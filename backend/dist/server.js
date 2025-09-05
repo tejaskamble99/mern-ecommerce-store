@@ -1,6 +1,10 @@
 import express from "express";
 import userRoute from "./routes/user.js";
-const port = 8080;
+import { config } from "dotenv";
+config({
+    path: "./.env",
+});
+const port = process.env.PORT;
 const app = express();
 //Routes
 app.use("/api/v1/user", userRoute);

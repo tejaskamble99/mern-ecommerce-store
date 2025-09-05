@@ -1,8 +1,12 @@
 import express from "express";
 
 import userRoute from "./routes/user.js";
+import { config } from "dotenv";
 
-const port = 8080;
+config({
+  path: "./.env",
+});
+const port = process.env.PORT ;
 const app = express();
 
 //Routes
