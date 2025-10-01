@@ -3,7 +3,7 @@ import validator from "validator";
 const roles = ["admin", "user"];
 const genders = ["male", "female"];
 const userSchema = new mongoose.Schema({
-    _id: {
+    userId: {
         type: String,
         required: [true, "Please enter Id"],
     },

@@ -3,19 +3,20 @@ import { User } from "../models/user.js";
 import { newUserRequestBody } from "../types/types.js";
 
 export const newUser = async (
-  req: Request,
+  req: Request<{}, {}, newUserRequestBody>,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { name, email, photo, gender, _id, dob } = req.body;
+     
+    const { name, email, photo, gender,userId, dob } = req.body;
 
     const user = await User.create({
       name,
       email,
       photo,
       gender,
-      _id,
+      userId,
       dob : new Date(dob),
     });
     console.log(user);
@@ -26,7 +27,7 @@ export const newUser = async (
       user,
     });
   } catch (error) {
-    return res.status(200).json({
+    return res.status(500).json({
       success: false,
       message: `error`,
     });

@@ -3,7 +3,7 @@ import validator from "validator";
 
 // IUser interface for typing
 interface IUser extends Document {
-  _id: string;
+  userId: string;
   name: string;
   email: string;
   photo: string;
@@ -20,7 +20,7 @@ const genders = ["male", "female"] as const;
 
 const userSchema = new mongoose.Schema(
   {
-    _id: {
+    userId: {
       type: String,
       required: [true, "Please enter Id"],
     },
