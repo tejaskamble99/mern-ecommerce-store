@@ -8,7 +8,7 @@ export const newUser = async (
   next: NextFunction
 ) => {
   try {
-     
+    return next(new Error("error")  ); 
     const { name, email, photo, gender,userId, dob } = req.body;
 
     const user = await User.create({

@@ -18,8 +18,9 @@ app.get("/", (req, res) => {
 })
 
 //Routes
-app.use(express.json());
 app.use("/api/v1/user", userRoute);
+
+
 
 
 app.listen(port, () => {

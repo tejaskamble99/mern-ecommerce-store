@@ -13,7 +13,6 @@ app.get("/", (req, res) => {
     res.send("hello world");
 });
 //Routes
-app.use(express.json());
 app.use("/api/v1/user", userRoute);
 app.listen(port, () => {
     console.log(`sever is start and tun on  http://localhost:${port}`);
