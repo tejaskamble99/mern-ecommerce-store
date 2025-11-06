@@ -1,8 +1,8 @@
 import express from "express";
-
 import userRoute from "./routes/user.js";
 import { config } from "dotenv";
 import { connectDB } from "./utils/features.js";
+import { errorMiddleware } from "./middleware/error.js";
 
 config({
   path: "./.env",
@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
 //Routes
 app.use("/api/v1/user", userRoute);
 
-
+app.use(errorMiddleware);
 
 
 app.listen(port, () => {
