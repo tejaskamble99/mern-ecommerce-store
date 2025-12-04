@@ -7,7 +7,7 @@ export default function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="w-full bg-black/90  backdrop-blur-sm shadow-sm sticky top-0 z-40">
+    <header className="w-full bg-[var(--custom-dark)]  backdrop-blur-sm shadow-sm sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -24,25 +24,25 @@ export default function Header() {
           <nav className="hidden md:flex items-center gap-6">
             <Link
               href="/products"
-              className="text-sm font-medium text-white-700 hover:text-gray-900"
+              className="text-sm font-medium text-gray-300 hover:text-custom-blue transition-colors"
             >
               Products
             </Link>
             <Link
               href="/categories"
-              className="text-sm font-medium text-white-700 hover:text-gray-900"
+              className="text-sm font-medium text-gray-300 hover:text-custom-blue transition-colors"
             >
               Categories
             </Link>
             <Link
               href="/about"
-              className="text-sm font-medium text-white-700 hover:text-gray-900"
+              className="ttext-sm font-medium text-gray-300 hover:text-custom-blue transition-colors"
             >
               About
             </Link>
             <Link
               href="/contact"
-              className="text-sm font-medium text-white-700 hover:text-gray-900"
+              className="ttext-sm font-medium text-gray-300 hover:text-custom-blue transition-colors"
             >
               Contact
             </Link>
@@ -148,16 +148,16 @@ export default function Header() {
         className={`md:hidden bg-white border-t ${open ? "block" : "hidden"}`}
       >
         <div className="px-4 py-3 space-y-2">
-          <Link href="/products" className="block text-gray-700 font-medium">
+          <Link href="/products" className="block text-gray-700 font-medium hover:text-custom-blue transition-colors">
             Products
           </Link>
-          <Link href="/categories" className="block text-gray-700 font-medium">
+          <Link href="/categories" className="block text-gray-700 font-medium hover:text-custom-blue transition-colors">
             Categories
           </Link>
-          <Link href="/about" className="block text-gray-700 font-medium">
+          <Link href="/about" className="block text-gray-700 font-medium hover:text-custom-blue transition-colors">
             About
           </Link>
-          <Link href="/contact" className="block text-gray-700 font-medium">
+          <Link href="/contact" className="block text-gray-700 font-medium hover:text-custom-blue transition-colors">
             Contact
           </Link>
         </div>
