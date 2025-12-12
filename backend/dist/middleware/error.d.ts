@@ -1,2 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-export declare const errorMiddleware: (err: Error, req: Request, res: Response, next: NextFunction) => Response<any, Record<string, any>>;
+import ErrorHandeler from "../utils/utility-class.js";
+import { Controllertype } from "../types/types.js";
+export declare const errorMiddleware: (err: ErrorHandeler, req: Request, res: Response, next: NextFunction) => Response<any, Record<string, any>>;
+export declare const TryCatch: (func: Controllertype) => () => void;

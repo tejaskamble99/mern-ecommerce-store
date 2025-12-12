@@ -1,12 +1,20 @@
 import { NextFunction, Request, Response } from "express";
+import ErrorHandeler from "../utils/utility-class.js";
+import { Controllertype } from "../types/types.js";
 export const errorMiddleware = (
-  err: Error,
+  err: ErrorHandeler,
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  return res.status(400).json({
+
+  err.message ||= "something went wrong";
+  err.statusCode ||= 500;
+  return res.status(err.statusCode).json({
     success: true,
-    message: "something went wrong",
+    message:  err.message,
   });
 };
+
+
+export const TryCatch = (func : Controllertype) => () => {};

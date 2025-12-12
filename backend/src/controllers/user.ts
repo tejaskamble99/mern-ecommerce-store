@@ -1,14 +1,15 @@
 import { NextFunction, Request, Response } from "express";
 import { User } from "../models/user.js";
-import { newUserRequestBody } from "../types/types.js";
+import { NewUserRequestBody } from "../types/types.js";
+import { TryCatch } from "../middleware/error.js";
 
-export const newUser = async (
-  req: Request<{}, {}, newUserRequestBody>,
+export const newUser = TryCatch(
+  async (
+  req: Request<{}, {}, NewUserRequestBody>,
   res: Response,
   next: NextFunction
 ) => {
-  try {
-    return next(new Error("error")  ); 
+
     const { name, email, photo, gender,userId, dob } = req.body;
 
     const user = await User.create({
@@ -26,10 +27,7 @@ export const newUser = async (
       message: `User ${user.name} created successfully`,
       user,
     });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: `error`,
-    });
+
+
   }
-};
+);

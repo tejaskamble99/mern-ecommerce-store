@@ -1,7 +1,10 @@
 export const errorMiddleware = (err, req, res, next) => {
-    return res.status(400).json({
+    err.message || (err.message = "something went wrong");
+    err.statusCode || (err.statusCode = 500);
+    return res.status(err.statusCode).json({
         success: true,
-        message: "something went wrong",
+        message: err.message,
     });
 };
+export const TryCatch = (func) => () => { };
 //# sourceMappingURL=error.js.map
