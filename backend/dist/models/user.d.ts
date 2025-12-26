@@ -1,6 +1,6 @@
 import mongoose, { Document } from "mongoose";
 interface IUser extends Document {
-    userId: string;
+    _id: string;
     name: string;
     email: string;
     photo: string;
@@ -12,7 +12,7 @@ interface IUser extends Document {
     age: number | null;
 }
 export declare const User: mongoose.Model<IUser, {}, {}, {}, mongoose.Document<unknown, {}, IUser, {}, {}> & IUser & Required<{
-    _id: unknown;
+    _id: string;
 }> & {
     __v: number;
 }, any>;
