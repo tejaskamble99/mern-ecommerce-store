@@ -7,14 +7,19 @@ export const errorMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-
   err.message ||= "something went wrong";
   err.statusCode ||= 500;
   return res.status(err.statusCode).json({
     success: true,
-    message:  err.message,
+    message: err.message,
   });
 };
 
+export const TryCatch =
+  (func: Controllertype) =>{
+     return  (req: Request, res: Response, next: NextFunction) => {
+    return  Promise.resolve(func(req, res, next)).catch(next);
+  };
+  };
 
-export const TryCatch = (func : Controllertype) => () => {};
+

@@ -6,5 +6,9 @@ export const errorMiddleware = (err, req, res, next) => {
         message: err.message,
     });
 };
-export const TryCatch = (func) => () => { };
+export const TryCatch = (func) => {
+    return (req, res, next) => {
+        return Promise.resolve(func(req, res, next)).catch(next);
+    };
+};
 //# sourceMappingURL=error.js.map
