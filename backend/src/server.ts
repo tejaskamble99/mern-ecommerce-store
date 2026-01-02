@@ -1,5 +1,6 @@
 import express from "express";
 import userRoute from "./routes/user.js";
+import productRoute from "./routes/products.js";
 import { config } from "dotenv";
 import { connectDB } from "./utils/features.js";
 import { errorMiddleware } from "./middleware/error.js";
@@ -19,7 +20,9 @@ app.get("/", (req, res) => {
 
 //Routes
 app.use("/api/v1/user", userRoute);
+app.use("/api/v1/product", productRoute);
 
+app.use("/uploads", express.static("uploads"));
 app.use(errorMiddleware);
 
 

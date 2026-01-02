@@ -7,4 +7,12 @@ export interface NewUserRequestBody {
     gender: string;
     dob: Date;
 }
+export interface NewProductRequestBody {
+    name: string;
+    photo: string;
+    price: number;
+    stock: number;
+    description: string;
+    category: string;
+}
 export type Controllertype = (req: Request, res: Response, next: NextFunction) => Promise<void | Response<any, Record<string, any>>>;

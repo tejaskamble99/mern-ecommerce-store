@@ -1,0 +1,13 @@
+import express from "express";
+import { newUser, getAllUsers, getUser, deleteUser } from "../controllers/user.js";
+import { adminOnly } from './../middleware/auth.js';
+const app = express.Router();
+// Route - /api/v1/user/new
+app.post("/new", newUser);
+// Route - /api/v1/user/all
+app.get("/all", adminOnly, getAllUsers);
+// Route - /api/v1/user/dynamicID
+app.get("/:id", getUser);
+app.delete("/:id", adminOnly, deleteUser);
+export default app;
+//# sourceMappingURL=user%20copy.js.map
