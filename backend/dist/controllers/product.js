@@ -33,4 +33,21 @@ export const getlatestProduct = TryCatch(async (req, res, next) => {
         product,
     });
 });
+export const getAllCategories = TryCatch(async (req, res, next) => {
+    const product = await Product.distinct("category");
+    return res.status(200).json({
+        success: true,
+        product,
+    });
+});
+export const getAllProducts = TryCatch(async (req, res, next) => {
+    const { search, category, sort, price } = req.query;
+    const page = Number(req.query.page) || 1;
+    const key = `product:${search || 'all'}:${category || 'all'}:${sort || 'all'}:${price || 'all'}:${page}`;
+    const product = await Product.find({});
+    return res.status(200).json({
+        success: true,
+        product,
+    });
+});
 //# sourceMappingURL=product.js.map

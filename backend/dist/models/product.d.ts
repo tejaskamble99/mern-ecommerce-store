@@ -5,9 +5,9 @@ export declare const Product: mongoose.Model<{
 } & {
     name: string;
     photo: string;
+    description: string;
     price: number;
     stock: number;
-    description: string;
     category: string;
 }, {}, {}, {}, mongoose.Document<unknown, {}, {
     createdAt: NativeDate;
@@ -15,9 +15,9 @@ export declare const Product: mongoose.Model<{
 } & {
     name: string;
     photo: string;
+    description: string;
     price: number;
     stock: number;
-    description: string;
     category: string;
 }, {}, {
     timestamps: true;
@@ -28,9 +28,9 @@ export declare const Product: mongoose.Model<{
 } & {
     name: string;
     photo: string;
+    description: string;
     price: number;
     stock: number;
-    description: string;
     category: string;
 } & {
     _id: mongoose.Types.ObjectId;
@@ -45,9 +45,9 @@ export declare const Product: mongoose.Model<{
 } & {
     name: string;
     photo: string;
+    description: string;
     price: number;
     stock: number;
-    description: string;
     category: string;
 }, mongoose.Document<unknown, {}, mongoose.FlatRecord<{
     createdAt: NativeDate;
@@ -55,9 +55,9 @@ export declare const Product: mongoose.Model<{
 } & {
     name: string;
     photo: string;
+    description: string;
     price: number;
     stock: number;
-    description: string;
     category: string;
 }>, {}, mongoose.ResolveSchemaOptions<{
     timestamps: true;
@@ -68,9 +68,9 @@ export declare const Product: mongoose.Model<{
 } & {
     name: string;
     photo: string;
+    description: string;
     price: number;
     stock: number;
-    description: string;
     category: string;
 }> & {
     _id: mongoose.Types.ObjectId;

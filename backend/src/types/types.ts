@@ -15,7 +15,7 @@ export interface NewProductRequestBody {
     price: number;  
     stock : number;
     description: string;
-     category: string;
+    category: string;
    
 }
 export type  Controllertype = (
@@ -23,3 +23,24 @@ export type  Controllertype = (
     res:Response,
     next: NextFunction
 ) => Promise<void | Response<any, Record<string, any>>>;
+
+
+export type SeaechRequestQuery = {
+    search? : string;
+    category?: string;
+    sort?: string;       
+    price?: string;
+    page?: string;  
+}
+
+export interface BaseQury {
+    name?:{
+        $regex : string;
+        $options : string;
+    };
+    price?:{
+        $gte :number;
+        $lte : number
+    };
+    category?:  string;
+}
