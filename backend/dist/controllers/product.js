@@ -57,14 +57,12 @@ export const getAllProducts = TryCatch(async (req, res, next) => {
     if (price) {
         baseQuery.price = { $lte: Number(price) };
     }
-    // Parallel Execution: Fetch Data & Count Total Documents
-    // usage of .countDocuments() is vastly more efficient than .find() for counting
     const [products, totalFilteredCount] = await Promise.all([
         Product.find(baseQuery)
             .sort(sort && { price: sort === "asc" ? 1 : -1 })
             .limit(limit)
             .skip(skip),
-        Product.countDocuments(baseQuery)
+        Product.countDocuments(baseQuery),
     ]);
     const totalPage = Math.ceil(totalFilteredCount / limit);
     return res.status(200).json({
