@@ -4,11 +4,14 @@ import productRoute from "./routes/products.js";
 import { config } from "dotenv";
 import { connectDB } from "./utils/features.js";
 import { errorMiddleware } from "./middleware/error.js";
+import  NodeCache from "node-cache"
 
 config({
   path: "./.env",
 });
  connectDB();
+
+ export const nodeCache = new NodeCache();
 
 const port = process.env.PORT ;
 const app = express();

@@ -2,6 +2,7 @@ import { TryCatch } from "../middleware/error.js";
 import { Product } from "../models/product.js";
 import ErrorHandeler from "../utils/utility-class.js";
 import { rm } from "fs";
+import { nodeCache } from "../server.js";
 export const newProduct = TryCatch(async (req, res, next) => {
     const { name, price, stock, description, category } = req.body;
     const photo = req.file;
@@ -27,14 +28,26 @@ export const newProduct = TryCatch(async (req, res, next) => {
     });
 });
 export const getlatestProduct = TryCatch(async (req, res, next) => {
-    const products = await Product.find({}).sort({ createdAt: -1 }).limit(5);
+    let products = [];
+    if (nodeCache.has("latest-Products"))
+        products = JSON.parse(nodeCache.get("latest-Products"));
+    else {
+        products = await Product.find({}).sort({ createdAt: -1 }).limit(5);
+        nodeCache.set("latest-Products", JSON.stringify(products));
+    }
     return res.status(200).json({
         success: true,
         products,
     });
 });
 export const getAllCategories = TryCatch(async (req, res, next) => {
-    const categories = await Product.distinct("category");
+    let categories = [];
+    if (nodeCache.has("categories"))
+        categories = JSON.parse(nodeCache.get("categories"));
+    else {
+        categories = await Product.distinct("category");
+        nodeCache.set("categories", JSON.stringify(categories));
+    }
     return res.status(200).json({
         success: true,
         categories,
@@ -72,16 +85,29 @@ export const getAllProducts = TryCatch(async (req, res, next) => {
     });
 });
 export const getAdminProduct = TryCatch(async (req, res, next) => {
-    const products = await Product.find({});
+    let products;
+    if (nodeCache.has("all-Products"))
+        products = JSON.parse(nodeCache.get("all-Products"));
+    else {
+        const products = await Product.find({});
+        nodeCache.set("all-Products", JSON.stringify(products));
+    }
     return res.status(200).json({
         success: true,
         products,
     });
 });
 export const getSigleProduct = TryCatch(async (req, res, next) => {
-    const product = await Product.findById(req.params.id);
-    if (!product)
-        return next(new ErrorHandeler("Product not found", 404));
+    let product;
+    const id = req.params.id;
+    if (nodeCache.has(`product-${id}`))
+        product = JSON.parse(nodeCache.get(`product-${id}`));
+    else {
+        product = await Product.findById(id);
+        if (!product)
+            return next(new ErrorHandeler("Product not found", 404));
+        nodeCache.set(`product-${id}`, JSON.stringify(product));
+    }
     return res.status(200).json({
         success: true,
         product,
