@@ -1,0 +1,4 @@
+import { TryCatch } from "../middleware/error.js";
+export const newOrder = TryCatch(async () => {
+});
+//# sourceMappingURL=order.js.map

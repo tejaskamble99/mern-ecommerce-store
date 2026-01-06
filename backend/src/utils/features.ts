@@ -1,32 +1,54 @@
 // utils/features.ts
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import { InvalidateCacheProps } from "../types/types.js";
+import { nodeCache } from "../server.js";
+import { Product } from "../models/product.js";
+
 
 dotenv.config();
 mongoose.set("strictQuery", true);
-mongoose.set("debug", true); // logs queries to console (remove in prod)
+mongoose.set("debug", true);
 
 export const connectDB = async (): Promise<void> => {
   const uri = process.env.MONGO_URI;
   if (!uri) {
     throw new Error("MONGO_URI environment variable is not set");
   }
-
-  mongoose.connection.on("connected", () => {
-    console.log("Mongoose connected to DB:", mongoose.connection.host, "db:", mongoose.connection.name);
-  });
-  mongoose.connection.on("error", (err) => {
-    console.error("Mongoose connection error:", err);
-  });
-  mongoose.connection.on("disconnected", () => {
-    console.log("Mongoose disconnected");
-  });
+  mongoose.connection.on("connected", () => console.log("✅ MongoDB Connected"));
+  mongoose.connection.on("error", (err) => console.error("❌ MongoDB Error:", err));
+  mongoose.connection.on("disconnected", () => console.log("⚠️ MongoDB Disconnected"));
 
   try {
-    const conn = await mongoose.connect(uri);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+
+    await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
   } catch (err) {
-    console.error("MongoDB connection error:", err);
-    throw err;
+    console.error("Failed to connect to MongoDB on startup:", err);
+    process.exit(1); 
+  }
+};
+
+export const invalidateCache = async ({
+  product,
+  order,
+  admin,
+}: InvalidateCacheProps) => {
+  if (product) {
+    const productKeys: string[] = [
+      "latest-Products",
+      "categories",
+      "all-Products",
+    ];
+    const products = await Product.find({}).select("_id");
+    products.forEach((i) =>{
+      productKeys.push(`product-${i._id}`);
+    });
+    nodeCache.del(productKeys);
+  }
+  if (order) {
+    nodeCache.del("");
+  }
+  if (admin) {
+    nodeCache.del("");
   }
 };

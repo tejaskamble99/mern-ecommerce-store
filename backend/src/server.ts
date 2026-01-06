@@ -1,21 +1,24 @@
 import express from "express";
 import userRoute from "./routes/user.js";
 import productRoute from "./routes/products.js";
+import oderRoute from "./routes/order.js";
 import { config } from "dotenv";
 import { connectDB } from "./utils/features.js";
 import { errorMiddleware } from "./middleware/error.js";
 import  NodeCache from "node-cache"
+import morgan from "morgan";
 
 config({
   path: "./.env",
 });
  connectDB();
 
- export const nodeCache = new NodeCache();
+export const nodeCache = new NodeCache();
 
 const port = process.env.PORT ;
 const app = express();
 app.use(express.json());
+app.use(morgan("dev"));
 
 app.get("/", (req, res) => {
   res.send("hello world");
@@ -24,6 +27,7 @@ app.get("/", (req, res) => {
 //Routes
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/product", productRoute);
+app.use("/api/v1/order", oderRoute);
 
 app.use("/uploads", express.static("uploads"));
 app.use(errorMiddleware);
