@@ -1,7 +1,7 @@
 // utils/features.ts
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { InvalidateCacheProps } from "../types/types.js";
+import { InvalidateCacheProps, OrderItemType } from "../types/types.js";
 import { nodeCache } from "../server.js";
 import { Product } from "../models/product.js";
 
@@ -52,3 +52,17 @@ export const invalidateCache = async ({
     nodeCache.del("");
   }
 };
+
+
+export const reduceStock= async (orderItems: OrderItemType[]) => {
+for(let i=0; i<orderItems.length; i++){
+const order = orderItems[i];
+
+  const product = await Product.findById(order.productId);
+  if(!product) throw new  Error("Product not found");
+
+    product.stock -= orderItems[i].quantity;
+    await product.save();
+ 
+}
+}

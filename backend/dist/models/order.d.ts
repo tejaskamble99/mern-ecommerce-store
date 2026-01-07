@@ -3,7 +3,7 @@ export declare const Order: mongoose.Model<{
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
-    user: mongoose.Types.ObjectId;
+    user: string;
     subtotal: number;
     tax: number;
     shippingCharges: number;
@@ -40,7 +40,7 @@ export declare const Order: mongoose.Model<{
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
-    user: mongoose.Types.ObjectId;
+    user: string;
     subtotal: number;
     tax: number;
     shippingCharges: number;
@@ -79,7 +79,7 @@ export declare const Order: mongoose.Model<{
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
-    user: mongoose.Types.ObjectId;
+    user: string;
     subtotal: number;
     tax: number;
     shippingCharges: number;
@@ -122,7 +122,7 @@ export declare const Order: mongoose.Model<{
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
-    user: mongoose.Types.ObjectId;
+    user: string;
     subtotal: number;
     tax: number;
     shippingCharges: number;
@@ -159,7 +159,7 @@ export declare const Order: mongoose.Model<{
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
-    user: mongoose.Types.ObjectId;
+    user: string;
     subtotal: number;
     tax: number;
     shippingCharges: number;
@@ -198,7 +198,7 @@ export declare const Order: mongoose.Model<{
     createdAt: NativeDate;
     updatedAt: NativeDate;
 } & {
-    user: mongoose.Types.ObjectId;
+    user: string;
     subtotal: number;
     tax: number;
     shippingCharges: number;

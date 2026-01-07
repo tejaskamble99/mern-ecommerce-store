@@ -27,7 +27,7 @@ const schema = new mongoose.Schema({
         },
     },
     user: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: "User",
         required: [true, "Order must belong to a user"],
     },

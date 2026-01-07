@@ -1,6 +1,6 @@
 import { TryCatch } from "../middleware/error.js";
 import { Product } from "../models/product.js";
-import ErrorHandeler from "../utils/utility-class.js";
+import ErrorHandler from "../utils/utility-class.js";
 import { rm } from "fs";
 import { nodeCache } from "../server.js";
 import { invalidateCache } from "../utils/features.js";
@@ -82,7 +82,7 @@ export const getSigleProduct = TryCatch(async (req, res, next) => {
     else {
         product = await Product.findById(id);
         if (!product)
-            return next(new ErrorHandeler("Product not found", 404));
+            return next(new ErrorHandler("Product not found", 404));
         nodeCache.set(`product-${id}`, JSON.stringify(product));
     }
     return res.status(200).json({
@@ -94,12 +94,12 @@ export const newProduct = TryCatch(async (req, res, next) => {
     const { name, price, stock, description, category } = req.body;
     const photo = req.file;
     if (!photo)
-        return next(new ErrorHandeler("Please upload photo", 400));
+        return next(new ErrorHandler("Please upload photo", 400));
     if (!name || !price || !stock || !description || !category) {
         rm(photo.path, () => {
             console.log("file deleted");
         });
-        return next(new ErrorHandeler("Please enter all fields", 400));
+        return next(new ErrorHandler("Please enter all fields", 400));
     }
     await Product.create({
         name,
@@ -121,7 +121,7 @@ export const updateProduct = TryCatch(async (req, res, next) => {
     const photo = req.file;
     const product = await Product.findById(id);
     if (!product)
-        return next(new ErrorHandeler("Product not found", 404));
+        return next(new ErrorHandler("Product not found", 404));
     if (photo) {
         rm(product.photo, () => {
             console.log("Old Photo Deleted");
@@ -148,7 +148,7 @@ export const updateProduct = TryCatch(async (req, res, next) => {
 export const deleteProduct = TryCatch(async (req, res, next) => {
     const product = await Product.findById(req.params.id);
     if (!product)
-        return next(new ErrorHandeler("Product not found", 404));
+        return next(new ErrorHandler("Product not found", 404));
     rm(product.photo, () => {
         console.log("Old Photo Deleted");
     });

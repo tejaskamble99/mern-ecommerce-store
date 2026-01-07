@@ -42,4 +42,14 @@ export const invalidateCache = async ({ product, order, admin, }) => {
         nodeCache.del("");
     }
 };
+export const reduceStock = async (orderItems) => {
+    for (let i = 0; i < orderItems.length; i++) {
+        const order = orderItems[i];
+        const product = await Product.findById(order.productId);
+        if (!product)
+            throw new Error("Product not found");
+        product.stock -= orderItems[i].quantity;
+        await product.save();
+    }
+};
 //# sourceMappingURL=features.js.map

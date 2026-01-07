@@ -1,4 +1,4 @@
-class ErrorHandeler extends Error {
+class ErrorHandler extends Error {
     constructor(message, statusCode) {
         super(message);
         this.message = message;
@@ -6,5 +6,5 @@ class ErrorHandeler extends Error {
         this.statusCode = statusCode;
     }
 }
-export default ErrorHandeler;
+export default ErrorHandler;
 //# sourceMappingURL=utility-class.js.map
