@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { InvalidateCacheProps, OrderItemType } from "../types/types.js";
 import { nodeCache } from "../server.js";
 import { Product } from "../models/product.js";
+import { Order } from "../models/order.js";
 
 
 dotenv.config();
@@ -32,21 +33,36 @@ export const invalidateCache = async ({
   product,
   order,
   admin,
+  userId,
+  orderId,
+  productId,
 }: InvalidateCacheProps) => {
   if (product) {
     const productKeys: string[] = [
       "latest-Products",
       "categories",
       "all-Products",
+      `product-${productId}`,
     ];
     const products = await Product.find({}).select("_id");
     products.forEach((i) =>{
-      productKeys.push(`product-${i._id}`);
+      productKeys.push();
     });
+    if(typeof productId === "string") productKeys.push(`product-${productId}`);
+    if (typeof productId === "object") {
+      productId.forEach((i) => {
+        productKeys.push(`product-${i}`);
+      });
+    }
     nodeCache.del(productKeys);
   }
   if (order) {
-    nodeCache.del("");
+    const orderKeys: string[] = [
+      `my-orders-${userId}`,
+      "all-orders",
+      `order-${orderId}`,
+    ];
+    nodeCache.del(orderKeys);
   }
   if (admin) {
     nodeCache.del("");

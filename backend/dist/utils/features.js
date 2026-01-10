@@ -22,21 +22,34 @@ export const connectDB = async () => {
         process.exit(1);
     }
 };
-export const invalidateCache = async ({ product, order, admin, }) => {
+export const invalidateCache = async ({ product, order, admin, userId, orderId, productId, }) => {
     if (product) {
         const productKeys = [
             "latest-Products",
             "categories",
             "all-Products",
+            `product-${productId}`,
         ];
         const products = await Product.find({}).select("_id");
         products.forEach((i) => {
-            productKeys.push(`product-${i._id}`);
+            productKeys.push();
         });
+        if (typeof productId === "string")
+            productKeys.push(`product-${productId}`);
+        if (typeof productId === "object") {
+            productId.forEach((i) => {
+                productKeys.push(`product-${i}`);
+            });
+        }
         nodeCache.del(productKeys);
     }
     if (order) {
-        nodeCache.del("");
+        const orderKeys = [
+            `my-orders-${userId}`,
+            "all-orders",
+            `order-${orderId}`,
+        ];
+        nodeCache.del(orderKeys);
     }
     if (admin) {
         nodeCache.del("");
