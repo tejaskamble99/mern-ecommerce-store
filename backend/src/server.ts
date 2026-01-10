@@ -8,6 +8,7 @@ import { errorMiddleware } from "./middleware/error.js";
 import  NodeCache from "node-cache"
 import morgan from "morgan";
 import paymentRoute from "./routes/payment.js";
+import dashboardRoute from "./routes/stats.js";
 
 config({
   path: "./.env",
@@ -30,6 +31,7 @@ app.use("/api/v1/user", userRoute);
 app.use("/api/v1/product", productRoute);
 app.use("/api/v1/order", orderRoute);
 app.use("/api/v1/payment", paymentRoute);
+app.use("/api/v1/dashboard", dashboardRoute);
 
 app.use("/uploads", express.static("uploads"));
 app.use(errorMiddleware);
