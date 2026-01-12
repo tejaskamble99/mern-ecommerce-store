@@ -1,47 +1,141 @@
 import { TryCatch } from "../middleware/error.js";
+import { Order } from "../models/order.js";
 import { Product } from "../models/product.js";
 import { User } from "../models/user.js";
 import { nodeCache } from "../server.js";
+import { calculatePercentage } from "../utils/features.js";
 export const getDashboardStats = TryCatch(async (req, res, next) => {
     let stats;
     if (nodeCache.has("stats"))
         stats = JSON.parse(nodeCache.get("stats"));
     else {
         const today = new Date();
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
         const thisMonth = {
             start: new Date(today.getFullYear(), today.getMonth(), 1),
             end: today,
         };
-        const LastMonth = {
+        const lastMonth = {
             start: new Date(today.getFullYear(), today.getMonth() - 1, 1),
             end: new Date(today.getFullYear(), today.getMonth(), 0),
         };
-        const thisMonthProductsPromise = await Product.find({
+        const thisMonthProductsPromise = Product.find({
             createdAt: {
                 $gte: thisMonth.start,
                 $lte: thisMonth.end,
             },
         });
-        const lastMonthProductsPromise = await Product.find({
+        const lastMonthProductsPromise = Product.find({
+            createdAt: {
+                $gte: lastMonth.start,
+                $lte: lastMonth.end,
+            },
+        });
+        const thisMonthUsersPromise = User.find({
             createdAt: {
                 $gte: thisMonth.start,
                 $lte: thisMonth.end,
             },
         });
-        const thisMonthUsersPromise = await User.find({
+        const lastMonthUsersPromise = User.find({
+            createdAt: {
+                $gte: lastMonth.start,
+                $lte: lastMonth.end,
+            },
+        });
+        const thisMonthOrderPromise = Order.find({
             createdAt: {
                 $gte: thisMonth.start,
                 $lte: thisMonth.end,
             },
         });
-        const lastMonthUsersPromise = await User.find({
+        const lastMonthOrderPromise = Order.find({
             createdAt: {
-                $gte: thisMonthUser,
-                $lte: thisMonth.end,
+                $gte: lastMonth.start,
+                $lte: lastMonth.end,
             },
         });
-        const startofThisYear = new Date(today.getFullYear(), 0, 1);
-        const startofLastYear = new Date(today.getFullYear() - 1, 0, 1);
+        const lastSixMonthOrdersPromise = Order.find({
+            createdAt: {
+                $gte: sixMonthsAgo,
+                $lte: today,
+            },
+        });
+        const latestTransactionsPromise = Order.find({})
+            .select(["orderItems", "discount", "total", "status"])
+            .limit(4);
+        const [thisMonthProducts, lastMonthProducts, thisMonthUsers, lastMonthUsers, thisMonthOrders, lastMonthOrders, productCount, usersCount, allOrders, lastSixMonthOrders, categories, femaleUsersCount, latestTransaction,] = await Promise.all([
+            thisMonthProductsPromise,
+            lastMonthProductsPromise,
+            thisMonthUsersPromise,
+            lastMonthUsersPromise,
+            thisMonthOrderPromise,
+            lastMonthOrderPromise,
+            Product.countDocuments(),
+            User.countDocuments(),
+            Order.find({}).select("total"),
+            lastSixMonthOrdersPromise,
+            Product.distinct("category"),
+            User.countDocuments({ gender: "female" }),
+            latestTransactionsPromise,
+        ]);
+        const thisMonthRevenue = thisMonthOrders.reduce((total, order) => total + (order.total || 0), 0);
+        const lastMonthRevenue = lastMonthOrders.reduce((total, order) => total + (order.total || 0), 0);
+        const changePercent = {
+            revenue: calculatePercentage(thisMonthRevenue, lastMonthRevenue),
+            product: calculatePercentage(thisMonthProducts.length, lastMonthProducts.length),
+            user: calculatePercentage(thisMonthUsers.length, lastMonthUsers.length),
+            order: calculatePercentage(thisMonthOrders.length, lastMonthOrders.length),
+        };
+        const revenue = allOrders.reduce((total, order) => total + (order.total || 0), 0);
+        const count = {
+            revenue,
+            product: productCount,
+            user: usersCount,
+            order: allOrders.length,
+        };
+        const orderMonthCounts = new Array(6).fill(0);
+        const orderMonthyRevenue = new Array(6).fill(0);
+        lastSixMonthOrders.forEach((order) => {
+            const creationDate = order.createdAt;
+            const monthDiff = (today.getMonth() - creationDate.getMonth() + 12) % 12;
+            if (monthDiff < 6) {
+                orderMonthCounts[6 - monthDiff - 1] += 1;
+                orderMonthyRevenue[6 - monthDiff - 1] += order.total;
+            }
+        });
+        const categoriesCountPromise = categories.map((category) => Product.countDocuments({ category }));
+        const categoriesCount = await Promise.all(categoriesCountPromise);
+        const categoryCount = [];
+        categories.forEach((category, i) => {
+            categoryCount.push({
+                [category]: Math.round((categoriesCount[i] / productCount) * 100)
+            });
+        });
+        const userRatio = {
+            male: usersCount - femaleUsersCount,
+            female: femaleUsersCount,
+        };
+        const modifiedLatestTransaction = latestTransaction.map((i) => ({
+            _id: i._id,
+            discount: i.discount,
+            amount: i.total,
+            quantity: i.orderItems.length,
+            status: i.status,
+        }));
+        stats = {
+            categoryCount,
+            changePercent,
+            count,
+            chart: {
+                order: orderMonthCounts,
+                revenue: orderMonthyRevenue,
+            },
+            userRatio,
+            latestTransaction: modifiedLatestTransaction,
+        };
+        nodeCache.set("stats", JSON.stringify(stats));
     }
     return res.status(200).json({
         success: true,

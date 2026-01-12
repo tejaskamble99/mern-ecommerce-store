@@ -6,7 +6,6 @@ import { nodeCache } from "../server.js";
 import { Product } from "../models/product.js";
 import { Order } from "../models/order.js";
 
-
 dotenv.config();
 mongoose.set("strictQuery", true);
 mongoose.set("debug", true);
@@ -16,16 +15,21 @@ export const connectDB = async (): Promise<void> => {
   if (!uri) {
     throw new Error("MONGO_URI environment variable is not set");
   }
-  mongoose.connection.on("connected", () => console.log("✅ MongoDB Connected"));
-  mongoose.connection.on("error", (err) => console.error("❌ MongoDB Error:", err));
-  mongoose.connection.on("disconnected", () => console.log("⚠️ MongoDB Disconnected"));
+  mongoose.connection.on("connected", () =>
+    console.log("✅ MongoDB Connected")
+  );
+  mongoose.connection.on("error", (err) =>
+    console.error("❌ MongoDB Error:", err)
+  );
+  mongoose.connection.on("disconnected", () =>
+    console.log("⚠️ MongoDB Disconnected")
+  );
 
   try {
-
     await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
   } catch (err) {
     console.error("Failed to connect to MongoDB on startup:", err);
-    process.exit(1); 
+    process.exit(1);
   }
 };
 
@@ -45,10 +49,10 @@ export const invalidateCache = async ({
       `product-${productId}`,
     ];
     const products = await Product.find({}).select("_id");
-    products.forEach((i) =>{
+    products.forEach((i) => {
       productKeys.push();
     });
-    if(typeof productId === "string") productKeys.push(`product-${productId}`);
+    if (typeof productId === "string") productKeys.push(`product-${productId}`);
     if (typeof productId === "object") {
       productId.forEach((i) => {
         productKeys.push(`product-${i}`);
@@ -69,16 +73,20 @@ export const invalidateCache = async ({
   }
 };
 
+export const reduceStock = async (orderItems: OrderItemType[]) => {
+  for (let i = 0; i < orderItems.length; i++) {
+    const order = orderItems[i];
 
-export const reduceStock= async (orderItems: OrderItemType[]) => {
-for(let i=0; i<orderItems.length; i++){
-const order = orderItems[i];
-
-  const product = await Product.findById(order.productId);
-  if(!product) throw new  Error("Product not found");
+    const product = await Product.findById(order.productId);
+    if (!product) throw new Error("Product not found");
 
     product.stock -= orderItems[i].quantity;
     await product.save();
- 
-}
-}
+  }
+};
+
+export const calculatePercentage = (thisMonth : number, lastMonth: number) => {
+ if (lastMonth === 0) return thisMonth * 100;
+ const percent = ((thisMonth - lastMonth) / lastMonth) * 100;
+  return Number(percent.toFixed(0));
+};
