@@ -119,7 +119,7 @@ export const processOrder = TryCatch(async (req, res, next) => {
   }
   await order.save();
 
-  await invalidateCache({
+  invalidateCache({
     order: true,
     admin: true,
     userId: order.user,
@@ -140,7 +140,7 @@ export const deleteOrder = TryCatch(async (req, res, next) => {
 
   await order.deleteOne();
 
-  await invalidateCache({
+  invalidateCache({
     order: true,
     admin: true,
     userId: order.user,

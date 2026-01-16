@@ -22,7 +22,7 @@ export const connectDB = async () => {
         process.exit(1);
     }
 };
-export const invalidateCache = async ({ product, order, admin, userId, orderId, productId, }) => {
+export const invalidateCache = ({ product, order, admin, userId, orderId, productId, }) => {
     if (product) {
         const productKeys = [
             "latest-Products",
@@ -30,10 +30,6 @@ export const invalidateCache = async ({ product, order, admin, userId, orderId, 
             "all-Products",
             `product-${productId}`,
         ];
-        const products = await Product.find({}).select("_id");
-        products.forEach((i) => {
-            productKeys.push();
-        });
         if (typeof productId === "string")
             productKeys.push(`product-${productId}`);
         if (typeof productId === "object") {
@@ -52,7 +48,12 @@ export const invalidateCache = async ({ product, order, admin, userId, orderId, 
         nodeCache.del(orderKeys);
     }
     if (admin) {
-        nodeCache.del("");
+        nodeCache.del([
+            "stats",
+            "admin-pie-charts",
+            "bar-charts",
+            "line-charts",
+        ]);
     }
 };
 export const reduceStock = async (orderItems) => {
@@ -81,5 +82,21 @@ export const getInventories = async ({ categories, productsCount, }) => {
         });
     });
     return categoryCount;
+};
+export const getChartData = ({ length, docArr, today, property, }) => {
+    const data = new Array(length).fill(0);
+    docArr.forEach((i) => {
+        const creationDate = i.createdAt;
+        const monthDiff = (today.getMonth() - creationDate.getMonth() + 12) % 12;
+        if (monthDiff < length) {
+            if (property) {
+                data[length - monthDiff - 1] += i[property];
+            }
+            else {
+                data[length - monthDiff - 1] += 1;
+            }
+        }
+    });
+    return data;
 };
 //# sourceMappingURL=features.js.map

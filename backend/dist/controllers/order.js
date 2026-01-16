@@ -96,7 +96,7 @@ export const processOrder = TryCatch(async (req, res, next) => {
             return next(new ErrorHandler("Cannot process this order status", 400));
     }
     await order.save();
-    await invalidateCache({
+    invalidateCache({
         order: true,
         admin: true,
         userId: order.user,
@@ -113,7 +113,7 @@ export const deleteOrder = TryCatch(async (req, res, next) => {
     if (!order)
         return next(new ErrorHandler("Order not found", 404));
     await order.deleteOne();
-    await invalidateCache({
+    invalidateCache({
         order: true,
         admin: true,
         userId: order.user,

@@ -33,7 +33,7 @@ export const connectDB = async (): Promise<void> => {
   }
 };
 
-export const invalidateCache = async ({
+export const invalidateCache =  ({
   product,
   order,
   admin,
@@ -48,10 +48,7 @@ export const invalidateCache = async ({
       "all-Products",
       `product-${productId}`,
     ];
-    const products = await Product.find({}).select("_id");
-    products.forEach((i) => {
-      productKeys.push();
-    });
+
     if (typeof productId === "string") productKeys.push(`product-${productId}`);
     if (typeof productId === "object") {
       productId.forEach((i) => {
@@ -69,7 +66,12 @@ export const invalidateCache = async ({
     nodeCache.del(orderKeys);
   }
   if (admin) {
-    nodeCache.del("");
+    nodeCache.del([
+      "stats",
+      "admin-pie-charts",
+      "bar-charts",
+      "line-charts",
+    ]);
   }
 };
 
@@ -113,4 +115,41 @@ export const getInventories = async ({
   });
 
   return categoryCount;
+};
+
+interface MyDocument  {
+  createdAt: Date;
+  discount?: number;
+  total?: number;
+}
+
+type FuncProps = {
+  length: number;
+  docArr: MyDocument[];
+  today: Date;
+  property?: "discount" | "total";
+};
+
+export const getChartData = ({
+  length,
+  docArr,
+  today,
+  property,
+}: FuncProps) => {
+  const data: number[] = new Array(length).fill(0);
+
+  docArr.forEach((i) => {
+    const creationDate = i.createdAt;
+    const monthDiff = (today.getMonth() - creationDate.getMonth() + 12) % 12;
+
+    if (monthDiff < length) {
+      if (property) {
+        data[length - monthDiff - 1] += i[property]!;
+      } else {
+        data[length - monthDiff - 1] += 1;
+      }
+    }
+  });
+
+  return data;
 };
