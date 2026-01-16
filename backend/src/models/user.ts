@@ -74,7 +74,6 @@ const userSchema = new mongoose.Schema(
 
 // Virtual for age computation
 userSchema.virtual("age").get(function () {
-  if (!this.dob) return null;
   const today = new Date();
   const dob = this.dob;
   let age = today.getFullYear() - dob.getFullYear();
@@ -85,6 +84,7 @@ userSchema.virtual("age").get(function () {
   ) {
     age--;
   }
+
   return age;
 });
 

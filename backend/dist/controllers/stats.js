@@ -192,9 +192,9 @@ export const getPieCharts = TryCatch(async (req, res, next) => {
             customer: customerUsers,
         };
         const usersAgeGroup = {
-            teen: allUsers.filter((i) => i.age < 20).length,
-            adult: allUsers.filter((i) => i.age >= 20 && i.age < 40).length,
-            old: allUsers.filter((i) => i.age >= 40).length,
+            teen: allUsers.filter((i) => i.age !== null && i.age < 20).length,
+            adult: allUsers.filter((i) => i.age !== null && i.age >= 20 && i.age < 40).length,
+            old: allUsers.filter((i) => i.age !== null && i.age >= 40).length,
         };
         charts = {
             orderFullfillment,
@@ -202,6 +202,7 @@ export const getPieCharts = TryCatch(async (req, res, next) => {
             stockAvailability,
             revenueDistribution,
             adminCustomer,
+            usersAgeGroup,
         };
         nodeCache.set("admin-pie-charts", JSON.stringify(charts));
     }
