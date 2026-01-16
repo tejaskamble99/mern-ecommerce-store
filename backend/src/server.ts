@@ -5,26 +5,31 @@ import orderRoute from "./routes/order.js";
 import { config } from "dotenv";
 import { connectDB } from "./utils/features.js";
 import { errorMiddleware } from "./middleware/error.js";
-import  NodeCache from "node-cache"
+import NodeCache from "node-cache";
 import morgan from "morgan";
 import paymentRoute from "./routes/payment.js";
 import dashboardRoute from "./routes/stats.js";
+import Stripe from "stripe";
 
 config({
   path: "./.env",
 });
- connectDB();
+
+const stripeKey = process.env.STRIPE_KEY || ""; 
+connectDB();
+
+export const stripe = new Stripe(stripeKey)
 
 export const nodeCache = new NodeCache();
 
-const port = process.env.PORT ;
+const port = process.env.PORT;
 const app = express();
 app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/", (req, res) => {
   res.send("hello world");
-})
+});
 
 //Routes
 app.use("/api/v1/user", userRoute);
@@ -35,7 +40,6 @@ app.use("/api/v1/dashboard", dashboardRoute);
 
 app.use("/uploads", express.static("uploads"));
 app.use(errorMiddleware);
-
 
 app.listen(port, () => {
   console.log(`Server is working on http://localhost:${port}`);

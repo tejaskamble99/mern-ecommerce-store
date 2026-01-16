@@ -8,12 +8,17 @@ import {
   deleteCoupon,
   updateCoupon,
   getCoupon,
+  createPaymentIntent,
 } from "../controllers/payment.js";
 
 const app = express.Router();
 
+// Route - /api/v1/user/payment/create
+app.post("/create", createPaymentIntent);
+
 // Route - /api/v1/user/payment/coupon/new
 app.post("/coupon/new",adminOnly,  newCoupon); 
+
 // Route - /api/v1/user/payment/discount
 app.get("/discount", applyDiscount);
 

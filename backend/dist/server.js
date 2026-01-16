@@ -9,10 +9,13 @@ import NodeCache from "node-cache";
 import morgan from "morgan";
 import paymentRoute from "./routes/payment.js";
 import dashboardRoute from "./routes/stats.js";
+import Stripe from "stripe";
 config({
     path: "./.env",
 });
+const stripeKey = process.env.STRIPE_KEY || "";
 connectDB();
+export const stripe = new Stripe(stripeKey);
 export const nodeCache = new NodeCache();
 const port = process.env.PORT;
 const app = express();
