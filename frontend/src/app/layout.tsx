@@ -1,23 +1,29 @@
-import './globals.css';
-import Providers from '@/components/Providers';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
+// src/app/layout.tsx
+import "@/styles/app.scss";
+import Providers from '@/components/Providers'; // Assuming this wraps Redux/Session
+import { Toaster } from "react-hot-toast"; 
 
+// This ONLY works because we removed "use client"
 export const metadata = {
   title: 'MyStore',
-  description: 'Demo store built with Next.js + FakeStoreAPI',
+  description: 'MERN Stack Ecommerce Store',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body className="min-h-screen flex flex-col">
+      {/* ADD suppressHydrationWarning={true} HERE */}
+      <body 
+        className="min-h-screen flex flex-col font-sans"
+        suppressHydrationWarning={true} 
+      >
         <Providers>
-          <Header />
-          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {children}
-          </main>
-          <Footer />
+          {children}
+          <Toaster position="bottom-center" />
         </Providers>
       </body>
     </html>
