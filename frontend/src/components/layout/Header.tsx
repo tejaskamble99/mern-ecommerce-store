@@ -14,6 +14,7 @@ export default function Header() {
     console.log("logout...");
   }
   return (
+    <div className="navbar">
     <nav className="header">
       <Link href="/">Home</Link>
       <Link href="/products">Products</Link>
@@ -54,5 +55,6 @@ export default function Header() {
         </Link>
       )}
     </nav>
+    </div>
   );
 }
