@@ -45,41 +45,96 @@ body {
 
 
 
-
-.navbar{
+.navbar {
   background-color: #CCCCCC;
   padding: 1rem;
   box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.093);
-}
-.header {
-  @include flex(row, flex-end, stretch, 1.2rem);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
-  @media (max-width:768px) {
-    display:  none;
-    flex-direction: column ;
-    position: absolute;
-    top:60px;
-    left: 0;
-    width: 100%;
-    background-color: #CCCCCC;
-    padding: 2rem;
-    gap: 2rem;
-    align-items: center;
+  .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: $color2;
 
-    &.is-open{
-      @include flex(row, flex-end, stretch, 1.5rem);
+    a {
+      color: $color2;
+      text-decoration: none;
       
+      &:hover {
+        color: $color3;
+      }
+    }
+
+    @media (max-width: 768px) {
+      font-size: 1.2rem;
     }
   }
 
+  .hamburger-menu {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: $color2;
+    padding: 0.5rem;
+    z-index: 1001;
+
+    &:hover {
+      color: $color3;
+    }
+
+    @media (max-width: 768px) {
+      display: block;
+    }
+  }
+}
+
+.header {
+  @include flex(row, flex-end, center, 1.2rem);
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 70%;
+    max-width: 300px;
+    height: 100vh;
+    background-color: #CCCCCC;
+    padding: 4rem 2rem 2rem;
+    gap: 1.5rem;
+    align-items: flex-start;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    transition: left 0.3s ease-in-out;
+    z-index: 1000;
+    overflow-y: auto;
+
+    &.is-open {
+      left: 0;
+    }
+  }
 
   a {
     color: $color2;
     letter-spacing: 2px;
     font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 
     &:hover {
       color: $color3;
+    }
+
+    @media (max-width: 768px) {
+      font-size: 1.1rem;
+      width: 100%;
+      padding: 0.5rem 0;
     }
   }
 
@@ -88,33 +143,99 @@ body {
     font-size: 1.2rem;
     cursor: pointer;
     background-color: transparent;
+    color: $color2;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 
     &:hover {
       color: $color3;
     }
+
+    @media (max-width: 768px) {
+      font-size: 1.1rem;
+      width: 100%;
+      padding: 0.5rem 0;
+      justify-content: flex-start;
+    }
   }
 
-  dialog {
+  .mobile-text {
+    display: none;
+
+    @media (max-width: 768px) {
+      display: inline;
+    }
+  }
+
+  .user-container {
+    position: relative;
+
+    @media (max-width: 768px) {
+      width: 100%;
+    }
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.5rem);
+    background-color: $color1;
     border: 1px solid #ccc;
     border-radius: 5px;
     padding: 10px;
-    width: 100px;
-    position: absolute;
-    left: calc(100% - 100px);
-    top: 8%;
+    min-width: 150px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    @include flex(column, flex-start, stretch, 0.5rem);
 
-    >div {
-      @include flex(column, flex-start, center, 0.25rem);
+    a,
+    button {
+      color: $color2;
+      letter-spacing: 1px;
+      font-size: 1rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      text-align: left;
+      width: 100%;
+      transition: background-color 0.2s ease;
 
+      &:hover {
+        background-color: rgba($color3, 0.1);
+        color: $color3;
+      }
+    }
 
+    button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      justify-content: flex-start;
+    }
+
+    @media (max-width: 768px) {
+      position: static;
+      box-shadow: none;
+      border: 1px solid #ddd;
+      margin-top: 0.5rem;
+      background-color: rgba($color1, 0.5);
     }
   }
 }
 
-
-
-
-
+// Overlay for mobile menu
+@media (max-width: 768px) {
+  .header.is-open::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+  }
+}
 
 
 .admin-container {
