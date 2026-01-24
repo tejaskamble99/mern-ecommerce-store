@@ -2,7 +2,14 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { BsHandbag } from "react-icons/bs";
-import { FaSearch, FaSignOutAlt, FaUser, FaSignInAlt, FaBars, FaTimes } from "react-icons/fa";
+import {
+  FaSearch,
+  FaSignOutAlt,
+  FaUser,
+  FaSignInAlt,
+  FaBars,
+  FaTimes,
+} from "react-icons/fa";
 
 const user = { _id: "tejas", role: "admin" };
 
@@ -14,7 +21,10 @@ export default function Header() {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -56,7 +66,7 @@ export default function Header() {
   return (
     <div className="navbar">
       {/* Hamburger Menu Button */}
-      <button 
+      <button
         className="hamburger-menu"
         onClick={() => setIsMobileMenuOpen((prev) => !prev)}
         aria-label="Toggle menu"
@@ -70,9 +80,15 @@ export default function Header() {
       </div>
 
       <nav className={`header ${isMobileMenuOpen ? "is-open" : ""}`}>
-        <Link href="/" onClick={closeMobileMenu}>Home</Link>
-        <Link href="/products" onClick={closeMobileMenu}>Products</Link>
-        <Link href="/categories" onClick={closeMobileMenu}>Categories</Link>
+        <Link href="/" onClick={closeMobileMenu}>
+          Home
+        </Link>
+        <Link href="/products" onClick={closeMobileMenu}>
+          Products
+        </Link>
+        <Link href="/categories" onClick={closeMobileMenu}>
+          Categories
+        </Link>
         <Link href="/search" onClick={closeMobileMenu}>
           <FaSearch /> <span className="mobile-text">Search</span>
         </Link>
@@ -80,10 +96,10 @@ export default function Header() {
         <Link href="/cart" onClick={closeMobileMenu}>
           <BsHandbag /> <span className="mobile-text">Cart</span>
         </Link>
-        
+
         {user?._id ? (
           <div className="user-container" ref={dropdownRef}>
-            <button 
+            <button
               onClick={() => setIsOpen((prev) => !prev)}
               aria-expanded={isOpen}
               aria-haspopup="true"
@@ -95,11 +111,23 @@ export default function Header() {
             {isOpen && (
               <div className="dropdown-menu">
                 {user.role === "admin" && (
-                  <Link href="/admin/dashboard" onClick={() => { setIsOpen(false); closeMobileMenu(); }}>
+                  <Link
+                    href="/admin/dashboard"
+                    onClick={() => {
+                      setIsOpen(false);
+                      closeMobileMenu();
+                    }}
+                  >
                     Admin
                   </Link>
                 )}
-                <Link href="/orders" onClick={() => { setIsOpen(false); closeMobileMenu(); }}>
+                <Link
+                  href="/orders"
+                  onClick={() => {
+                    setIsOpen(false);
+                    closeMobileMenu();
+                  }}
+                >
                   Orders
                 </Link>
                 <button onClick={logoutHandler}>
