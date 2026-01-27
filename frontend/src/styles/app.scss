@@ -36,7 +36,7 @@ body {
 }
 
 @import "admin-styles/mixin";
-
+@import "home";
 @import "admin-styles/dashboard";
 @import "admin-styles/products";
 @import "admin-styles/chart";
@@ -99,6 +99,7 @@ body {
   @media (max-width: 768px) {
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
     position: fixed;
     top: 0;
     left: -100%;
