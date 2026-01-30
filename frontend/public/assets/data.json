@@ -27,5 +27,39 @@
       "discount": 50,
       "status": "Shipped"
     }
+  ],
+  "products": [
+    {
+      "_id": "asd12345",
+      "name": "Macbook Pro M2",
+      "photo": "https://m.media-amazon.com/images/I/71TPda7cwUL._SX679_.jpg",
+      "price": 129999,
+      "stock": 10,
+      "category": "laptop"
+    },
+    {
+      "_id": "asd12346",
+      "name": "Canon EOS R5",
+      "photo": "https://i1.adlx.prod.ws.gmru.net/content/images/no-resize/product/55/55598/55598583/20200709141838637_1_w.jpg",
+      "price": 389990,
+      "stock": 5,
+      "category": "camera"
+    },
+    {
+      "_id": "asd12347",
+      "name": "Sony WH-1000XM5",
+      "photo": "https://m.media-amazon.com/images/I/51SKmu2G9FL._SX679_.jpg",
+      "price": 26990,
+      "stock": 20,
+      "category": "headphones"
+    },
+    {
+      "_id": "asd12348",
+      "name": "Logitech MX Master 3S",
+      "photo": "https://resource.logitech.com/w_692,c_lpad,ar_4:3,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/products/mice/mx-master-3s/gallery/mx-master-3s-mouse-top-view-graphite.png?v=1",
+      "price": 9500,
+      "stock": 0,
+      "category": "accessories"
+    }
   ]
 }
