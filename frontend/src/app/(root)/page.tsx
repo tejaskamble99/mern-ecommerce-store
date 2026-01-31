@@ -65,7 +65,7 @@ export default function Home() {
         productId="qedcsd"
         name="Logitech MX Master 3S"
         price={9500}
-        stock={6}
+        stock={1}
         photo={
           "https://resource.logitech.com/w_692,c_lpad,ar_4:3,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/products/mice/mx-master-3s/gallery/mx-master-3s-mouse-top-view-graphite.png?v=1"
         }

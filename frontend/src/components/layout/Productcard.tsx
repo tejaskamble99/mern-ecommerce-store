@@ -18,12 +18,26 @@ export default function ProductCard({
 }: ProdctsProps) {
   return (
     <div className="productcard">
-      <img src={photo}alt={name} />
-      <p>{name}</p>
-      <span>{price}</span>
+      <div className="card-header">
+        <img src={photo} alt={name} />
+      </div>
 
-      <div>
-        <button onClick={() => handler()}>Add To Cart</button>
+      <div className="card-body">
+        <div className="row">
+          <h3>{name}</h3>
+          <p>{price}</p>
+        </div>
+      </div>
+
+      <div className="card-footer">
+        <button
+          onClick={() => handler()}
+          disabled={stock < 1}
+          className={stock < 1 ? "disabled" : ""}
+        >
+          {stock < 1 ? "Out of Stock" : "Add to Cart"}
+        </button>
+        
       </div>
     </div>
   );
