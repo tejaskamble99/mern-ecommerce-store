@@ -1,10 +1,4 @@
 {
-  "categories": [
-    { "heading": "Laptops", "value": 30 },
-    { "heading": "Shoes", "value": 100 },
-    { "heading": "Cameras", "value": 80 },
-    { "heading": "Jeans", "value": 40 }
-  ],
   "transaction": [
     {
       "_id": "ksdnvkjsdn",
@@ -61,5 +55,28 @@
       "stock": 0,
       "category": "accessories"
     }
-  ]
+  ],
+
+  "categories": [
+  {
+    "heading": "Laptops",
+    "value": 30,
+    "photo": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=1000"
+  },
+  {
+    "heading": "Shoes",
+    "value": 100,
+    "photo": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=1000"
+  },
+  {
+    "heading": "Cameras",
+    "value": 80,
+    "photo": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=1000"
+  },
+  {
+    "heading": "Mice",
+    "value": 10,
+    "photo": "https://resource.logitech.com/w_692,c_lpad,ar_4:3,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/products/mice/mx-master-3s/gallery/mx-master-3s-mouse-top-view-graphite.png?v=1"
+  }
+]
 }
