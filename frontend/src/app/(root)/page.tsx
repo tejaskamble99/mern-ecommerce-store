@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
-import data from "@/assets/data.json"
+import data from "@/assets/data.json";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/autoplay";
 import { Autoplay, Pagination } from "swiper/modules";
 import ProductCard from "@/components/layout/ProductCard";
-import CategoryCard from "@/components/layout/CategoryCard";
+// import CategoryCard from "@/components/layout/CategoryCard";
 
 const banners = [
   "/assets/images/cover.jpg",
@@ -56,21 +56,21 @@ export default function Home() {
       </section>
       <br />
 
-      <section className="category-section">
-  <h1>Browse Categories</h1>
-  
-  <div className="cat-grid">
-    {(data as any).categories.map((cat: any, index: number) => (
-      <CategoryCard
-        key={index}
-        name={cat.heading}
-        count={cat.value}
-        photo={cat.photo}
-      />
-    ))}
-  </div>
-</section>
-<br/>
+      {/* <section className="category-section">
+        <h1>Browse Categories</h1>
+
+        <div className="cat-grid">
+          {(data as any).categories.map((cat: any, index: number) => (
+            <CategoryCard
+              key={index}
+              name={cat.heading}
+              count={cat.value}
+              photo={cat.photo}
+            />
+          ))}
+        </div>
+      </section> */}
+      <br />
       <h1>
         Latest Products
         <Link href="/search" className="findmore">
