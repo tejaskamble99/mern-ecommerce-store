@@ -1,5 +1,6 @@
 "use client";
 import CartItem from "@/components/cart-item";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import {VscError} from "react-icons/vsc"
 
@@ -42,9 +43,9 @@ export default function Cart() {
     <div className="cart">
       <main>
         {
-          cartItems.map ((i , idx) => <CartItem key={idx} cartItem={i}/>
-
-          )
+         cartItems.length > 0 ? cartItems.map((cartItem) => (
+          <CartItem key={cartItem.productId} cartItem={cartItem} />
+         )) : <h1>Cart is empty</h1>
         }
       </main>
       <aside>
@@ -52,7 +53,7 @@ export default function Cart() {
         <p>Shipping Charges : ₹{shippingCharges}</p>
         <p>tax : ₹{tax}</p>
         <p>
-          Discount: <em> - ₹{discount}</em>
+          Discount: <em className="red"> - ₹{discount}</em>
         </p>
         <p>
           <b> Total : ₹{total} </b>
@@ -71,6 +72,12 @@ export default function Cart() {
         ) : (
           <span className="red">Invalid Coupon <VscError /></span>
         ))}
+
+{
+  cartItems.length > 0 && <Link href="/shipping">Checkout</Link>
+}
+
+
       </aside>
     </div>
   );
