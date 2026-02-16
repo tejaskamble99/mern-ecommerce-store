@@ -1,32 +1,34 @@
 "use client";
-import { ChangeEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ChangeEvent, useState} from "react";
 import { BiArrowBack } from "react-icons/bi";
 
 const Shipping = () => {
+  const navigate = useRouter();
   const [shippingInfo, setshippingInfo] = useState({
     address: "",
-    fullName: "", 
+    fullName: "",
     city: "",
     state: "",
     country: "",
     pinCode: "",
   });
 
-  const changeHandeler = (e: ChangeEvent<HTMLInputElement>) => {
-    setshippingInfo((prev)=> ({
-...prev,
-[e.target.name]:e.target.value,
+  const changeHandeler = (e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>) => {
+    setshippingInfo((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
     }));
   };
 
-  
-
   return (
     <div className="shipping">
-      <button>
+      <button className="back-btn" onClick={() => navigate.back()}>
         <BiArrowBack />
       </button>
+     
       <form>
+         <h1>Shipping Info</h1>
         <input
           required
           type="text"
@@ -35,7 +37,7 @@ const Shipping = () => {
           value={shippingInfo.address}
           onChange={changeHandeler}
         />
-         <input
+        <input
           required
           type="text"
           placeholder="Enter FullName"
@@ -59,14 +61,17 @@ const Shipping = () => {
           value={shippingInfo.state}
           onChange={changeHandeler}
         />
-        <input
-          required
-          type="text"
-          placeholder="Enter Country"
+        <select
           name="country"
+          required
           value={shippingInfo.country}
           onChange={changeHandeler}
-        />
+        >
+          <option value="">Country</option>
+          <option value="India">India</option>
+          <option value="USA">USA</option>
+          <option value="UAE">UAE</option>
+        </select>
         <input
           required
           type="number"
@@ -75,9 +80,15 @@ const Shipping = () => {
           value={shippingInfo.pinCode}
           onChange={changeHandeler}
         />
-        <button type="button" onClick={()=>{console.log(shippingInfo)}}>
-  Use My Location
-</button>
+        <button
+          type="button"
+          onClick={() => {
+            console.log(shippingInfo);
+          }}
+        >
+          Use My Location
+        </button>
+        <button type="submit">Pay Now</button>
       </form>
     </div>
   );
