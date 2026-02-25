@@ -38,6 +38,7 @@ body {
 @import "admin-styles/mixin";
 @import "home";
 @import "cart";
+@import "search";
 @import "shipping";
 @import "login";  
 @import "admin-styles/dashboard";
@@ -157,7 +158,7 @@ body {
     }
 
     @media (max-width: 768px) {
-      font-size: 1.1rem;
+      font-size: 1.1rem;      
       width: 100%;
       padding: 0.5rem 0;
       justify-content: flex-start;
@@ -238,6 +239,7 @@ body {
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: -1;
+    
   }
 }
 
