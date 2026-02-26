@@ -1,9 +1,9 @@
 
 
-export default function DashboardPage() {
+export default function OrderDetail() {
   return (
-    <div className="min-h-screen p-8">
-      <h1 className="text-3xl font-bold mb-6">DashBoard</h1>
+    <div className="">
+      <h1 className=" ">Order Detail</h1>
       
     </div>
   );

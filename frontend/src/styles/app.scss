@@ -39,8 +39,9 @@ body {
 @import "home";
 @import "cart";
 @import "search";
+@import "order";
 @import "shipping";
-@import "login";  
+@import "login";
 @import "admin-styles/dashboard";
 @import "admin-styles/products";
 @import "admin-styles/chart";
@@ -48,52 +49,16 @@ body {
 @import "admin-styles/mediaquery";
 
 
+.container {
+  max-width: 1367px;
+  width: 100%;
+  margin: auto;
+  overflow: auto;
 
-.navbar {
-  background-color: #CCCCCC;
-  padding: 1rem;
-  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.093);
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  .navbar-brand {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: $color2;
-
-    a {
-      color: $color2;
-      text-decoration: none;
-      
-      &:hover {
-        color: $color3;
-      }
-    }
-
-    @media (max-width: 768px) {
-      font-size: 1.2rem;
-    }
-  }
-
-  .hamburger-menu {
-    display: none;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: $color2;
-    padding: 0.5rem;
-    z-index: 1001;
-
-    &:hover {
-      color: $color3;
-    }
-
-    @media (max-width: 768px) {
-      display: block;
-    }
+  >h1 {
+    @include heading;
+    margin: 1rem 0;
+    text-align: left;
   }
 }
 
@@ -158,7 +123,7 @@ body {
     }
 
     @media (max-width: 768px) {
-      font-size: 1.1rem;      
+      font-size: 1.1rem;
       width: 100%;
       padding: 0.5rem 0;
       justify-content: flex-start;
@@ -228,6 +193,56 @@ body {
   }
 }
 
+.navbar {
+  background-color: #CCCCCC;
+  padding: 1rem;
+  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.093);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: $color2;
+
+    a {
+      color: $color2;
+      text-decoration: none;
+
+      &:hover {
+        color: $color3;
+      }
+    }
+
+    @media (max-width: 768px) {
+      font-size: 1.2rem;
+    }
+  }
+
+  .hamburger-menu {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: $color2;
+    padding: 0.5rem;
+    z-index: 1001;
+
+    &:hover {
+      color: $color3;
+    }
+
+    @media (max-width: 768px) {
+      display: block;
+    }
+  }
+}
+
+
+
 // Overlay for mobile menu
 @media (max-width: 768px) {
   .header.is-open::before {
@@ -239,7 +254,7 @@ body {
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: -1;
-    
+
   }
 }
 

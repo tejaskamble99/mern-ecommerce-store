@@ -11,7 +11,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 
-const user = { _id: "", role: "" };
+const user = { _id: "admin", role: "admin" };
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);

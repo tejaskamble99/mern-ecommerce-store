@@ -14,8 +14,8 @@ export default function Search() {
   };
   const handleSearch = () => {};
 
-  const isPrevPage = true;
-  const isNextPage = true;
+  const isPrevPage = page > 1;
+  const isNextPage = page < 4;
 
   return (
     <div className="search-page">
