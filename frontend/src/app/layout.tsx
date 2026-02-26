@@ -1,7 +1,7 @@
 // src/app/layout.tsx
 import "@/styles/app.scss";
 import Providers from '@/components/Providers'; // Assuming this wraps Redux/Session
-import { Toaster } from "react-hot-toast"; 
+import { ToasterProvider } from "@/components/ToasterProvider";
 
 // This ONLY works because we removed "use client"
 export const metadata = {
@@ -23,8 +23,9 @@ export default function RootLayout({
       >
         <Providers>
           {children}
-          <Toaster position="bottom-center" />
+          
         </Providers>
+       <ToasterProvider />
       </body>
     </html>
   );
