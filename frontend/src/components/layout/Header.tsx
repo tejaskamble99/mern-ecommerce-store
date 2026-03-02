@@ -1,4 +1,5 @@
 "use client";
+import { User } from "@/types/types";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { BsHandbag } from "react-icons/bs";
@@ -10,14 +11,24 @@ import {
   FaBars,
   FaTimes,
 } from "react-icons/fa";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import { signOut } from "firebase/auth";
+import { auth } from "@/firebase";
 
-const user = { _id: "", role: "" };
+// const user = { _id: "", role: "" };
+
+interface PropsType {
+  user : User | null;
+}
+ 
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const { user } = useSelector((state: RootState) => state.userReducer);
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -53,10 +64,18 @@ export default function Header() {
     };
   }, []);
 
-  const logoutHandler = () => {
-    setIsOpen(false);
-    setIsMobileMenuOpen(false);
-    console.log("logout...");
+  const logoutHandler = async () => {
+    try {
+      setIsOpen(false);
+      setIsMobileMenuOpen(false);
+      
+      // Tell Firebase to destroy the session token
+      await signOut(auth);
+      console.log("Logged out successfully");
+      
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   const closeMobileMenu = () => {
@@ -97,7 +116,7 @@ export default function Header() {
           <BsHandbag /> <span className="mobile-text">Cart</span>
         </Link>
 
-        {user?._id ? (
+        {user?.userId ? (
           <div className="user-container" ref={dropdownRef}>
             <button
               onClick={() => setIsOpen((prev) => !prev)}
