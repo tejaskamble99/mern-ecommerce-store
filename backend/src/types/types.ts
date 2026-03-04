@@ -4,7 +4,7 @@ export interface NewUserRequestBody {
     name: string;
     email: string;
     photo: string;
-    userId: string;
+    _id: string;
     gender: string;
     dob: Date;
 }
@@ -51,7 +51,7 @@ export type InvalidateCacheProps = {
   order?: boolean;
   admin?: boolean;
   review?: boolean;
-  userId?: string;
+  _id?: string;
   orderId?: string;
   productId?: string | string[];
 }

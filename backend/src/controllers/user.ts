@@ -10,13 +10,13 @@ export const newUser = TryCatch(
     res: Response,
     next: NextFunction
   ) => {
-    const { name, email, photo, gender, userId, dob } = req.body;
+    const { name, email, photo, gender, _id, dob } = req.body;
 
-    if (!name || !email || !photo || !gender || !userId || !dob) {
+    if (!name || !email || !photo || !gender || !_id|| !dob) {
       return next(new ErrorHandler("Please enter all fields", 400));
     }
 
-    let user = await User.findById(userId); // Use findById since _id = userId
+    let user = await User.findById(_id); // Use findById since _id = userId
 
     if (user) {
       return res.status(200).json({
@@ -26,7 +26,7 @@ export const newUser = TryCatch(
     }
 
     user = await User.create({
-      _id: userId, // Only set _id, remove duplicate userId field
+      _id, // Only set _id, remove duplicate userId field
       name,
       email,
       photo,

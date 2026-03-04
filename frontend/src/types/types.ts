@@ -5,7 +5,8 @@ export type User = {
   gender: string;
   role: string;
   dob: string;
-  userId: string;
+ _id: string;
+ userId: string;
 };
 
 export type Product = {

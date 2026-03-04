@@ -2,11 +2,11 @@ import { User } from "../models/user.js";
 import { TryCatch } from "../middleware/error.js";
 import ErrorHandler from "../utils/utility-class.js";
 export const newUser = TryCatch(async (req, res, next) => {
-    const { name, email, photo, gender, userId, dob } = req.body;
-    if (!name || !email || !photo || !gender || !userId || !dob) {
+    const { name, email, photo, gender, _id, dob } = req.body;
+    if (!name || !email || !photo || !gender || !_id || !dob) {
         return next(new ErrorHandler("Please enter all fields", 400));
     }
-    let user = await User.findById(userId); // Use findById since _id = userId
+    let user = await User.findById(_id); // Use findById since _id = userId
     if (user) {
         return res.status(200).json({
             success: true,
@@ -14,7 +14,7 @@ export const newUser = TryCatch(async (req, res, next) => {
         });
     }
     user = await User.create({
-        _id: userId, // Only set _id, remove duplicate userId field
+        _id, // Only set _id, remove duplicate userId field
         name,
         email,
         photo,

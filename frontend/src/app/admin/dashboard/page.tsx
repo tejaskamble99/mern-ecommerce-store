@@ -6,7 +6,7 @@ import { FaRegBell } from "react-icons/fa";
 import { HiTrendingDown, HiTrendingUp } from "react-icons/hi";
 import { BarChart, DoughnutChart } from "@/components/admin/Charts";
 import DashboardTable from "@/components/admin/DashboardTable";
-import data from "@/assets/data.json";
+import data from "@/data/data.json";
 
 const userImg = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJxA5cTf-5dh5Eusm0puHbvAhOrCRPtckzjA&usqp";
 

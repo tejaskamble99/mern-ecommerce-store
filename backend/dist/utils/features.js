@@ -22,7 +22,7 @@ export const connectDB = async () => {
         process.exit(1);
     }
 };
-export const invalidateCache = ({ product, order, admin, userId, orderId, productId, }) => {
+export const invalidateCache = ({ product, order, admin, _id, orderId, productId, }) => {
     if (product) {
         const productKeys = [
             "latest-Products",
@@ -41,7 +41,7 @@ export const invalidateCache = ({ product, order, admin, userId, orderId, produc
     }
     if (order) {
         const orderKeys = [
-            `my-orders-${userId}`,
+            `my-orders-${_id}`,
             "all-orders",
             `order-${orderId}`,
         ];

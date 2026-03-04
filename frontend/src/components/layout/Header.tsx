@@ -18,9 +18,7 @@ import { auth } from "@/firebase";
 
 // const user = { _id: "", role: "" };
 
-interface PropsType {
-  user : User | null;
-}
+
  
 
 export default function Header() {
@@ -29,6 +27,7 @@ export default function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { user } = useSelector((state: RootState) => state.userReducer);
+  console.log("THE TRUTH FROM REDUX:", user);
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -116,7 +115,7 @@ export default function Header() {
           <BsHandbag /> <span className="mobile-text">Cart</span>
         </Link>
 
-        {user?.userId ? (
+        {user?._id ? (
           <div className="user-container" ref={dropdownRef}>
             <button
               onClick={() => setIsOpen((prev) => !prev)}

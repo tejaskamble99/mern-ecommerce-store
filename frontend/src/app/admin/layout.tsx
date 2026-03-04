@@ -1,6 +1,7 @@
 "use client";
 
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import ProtectedRoute from "@/components/protected-route";
 
 export default function AdminLayout({
   children,
@@ -8,12 +9,14 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="admin-container">
-      {/* Column 1: Sidebar */}
-      <AdminSidebar />
-      
-      {/* Column 2: The Page Content (Dashboard, Products, etc.) */}
-      {children}
-    </div>
+    <ProtectedRoute adminOnly={true}>
+      <div className="admin-container">
+        {/* Column 1: Sidebar */}
+        <AdminSidebar />
+
+        {/* Column 2: The Page Content (Dashboard, Products, etc.) */}
+        {children}
+      </div>
+    </ProtectedRoute>
   );
 }
