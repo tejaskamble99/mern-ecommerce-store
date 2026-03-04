@@ -6,7 +6,7 @@ export type User = {
   role: string;
   dob: string;
  _id: string;
- userId: string;
+
 };
 
 export type Product = {
