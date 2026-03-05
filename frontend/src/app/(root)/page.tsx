@@ -1,12 +1,14 @@
 "use client";
 import Link from "next/link";
-import data from "@/assets/data.json";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/autoplay";
 import { Autoplay, Pagination } from "swiper/modules";
 import ProductCard from "@/components/layout/ProductCard";
+import toast from "react-hot-toast";
+import { useLatestProductsQuery } from "@/redux/api/productApi";
+import { Skeleton } from "@/components/admin/Loader";
 // import CategoryCard from "@/components/layout/CategoryCard";
 
 const banners = [
@@ -17,9 +19,11 @@ const banners = [
 ];
 
 export default function Home() {
+  const { data, isLoading, isError } = useLatestProductsQuery();
   const addToCartHandler = () => {
-    console.log("Added to cart");
+    toast.success("Added to cart");
   };
+  if(isError) toast.error("Cannot Fetch the Products");
 
   return (
     <div className="home">
@@ -36,8 +40,8 @@ export default function Home() {
           pagination={{ clickable: true }}
           className="hero-swiper"
         >
-          {banners.map((src, index) => (
-            <SwiperSlide key={index}>
+          {banners.map((src) => (
+            <SwiperSlide key={src}>
               <img src={src} alt="banner" />
             </SwiperSlide>
           ))}
@@ -54,7 +58,6 @@ export default function Home() {
           </Link>
         </div>
       </section>
-      <br />
 
       {/* <section className="category-section">
         <h1>Browse Categories</h1>
@@ -70,24 +73,33 @@ export default function Home() {
           ))}
         </div>
       </section> */}
-      <br />
-      <h1>
-        Latest Products
-        <Link href="/search" className="findmore">
-          View All
-        </Link>
-      </h1>
-
-      <ProductCard
-        productId="qedcsd"
-        name="Logitech MX Master 3S"
-        price={9500}
-        stock={1}
-        photo={
-          "https://resource.logitech.com/w_692,c_lpad,ar_4:3,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/products/mice/mx-master-3s/gallery/mx-master-3s-mouse-top-view-graphite.png?v=1"
-        }
-        handler={addToCartHandler}
-      />
+    
+        <h1>
+          Latest Products
+          <Link href="/search" className="findmore">
+            View All
+          </Link>
+        </h1>
+        {isLoading ? (
+          <Skeleton width="80vw " count={3}/>
+        ) : isError ? (
+          <p>Something went wrong. Please try again later.</p>
+        ) : (
+          <main>
+            {data?.products.map((i) => (
+              <ProductCard
+                key={i._id}
+                productId={i._id}
+                name={i.name}
+                price={i.price}
+                stock={i.stock}
+                photo={i.photo}
+                handler={addToCartHandler}
+              />
+            ))}
+          </main>
+        )}
+    
     </div>
   );
 }

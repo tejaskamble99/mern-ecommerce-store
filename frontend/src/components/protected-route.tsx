@@ -8,10 +8,10 @@ interface Props {
   children: ReactNode;
   adminOnly?: boolean;
   redirect?: string;
-  loadingFallback?: ReactNode; // FIX 3: customizable loading UI instead of hardcoded div
+  loadingFallback?: ReactNode; 
 }
 
-// FIX 3: default spinner extracted — easy to swap out globally
+
 function DefaultSpinner() {
   return (
     <div className="flex h-screen w-full items-center justify-center">
@@ -24,13 +24,13 @@ export default function ProtectedRoute({
   children,
   adminOnly = false,
   redirect = "/login",
-  loadingFallback = <DefaultSpinner />, // FIX 3: overridable per use-case
+  loadingFallback = <DefaultSpinner />, 
 }: Props) {
   const { user, loading } = useSelector((state: RootState) => state.userReducer);
   const router = useRouter();
 
   useEffect(() => {
-    // FIX 1: guard only runs after Firebase has restored the session
+   
     if (loading) return;
 
     if (!user) {
@@ -40,8 +40,7 @@ export default function ProtectedRoute({
     }
   }, [user, loading, adminOnly, router, redirect]);
 
-  // FIX 1: show spinner while Firebase/Redux is restoring auth state
-  // Without this, a logged-in user gets flash-redirected to /login on refresh
+ 
   if (loading) return <>{loadingFallback}</>;
 
   // Prevent rendering children before redirect fires

@@ -5,12 +5,12 @@
     height: auto;
     min-height: calc(100vh - 4rem);
     width: 100%;
-    
+
     @media only screen and (min-width: 768px) {
         padding: 2rem 5%;
-        height: calc(100vh - 4rem);
+        min-height: calc(100vh - 4rem);
     }
-    
+
     .hero {
         position: relative;
         width: 100%;
@@ -19,13 +19,13 @@
         margin: auto;
         border-radius: 12px;
         overflow: hidden;
-        
+
         @media only screen and (min-width: 768px) {
             aspect-ratio: 21/9;
             min-height: 400px;
             border-radius: 20px;
         }
-        
+
         .hero-swiper {
             position: absolute;
             top: 0;
@@ -33,11 +33,11 @@
             width: 100%;
             height: 100%;
             z-index: 0;
-            
+
             .swiper-slide {
                 width: 100%;
                 height: 100%;
-                
+
                 img {
                     width: 100%;
                     height: 100%;
@@ -45,24 +45,24 @@
                 }
             }
         }
-        
+
         .swiper-pagination-bullet {
             background-color: white;
             opacity: 0.7;
             width: 8px;
             height: 8px;
-            
+
             @media only screen and (min-width: 768px) {
                 width: 10px;
                 height: 10px;
             }
         }
-        
+
         .swiper-pagination-bullet-active {
             background-color: #000;
             opacity: 1;
         }
-        
+
         .hero-content {
             position: relative;
             z-index: 2;
@@ -74,38 +74,38 @@
             background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95) 50%, transparent 100%);
             width: 100%;
             pointer-events: none;
-            
+
             @media only screen and (min-width: 768px) {
                 padding-left: 3rem;
                 background: linear-gradient(to right, rgba(255, 255, 255, 0.9) 30%, transparent 100%);
             }
-            
+
             h1,
             p,
             a {
                 pointer-events: auto;
             }
-            
+
             h1 {
                 font-size: 1.5rem;
                 margin-bottom: 0.5rem;
-                
+
                 @media only screen and (min-width: 768px) {
                     font-size: 2.5rem;
                     margin-bottom: 1rem;
                 }
             }
-            
+
             p {
                 font-size: 0.875rem;
-                
+
                 @media only screen and (min-width: 768px) {
                     font-size: 1rem;
                 }
             }
         }
     }
-    
+
     > h1 {
         @include heading;
         text-align: center;
@@ -113,7 +113,7 @@
         gap: 0.5rem;
         font-size: 1.5rem;
         @include flex(column, center, center);
-        
+
         @media only screen and (min-width: 768px) {
             @include flex(row, space-between, center);
             text-align: left;
@@ -121,18 +121,28 @@
             font-size: 2.5rem;
         }
     }
-    
+
     .findmore {
         font-size: 0.875rem;
         cursor: pointer;
         margin-top: 0.5rem;
-        
+
         @media only screen and (min-width: 768px) {
             font-size: 1rem;
             margin-top: 0;
         }
     }
+
+    // FIX: grid layout for product cards
+    main {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+        gap: 2.5rem;
+        width: 100%;
+        margin-bottom: 3rem;
+    }
 }
+
 
 .productcard {
     width: 100%;
@@ -146,24 +156,24 @@
     transition: box-shadow 0.3s ease;
     flex: none;
     margin: 0 auto;
-    
+
     @media only screen and (min-width: 640px) {
         width: 19rem;
         margin: 0;
     }
-    
+
     &:hover {
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
-    
+
     .card-header {
         height: 12rem;
         width: 100%;
-        
+
         @media only screen and (min-width: 768px) {
             height: 14rem;
         }
-        
+
         img {
             width: 100%;
             height: 100%;
@@ -171,32 +181,31 @@
             transition: transform 0.5s ease;
         }
     }
-    
+
     &:hover .card-header img {
         transform: scale(1.05);
     }
-    
-    // Disable hover effect on touch devices
+
     @media (hover: none) {
         &:hover .card-header img {
             transform: none;
         }
-        
+
         &:hover {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
     }
-    
+
     .card-body {
         padding: 1rem;
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
-        
+
         @media only screen and (min-width: 768px) {
             padding: 1.5rem;
         }
-        
+
         .row {
             display: flex;
             justify-content: space-between;
@@ -204,50 +213,50 @@
             flex-wrap: wrap;
             gap: 0.25rem;
         }
-        
+
         h3 {
             font-size: 1rem;
             font-weight: 600;
             color: #1f2937;
             margin: 0;
-            
+
             @media only screen and (min-width: 768px) {
                 font-size: 1.1rem;
             }
         }
-        
-        p {
+
+        .price {
             font-size: 0.875rem;
             font-weight: 600;
             color: #1f2937;
             margin: 0;
-            
+
             @media only screen and (min-width: 768px) {
                 font-size: 1rem;
             }
         }
-        
+
         .desc {
             font-size: 0.8125rem;
             color: #6b7280;
             font-weight: 400;
             opacity: 0.8;
             line-height: 1.4;
-            
+
             @media only screen and (min-width: 768px) {
                 font-size: 0.875rem;
             }
         }
     }
-    
+
     .card-footer {
         padding: 0 1rem 1rem 1rem;
         margin-top: auto;
-        
+
         @media only screen and (min-width: 768px) {
             padding: 0 1.5rem 1.5rem 1.5rem;
         }
-        
+
         button {
             width: 100%;
             padding: 0.75rem 1rem;
@@ -262,117 +271,110 @@
             color: #1f2937;
             box-shadow: none;
             -webkit-tap-highlight-color: transparent;
-            
+
             @media only screen and (min-width: 768px) {
                 font-size: 0.875rem;
             }
-            
+
             &:hover {
                 transform: scale(1.02);
                 background-color: #e5e7eb;
             }
-            
+
             &:active {
-                transform: scale(1.00);
+                transform: scale(1);
             }
-            
-            // Better touch feedback on mobile
+
             @media (hover: none) {
                 &:hover {
                     transform: none;
                     background-color: #f3f4f6;
                 }
-                
+
                 &:active {
                     background-color: #e5e7eb;
                 }
             }
-            
-            &.disabled {
+
+            &.disabled,
+            &:disabled {
                 background-color: #fee2e2;
                 color: #ef4444;
                 cursor: not-allowed;
-                
+                pointer-events: none;
+
                 &:hover {
                     transform: none;
+                    background-color: #fee2e2;
                 }
             }
         }
     }
 }
 
-// Optional: Add container queries support for product cards in different layouts
 @container (max-width: 400px) {
     .productcard {
         .card-header {
             height: 10rem;
         }
-        
+
         .card-body {
             padding: 0.75rem;
         }
     }
 }
 
-.category-section{
-    width:100%;
+.category-section {
+    width: 100%;
     margin-bottom: 4rem;
 
-    h1{
-        font-size:1.8rem;
+    h1 {
+        font-size: 1.8rem;
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-bottom: 2rem;
         text-align: center;
 
-        @media (min-width: 768px){
+        @media (min-width: 768px) {
             text-align: left;
         }
     }
 
-    .card-grid{
-        display:flex;
+    // FIX: was .card-grid — renamed to match JSX (.cat-grid)
+    .cat-grid {
+        display: flex;
         flex-wrap: wrap;
-        gap:1.5rem;
+        gap: 1.5rem;
         justify-content: center;
 
-        @media (min-width: 768px){
+        @media (min-width: 768px) {
             justify-content: space-between;
         }
     }
-
 }
 
+// Fill in styles when you build CategoryCard
 .category-card {
- 
-
-  // Desktop Size
-  @media (min-width: 768px) {
-    width: 14rem;
-    height: 14rem;
-  }
-
-  img {
-    
-  }
-
-  // Text Overlay
-  .cat-overlay {
-   
-
-    h3 {
-      
+    @media (min-width: 768px) {
+        width: 14rem;
+        height: 14rem;
     }
 
-    p {
-      
-    }
-  }
-
-  // Hover Effect: Zoom Image
-  &:hover {
     img {
-      transform: scale(1.15);
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
     }
-  }
+
+    .cat-overlay {
+        h3 {}
+        p {}
+    }
+
+    &:hover {
+        img {
+            transform: scale(1.15);
+        }
+    }
 }

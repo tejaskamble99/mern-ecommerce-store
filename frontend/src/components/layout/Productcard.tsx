@@ -1,4 +1,5 @@
-const server = "";
+import { server } from "@/redux/store";
+
 type ProdctsProps = {
   productId: string;
   photo: string;
@@ -16,26 +17,33 @@ export default function ProductCard({
   photo,
   handler,
 }: ProdctsProps) {
+  const isOutOfStock = stock < 1;
   return (
     <div className="productcard">
       <div className="card-header">
-        <img src={photo} alt={name} />
+        <img src={`${server}/${photo}`} alt={name} />
       </div>
 
       <div className="card-body">
         <div className="row">
           <h3>{name}</h3>
-          <p>{price}</p>
+          <p>
+            {price.toLocaleString("en-IN", {
+              style: "currency",
+              currency: "INR",
+              maximumFractionDigits: 0,
+            })}
+          </p>
         </div>
       </div>
 
       <div className="card-footer">
         <button
-          onClick={() => handler()}
-          disabled={stock < 1}
-          className={stock < 1 ? "disabled" : ""}
+          onClick={handler}
+          disabled={isOutOfStock}
+          className={isOutOfStock ? "disabled" : ""}
         >
-          {stock < 1 ? "Out of Stock" : "Add to Cart"}
+          {isOutOfStock ? "Out of Stock" : "Add to Cart"}
         </button>
         
       </div>

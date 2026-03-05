@@ -1,5 +1,4 @@
 "use client";
-import { User } from "@/types/types";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { BsHandbag } from "react-icons/bs";
@@ -15,6 +14,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase";
+import toast from "react-hot-toast";
 
 // const user = { _id: "", role: "" };
 
@@ -22,6 +22,7 @@ import { auth } from "@/firebase";
  
 
 export default function Header() {
+  const [isMounted, setIsMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -70,16 +71,20 @@ export default function Header() {
       
       // Tell Firebase to destroy the session token
       await signOut(auth);
-      console.log("Logged out successfully");
+      toast.success("Logged out successfully");
       
     } catch (error) {
-      console.error("Error logging out:", error);
+      toast.success("Error logging out:");
     }
   };
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   return (
     <div className="navbar">
@@ -115,7 +120,7 @@ export default function Header() {
           <BsHandbag /> <span className="mobile-text">Cart</span>
         </Link>
 
-        {user?._id ? (
+        {isMounted &&user?._id ? (
           <div className="user-container" ref={dropdownRef}>
             <button
               onClick={() => setIsOpen((prev) => !prev)}
