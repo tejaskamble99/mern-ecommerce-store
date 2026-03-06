@@ -96,11 +96,10 @@ export default function Transaction() {
   );
 
   return (
-    <div className="admin-container">
-      {/* Sidebar is handled by Layout, just render content */}
+   
       <main className="dashboard-product-box">
         <Table />
       </main>
-    </div>
+   
   );
 }

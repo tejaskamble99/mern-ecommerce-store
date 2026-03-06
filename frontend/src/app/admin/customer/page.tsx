@@ -95,10 +95,10 @@ export default function Customers() {
   );
 
   return (
-    <div className="admin-container">
+    
       <main>
         <Table />
       </main>
-    </div>
+   
   );
 }

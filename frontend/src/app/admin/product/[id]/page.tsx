@@ -93,8 +93,7 @@ const TransactionManagement = () => {
   };
 
   return (
-    <div className="admin-container">
-      {/* Sidebar removed (Layout handles it) */}
+    
       
       <main className="product-management">
         <section style={{ padding: "2rem" }}>
@@ -153,7 +152,7 @@ const TransactionManagement = () => {
           </button>
         </article>
       </main>
-    </div>
+   
   );
 };
 

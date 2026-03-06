@@ -77,7 +77,7 @@ const TransactionManagement = () => {
   };
 
   return (
-    <div className="admin-container">
+    
       <main className="product-management">
         {/* LEFT SIDE: ORDER ITEMS */}
         <section
@@ -141,7 +141,7 @@ const TransactionManagement = () => {
           </button>
         </article>
       </main>
-    </div>
+   
   );
 };
 

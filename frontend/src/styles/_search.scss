@@ -1,57 +1,78 @@
 .search-page {
-    padding: 2rem;
-    @include flex(row, flex-start, stretch, 2rem);
-    min-height: calc(100vh - 6.5vh);
+    padding: 1rem;
+    // Mobile: stack sidebar above products
+    @include flex(column, flex-start, stretch, 1.5rem);
+    min-height: 93.5vh;
 
-    >aside {
-        min-width: 20rem;
-        @include baseShadow;
+    @media (min-width: 768px) {
         padding: 2rem;
+        // Tablet+: sidebar beside products
+        @include flex(row, flex-start, stretch, 2rem);
+    }
+
+    > aside {
+        width: 100%; // full width on mobile
+        @include baseShadow;
+        padding: 1.5rem;
         @include flex(column, flex-start, stretch, 0.5rem);
 
-        >h2 {
+        @media (min-width: 768px) {
+            min-width: 20rem;
+            width: 20rem; // fixed sidebar width on desktop
+            padding: 2rem;
+        }
+
+        > h2 {
             @include heading;
         }
 
-        >div {
-
-            >input,
-            >select {
+        > div {
+            > input,
+            > select {
                 @include inputStyle(100%, 1rem, white, 1px solid rgba(154, 154, 154, 0.38));
                 border-radius: 10px;
-                margin: 0.5rem;
+                margin-top: 0.5rem;
             }
         }
     }
 
-    >main {
+    > main {
         width: 100%;
-        padding: 0 2rem;
+        padding: 0; // no padding on mobile — page padding handles it
 
-        >h1 {
-            @include heading;
-
+        @media (min-width: 768px) {
+            padding: 0 2rem;
         }
 
-        >input {
-            @include inputStyle(50%);
+        > h1 {
+            @include heading;
+        }
+
+        > input {
+            @include inputStyle(100%); // full width on mobile
             border-radius: 5px;
-            margin: 1rem;
-            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            font-size: 1rem;
             display: block;
+
+            @media (min-width: 768px) {
+                width: 50%;
+                font-size: 1.2rem;
+            }
         }
 
         .search-product-list {
             @include flex(row, flex-start, flex-start);
             flex-wrap: wrap;
-            height: calc(100% - 10rem);
-            overflow-y: auto;
+            gap: 1.5rem;
         }
 
         article {
             @include flex;
+            gap: 1rem;
+            margin-top: 2rem;
 
-            >button {
+            > button {
                 @include flex;
                 @include btn(0.5rem 1rem, $color3, $color1);
                 border-radius: 10px;
@@ -63,7 +84,5 @@
                 }
             }
         }
-
     }
-
 }

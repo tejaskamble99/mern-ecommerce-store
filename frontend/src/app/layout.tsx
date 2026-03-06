@@ -2,6 +2,7 @@
 import "@/styles/app.scss";
 import Providers from '@/components/Providers'; // Assuming this wraps Redux/Session
 import { ToasterProvider } from "@/components/ToasterProvider";
+import Header from "@/components/layout/Header";
 
 // This ONLY works because we removed "use client"
 export const metadata = {
@@ -22,6 +23,7 @@ export default function RootLayout({
         suppressHydrationWarning={true} 
       >
         <Providers>
+          <Header/>
           {children}
           
         </Providers>

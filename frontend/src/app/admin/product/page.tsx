@@ -61,18 +61,18 @@ export default function Products() {
 
   const { data, isLoading, isError, error } = useAllAdminProductsQuery(user?._id!);
 
-  // ✅ ALL hooks must be called before any early returns
+  
   const rows = useMemo<DataType[]>(
-    () =>
-      data?.products.map((i) => ({
-        photo: `${server}/${i.photo}`,
-        name: i.name,
-        price: i.price,
-        stock: i.stock,
-        _id: i._id,
-      })) ?? [],
-    [data]
-  );
+  () =>
+    data?.products?.map((i) => ({   
+      photo: `${server}/${i.photo}`,
+      name: i.name,
+      price: i.price,
+      stock: i.stock,
+      _id: i._id,
+    })) ?? [],
+  [data]
+);
 
   const Table = useMemo(
     () =>
@@ -100,7 +100,7 @@ export default function Products() {
   return (
     <>
       <main className="dashboard-product-box">
-       {isLoading ? <Skeleton width = "100%" count = {3}/> : <Table />} 
+       {isLoading ? <Skeleton width = "100%" length = {20}/> : <Table />} 
       </main>
       <Link href="/admin/product/new" className="create-product-btn">
         <FaPlus />

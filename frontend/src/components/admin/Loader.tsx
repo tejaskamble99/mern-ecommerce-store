@@ -24,23 +24,17 @@ export default Loader;
 
 
 interface SkeletonProps{
-  width : string;
-  count: number;
+  width? : string;
+  length? : number;
 }
-export const Skeleton = ( {width =" unset"}: {width : string , count : 3}) =>{
- 
-
+export const Skeleton = ( {width =" unset" , length = 3}:
+  SkeletonProps) =>{
+  const  skeletions = Array.from({length},(_,idx) =>
+  <div key ={idx} className="skeleton-shape"></div>
+  );
   return (
     <div className="skeleton-loader"  style={{width}}>
-      <div className="skeleton-shape" >
-      
-    </div>
-     <div className="skeleton-shape" >
-      
-    </div>
-     <div className="skeleton-shape" >
-      
-    </div>
+      {skeletions}
     </div>
   );
 };

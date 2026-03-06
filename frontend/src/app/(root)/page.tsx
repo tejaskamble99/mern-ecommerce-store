@@ -81,7 +81,7 @@ export default function Home() {
           </Link>
         </h1>
         {isLoading ? (
-          <Skeleton width="80vw " count={3}/>
+          <Skeleton width="80vw " length ={3}/>
         ) : isError ? (
           <p>Something went wrong. Please try again later.</p>
         ) : (
