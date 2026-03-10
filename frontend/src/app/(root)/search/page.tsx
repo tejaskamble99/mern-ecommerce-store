@@ -1,10 +1,17 @@
 "use client";
 import { useState, useEffect } from "react";
 import ProductCard from "./../../../components/layout/ProductCard";
-import { useCategoriesQuery, useSearchProductsQuery } from "@/redux/api/productApi";
+import {
+  useCategoriesQuery,
+  useSearchProductsQuery,
+} from "@/redux/api/productApi";
 import { CustomError } from "@/types/api-types";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/admin/Loader";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/redux/store";
+import { CartItem } from "@/types/types";
+import { addToCart } from "@/redux/reducer/cartReducer";
 
 export default function Search() {
   const {
@@ -19,32 +26,37 @@ export default function Search() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  const {isLoading: productLoading,data:searchData,isError: productIsError, // FIX 3
-    error: productError,} = useSearchProductsQuery({
-search,
-sort,
-category,
-page,
-price:maxPrice,
+  const {
+    isLoading: productLoading,
+    data: searchData,
+    isError: productIsError, // FIX 3
+    error: productError,
+  } = useSearchProductsQuery({
+    search,
+    sort,
+    category,
+    page,
+    price: maxPrice,
   });
 
+  const dispatch = useDispatch<AppDispatch>();
+  const addToCartHandler = (cartItem: CartItem) => {
+    if (cartItem.stock < 1) return toast.error("Out of Stock");
 
-  const addToCartHandler = () => {
-   toast.success("Added to cart");
+    dispatch(addToCart(cartItem));
+    toast.success("Added to Cart");
   };
- 
 
   const totalPages = searchData?.totalPage ?? 1;
   const isPrevPage = page > 1;
   const isNextPage = page < totalPages;
 
-
   useEffect(() => {
-  if (isError) {
-    const err = error as CustomError;
-    toast.error(err.data.message);
-  }
-}, [isError, error]);
+    if (isError) {
+      const err = error as CustomError;
+      toast.error(err.data.message);
+    }
+  }, [isError, error]);
   useEffect(() => {
     if (productIsError) {
       const err = productError as CustomError;
@@ -58,9 +70,13 @@ price:maxPrice,
         <h2>Filters</h2>
         <div>
           <h4>Sort</h4>
-          <select value={sort} onChange={(e) => {
-            setSort(e.target.value);
-            setPage(1)}}>
+          <select
+            value={sort}
+            onChange={(e) => {
+              setSort(e.target.value);
+              setPage(1);
+            }}
+          >
             <option value="">None</option>
             <option value="asc">Price (Low to High)</option>
             <option value="dsc">Price (High to Low )</option>
@@ -68,7 +84,7 @@ price:maxPrice,
         </div>
 
         <div>
-           <h4>Max Price : ₹{maxPrice.toLocaleString("en-IN")}</h4>
+          <h4>Max Price : ₹{maxPrice.toLocaleString("en-IN")}</h4>
           <input
             type="range"
             min={100}
@@ -76,7 +92,7 @@ price:maxPrice,
             value={maxPrice}
             onChange={(e) => {
               setMaxPrice(Number(e.target.value));
-              setPage(1); 
+              setPage(1);
             }}
           />
         </div>
@@ -87,15 +103,16 @@ price:maxPrice,
             value={category}
             onChange={(e) => {
               setCategory(e.target.value);
-              setPage(1); 
+              setPage(1);
             }}
           >
             <option value="">All</option>
-            {
-              !loadingCategories && categoriesResponce?.categories.map( (i) => (
-                <option key={i} value={i}>{i.toUpperCase()}</option>
-              ))
-            }
+            {!loadingCategories &&
+              categoriesResponce?.categories.map((i) => (
+                <option key={i} value={i}>
+                  {i.toUpperCase()}
+                </option>
+              ))}
           </select>
         </div>
       </aside>
@@ -107,11 +124,13 @@ price:maxPrice,
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
-            setPage(1); 
+            setPage(1);
           }}
         />
- {productLoading ? <Skeleton/> :(<div className="search-product-list">
-        
+        {productLoading ? (
+          <Skeleton />
+        ) : (
+          <div className="search-product-list">
             {searchData?.products.map((i) => (
               <ProductCard
                 key={i._id}
@@ -123,31 +142,28 @@ price:maxPrice,
                 handler={addToCartHandler}
               />
             ))}
-      
-        </div>) }
-        
+          </div>
+        )}
 
-        {
-         searchData && searchData.totalPage > 1 && (
-           <article>
-          <button
-            disabled={!isPrevPage}
-            onClick={() => setPage((prev) => prev - 1)}
-          >
-            Prev
-          </button>
-          <span>
-            {page} of {searchData.totalPage}
+        {searchData && searchData.totalPage > 1 && (
+          <article>
+            <button
+              disabled={!isPrevPage}
+              onClick={() => setPage((prev) => prev - 1)}
+            >
+              Prev
+            </button>
+            <span>
+              {page} of {searchData.totalPage}
             </span>
-          <button
-            disabled={!isNextPage}
-            onClick={() => setPage((prev) => prev + 1)}
-          >
-            Next
-          </button>
-        </article>
-         ) 
-        }
+            <button
+              disabled={!isNextPage}
+              onClick={() => setPage((prev) => prev + 1)}
+            >
+              Next
+            </button>
+          </article>
+        )}
       </main>
     </div>
   );

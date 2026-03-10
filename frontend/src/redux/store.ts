@@ -1,8 +1,8 @@
-import {configureStore } from "@reduxjs/toolkit";
-import { userApi } from "./api/userApi";
-import { userReducer } from "./reducer/userReducer";
+import { configureStore } from "@reduxjs/toolkit";
 import { productApi } from "./api/productApi";
-import cartReducer from "./reducer/cartReducer";
+import { userApi } from "./api/userApi";
+import { cartReducer } from "./reducer/cartReducer";
+import { userReducer } from "./reducer/userReducer";
 
 
 export const server = process.env.NEXT_PUBLIC_SERVER_URL
