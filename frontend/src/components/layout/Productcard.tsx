@@ -1,4 +1,5 @@
 import { server } from "@/redux/store";
+import { CartItem } from "@/types/types";
 
 type ProdctsProps = {
   productId: string;
@@ -6,7 +7,7 @@ type ProdctsProps = {
   name: string;
   price: number;
   stock: number;
-  handler: () => void;
+  handler: (cartItem: CartItem) => string | undefined;
 };
 
 export default function ProductCard({
@@ -39,7 +40,7 @@ export default function ProductCard({
 
       <div className="card-footer">
         <button
-          onClick={handler}
+          onClick={() => handler({ productId, photo, name, price, quantity: 1, stock })}
           disabled={isOutOfStock}
           className={isOutOfStock ? "disabled" : ""}
         >

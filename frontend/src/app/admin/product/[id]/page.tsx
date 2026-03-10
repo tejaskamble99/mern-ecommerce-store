@@ -1,176 +1,205 @@
 "use client";
 
-import { useState } from "react";
+import { useFileHandler } from "6pp";
+import { FormEvent, useEffect, useState } from "react";
 import { FaTrash } from "react-icons/fa";
-import Link from "next/link";
-import { useParams } from "next/navigation"; // To access the ID from URL
+import { useSelector } from "react-redux";
+import { useRouter, useParams, notFound } from "next/navigation";
+import { Skeleton } from "@/components/admin/Loader";
+import {
+  useDeleteProductMutation,
+  useProductDetailsQuery,
+  useUpdateProductMutation,
+} from "@/redux/api/productApi";
+import { RootState } from "@/redux/store";
+import { responseToast } from "@/utils/features";
+import { server } from "@/redux/store";
 
-// 1. Define Types locally (so it works immediately)
-interface OrderItem {
-  name: string;
-  photo: string;
-  _id: string;
-  quantity: number;
-  price: number;
-  productId: string;
-}
+const ProductManagement = () => {
+  const { user } = useSelector((state: RootState) => state.userReducer);
 
-interface OrderType {
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  pinCode: number;
-  status: "Processing" | "Shipped" | "Delivered";
-  subtotal: number;
-  discount: number;
-  shippingCharges: number;
-  tax: number;
-  total: number;
-  orderItems: OrderItem[];
-}
+  const params = useParams<{ id: string }>();
+  const router = useRouter();
 
-// 2. Mock Data
-const img = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8c2hvZXN8ZW58MHx8MHx8&w=1000&q=804";
+  const { data, isLoading, isError } = useProductDetailsQuery(params.id!);
 
-const mockOrderItems: OrderItem[] = [
-  {
-    name: "Puma Shoes",
-    photo: img,
-    _id: "asdsaasdas",
-    productId: "product_id_123",
-    quantity: 4,
-    price: 2000,
-  },
-];
+  // FIX: photo is now a string, not an object array
+  const { price, photo, name, stock, category, description } =
+    data?.product || {
+      photo: "",
+      category: "",
+      name: "",
+      stock: 0,
+      price: 0,
+      description: "",
+    };
 
-const TransactionManagement = () => {
-  const params = useParams(); // Get ID from URL (e.g., /admin/transaction/123)
+  const [btnLoading, setBtnLoading] = useState<boolean>(false);
+  const [priceUpdate, setPriceUpdate] = useState<number>(price);
+  const [stockUpdate, setStockUpdate] = useState<number>(stock);
+  const [nameUpdate, setNameUpdate] = useState<string>(name);
+  const [categoryUpdate, setCategoryUpdate] = useState<string>(category);
+  const [descriptionUpdate, setDescriptionUpdate] =
+    useState<string>(description);
 
-  const [order, setOrder] = useState<OrderType>({
-    name: "Puma Shoes",
-    address: "77 black street",
-    city: "Neyword",
-    state: "Nevada",
-    country: "US",
-    pinCode: 242433,
-    status: "Processing",
-    subtotal: 4000,
-    discount: 1200,
-    shippingCharges: 0,
-    tax: 200,
-    total: 4000 + 200 + 0 - 1200,
-    orderItems: mockOrderItems,
-  });
+  const [updateProduct] = useUpdateProductMutation();
+  const [deleteProduct] = useDeleteProductMutation();
 
-  // Destructure for cleaner JSX
-  const {
-    name,
-    address,
-    city,
-    country,
-    state,
-    pinCode,
-    subtotal,
-    shippingCharges,
-    tax,
-    discount,
-    total,
-    status,
-    orderItems,
-  } = order;
+  // FIX: "single" — backend uses req.file (single upload)
+  const photoFile = useFileHandler("single", 10);
 
-  const updateHandler = (): void => {
-    setOrder((prev) => ({
-      ...prev,
-      status: prev.status === "Processing" ? "Shipped" : "Delivered",
-    }));
+  const submitHandler = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setBtnLoading(true);
+    try {
+      const formData = new FormData();
+
+      if (nameUpdate) formData.set("name", nameUpdate);
+      if (descriptionUpdate) formData.set("description", descriptionUpdate);
+      if (priceUpdate) formData.set("price", priceUpdate.toString());
+      if (stockUpdate !== undefined)
+        formData.set("stock", stockUpdate.toString());
+      if (categoryUpdate) formData.set("category", categoryUpdate);
+
+      // FIX: field name "photo", single file — matches multer + req.file
+      if (photoFile.file) {
+        formData.set("photo", photoFile.file as Blob);
+      }
+
+      const res = await updateProduct({
+        formData,
+        userId: user?._id!,
+        productId: data?.product._id!,
+      });
+
+      responseToast(res, router, "/admin/product");
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setBtnLoading(false);
+    }
   };
 
-  const deleteHandler = (): void => {
-    console.log("Deleting Order ID:", params.id);
+  const deleteHandler = async () => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+
+    const res = await deleteProduct({
+      userId: user?._id!,
+      productId: data?.product._id!,
+    });
+    responseToast(res, router, "/admin/product");
   };
+
+  useEffect(() => {
+    if (data) {
+      setNameUpdate(data.product.name);
+      setPriceUpdate(data.product.price);
+      setStockUpdate(data.product.stock);
+      setCategoryUpdate(data.product.category);
+      setDescriptionUpdate(data.product.description);
+    }
+  }, [data]);
+
+  if (isLoading) return <Skeleton length={20} />;
+  if (isError) return notFound();
 
   return (
-    
-      
-      <main className="product-management">
-        <section style={{ padding: "2rem" }}>
-          <h2>Order Items</h2>
+    <main className="product-management">
+     {
+      isLoading? <Skeleton length={20} />:
+      <>
+       <section>
+        <strong>ID - {data?.product._id}</strong>
+        {photo && <img src={`${server}/${photo}`} alt={name} />}
+        <p>{name}</p>
+        {stock > 0 ? (
+          <span className="green">{stock} Available</span>
+        ) : (
+          <span className="red">Not Available</span>
+        )}
+        <h3>₹{price.toLocaleString("en-IN")}</h3>
+      </section>
 
-          {orderItems.map((i) => (
-            <ProductCard
-              key={i._id}
-              name={i.name}
-              photo={i.photo}
-              productId={i.productId}
-              _id={i._id}
-              quantity={i.quantity}
-              price={i.price}
+      <article>
+        <button className="product-delete-btn" onClick={deleteHandler}>
+          <FaTrash />
+        </button>
+        <form onSubmit={submitHandler}>
+          <h2>Manage</h2>
+          <div>
+            <label>Name</label>
+            <input
+              type="text"
+              placeholder="Name"
+              value={nameUpdate}
+              onChange={(e) => setNameUpdate(e.target.value)}
             />
-          ))}
-        </section>
+          </div>
+          <div>
+            <label>Description</label>
+            <textarea
+              required
+              placeholder="Description"
+              value={descriptionUpdate}
+              onChange={(e) => setDescriptionUpdate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label>Price</label>
+            <input
+              type="number"
+              placeholder="Price"
+              value={priceUpdate}
+              onChange={(e) => setPriceUpdate(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label>Stock</label>
+            <input
+              type="number"
+              placeholder="Stock"
+              value={stockUpdate}
+              onChange={(e) => setStockUpdate(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label>Category</label>
+            <input
+              type="text"
+              placeholder="eg. laptop, camera etc"
+              value={categoryUpdate}
+              onChange={(e) => setCategoryUpdate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label>Photo</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={photoFile.changeHandler}
+            />
+          </div>
 
-        <article className="shipping-info-card">
-          <button className="product-delete-btn" onClick={deleteHandler}>
-            <FaTrash />
-          </button>
-          
-          <h1>Order Info</h1>
-          <h5>User Info</h5>
-          <p>Name: {name}</p>
-          <p>
-            Address: {`${address}, ${city}, ${state}, ${country} ${pinCode}`}
-          </p>
-          
-          <h5>Amount Info</h5>
-          <p>Subtotal: {subtotal}</p>
-          <p>Shipping Charges: {shippingCharges}</p>
-          <p>Tax: {tax}</p>
-          <p>Discount: {discount}</p>
-          <p>Total: {total}</p>
+          {photoFile.error && <p>{photoFile.error}</p>}
 
-          <h5>Status Info</h5>
-          <p>
-            Status:{" "}
-            <span
-              className={
-                status === "Delivered"
-                  ? "purple"
-                  : status === "Shipped"
-                  ? "green"
-                  : "red"
-              }
-            >
-              {status}
-            </span>
-          </p>
-          
-          <button className="shipping-btn" onClick={updateHandler}>
-            Process Status
+          {photoFile.preview && (
+            <img
+              src={photoFile.preview as string}
+              alt="New Preview"
+              style={{ width: 100, height: 100, objectFit: "cover" }}
+            />
+          )}
+
+          <button disabled={btnLoading} type="submit">
+            {btnLoading ? "Updating..." : "Update"}
           </button>
-        </article>
-      </main>
-   
+        </form>
+      </article>
+      </>
+      
+     }
+    </main>
   );
 };
 
-// Sub-Component for Order Item Card
-const ProductCard = ({
-  name,
-  photo,
-  price,
-  quantity,
-  productId,
-}: OrderItem) => (
-  <div className="transaction-product-card">
-    <img src={photo} alt={name} />
-    <Link href={`/product/${productId}`}>{name}</Link>
-    <span>
-      ₹{price} X {quantity} = ₹{price * quantity}
-    </span>
-  </div>
-);
-
-export default TransactionManagement;
+export default ProductManagement;

@@ -1,3 +1,4 @@
+import { server } from "@/redux/store";
 import Link from "next/link";
 import { FaTrash } from 'react-icons/fa';
 
@@ -5,11 +6,11 @@ type CartItemProps ={
     cartItem : any
 };
 
-const CartItem = ({cartItem}: CartItemProps) => {
+const CartItemComponent = ({cartItem}: CartItemProps) => {
     const {productId,photo,name,price,quantity} = cartItem;
   return (
     <div className="cart-item">
-        <img src={photo} alt={name}/>
+        <img src={`${server}/${photo}`} alt={name}/>
         <article>
             <Link href={`/product/${productId}`}>{name}</Link>
             <span>₹{price}</span>
@@ -24,4 +25,4 @@ const CartItem = ({cartItem}: CartItemProps) => {
   )
 }
 
-export default CartItem
+export default CartItemComponent

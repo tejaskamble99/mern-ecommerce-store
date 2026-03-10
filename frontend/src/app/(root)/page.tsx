@@ -9,7 +9,11 @@ import ProductCard from "@/components/layout/ProductCard";
 import toast from "react-hot-toast";
 import { useLatestProductsQuery } from "@/redux/api/productApi";
 import { Skeleton } from "@/components/admin/Loader";
+import { CartItem } from "@/types/types";
 // import CategoryCard from "@/components/layout/CategoryCard";
+import { useDispatch } from 'react-redux';
+import { addToCart} from "@/redux/reducer/cartReducer";
+import { AppDispatch } from "@/redux/store";
 
 const banners = [
   "/assets/images/cover.jpg",
@@ -20,8 +24,13 @@ const banners = [
 
 export default function Home() {
   const { data, isLoading, isError } = useLatestProductsQuery();
-  const addToCartHandler = () => {
-    toast.success("Added to cart");
+
+  const dispatch = useDispatch<AppDispatch>();
+  const addToCartHandler = (cartItem: CartItem) => {
+    if (cartItem.stock < 1) return toast.error("Out of Stock");
+    
+    dispatch(addToCart(cartItem));
+    toast.success("Added to Cart");
   };
   if(isError) toast.error("Cannot Fetch the Products");
 

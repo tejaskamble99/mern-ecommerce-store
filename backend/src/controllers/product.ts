@@ -46,24 +46,14 @@ export const getAllProducts = TryCatch(
     const { search, category, sort, price } = req.query;
 
     const page = Number(req.query.page) || 1;
-    // Ensure env variable is read correctly as a number
     const limit = Number(process.env.PRODUCT_PER_PAGE) || 8;
     const skip = (page - 1) * limit;
 
-    // Base Query Logic
     const baseQuery: BaseQuery = {};
 
-    if (search) {
-      baseQuery.name = { $regex: search, $options: "i" };
-    }
-
-    if (category) {
-      baseQuery.category = category;
-    }
-
-    if (price) {
-      baseQuery.price = { $lte: Number(price) };
-    }
+    if (search) baseQuery.name = { $regex: search, $options: "i" };
+    if (category) baseQuery.category = category;
+    if (price) baseQuery.price = { $lte: Number(price) };
 
     const [products, totalFilteredCount] = await Promise.all([
       Product.find(baseQuery)
@@ -85,10 +75,11 @@ export const getAllProducts = TryCatch(
 
 export const getAdminProduct = TryCatch(async (req, res, next) => {
   let products;
-  if (nodeCache.has("all-Products"))
+  if (nodeCache.has("all-Products")) {
     products = JSON.parse(nodeCache.get("all-Products") as string);
-  else {
-    const products = await Product.find({});
+  } else {
+    // FIX 1: removed `const` — was shadowing outer `products`, always returned undefined
+    products = await Product.find({});
     nodeCache.set("all-Products", JSON.stringify(products));
   }
 
@@ -105,7 +96,6 @@ export const getSigleProduct = TryCatch(async (req, res, next) => {
     product = JSON.parse(nodeCache.get(`product-${id}`) as string);
   else {
     product = await Product.findById(id);
-
     if (!product) return next(new ErrorHandler("Product not found", 404));
     nodeCache.set(`product-${id}`, JSON.stringify(product));
   }
@@ -136,9 +126,12 @@ export const newProduct = TryCatch(
       stock,
       description,
       category: category.toLowerCase(),
-      photo: photo?.path,
+      // FIX 2: was `photos` — now consistent with updateProduct and model
+      photo: photo.path,
     });
+
     invalidateCache({ product: true, admin: true });
+
     return res.status(200).json({
       success: true,
       message: "Product created successfully",
@@ -148,18 +141,17 @@ export const newProduct = TryCatch(
 
 export const updateProduct = TryCatch(async (req, res, next) => {
   const { id } = req.params;
-
   const { name, price, stock, description, category } = req.body;
   const photo = req.file;
-  const product = await Product.findById(id);
 
+  const product = await Product.findById(id);
   if (!product) return next(new ErrorHandler("Product not found", 404));
 
   if (photo) {
     rm(product.photo!, () => {
       console.log("Old Photo Deleted");
     });
-    product.photo = photo?.path;
+    product.photo = photo.path;
   }
 
   if (name) product.name = name;
@@ -169,7 +161,7 @@ export const updateProduct = TryCatch(async (req, res, next) => {
   if (category) product.category = category.toLowerCase();
 
   await product.save();
-  invalidateCache({ product: true , productId: String(product._id),admin: true,});
+  invalidateCache({ product: true, productId: String(product._id), admin: true });
 
   return res.status(200).json({
     success: true,
@@ -185,8 +177,9 @@ export const deleteProduct = TryCatch(async (req, res, next) => {
     console.log("Old Photo Deleted");
   });
 
-  await Product.deleteOne();
-  invalidateCache({ product: true , productId: String(product._id),admin: true,});
+  // FIX 3: was Product.deleteOne() — deletes random doc. Must call on instance
+  await product.deleteOne();
+  invalidateCache({ product: true, productId: String(product._id), admin: true });
 
   return res.status(200).json({
     success: true,

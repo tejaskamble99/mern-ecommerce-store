@@ -1,52 +1,57 @@
 "use client";
-import CartItem from "@/components/cart-item";
+import CartItemComponent from "@/components/cart-item";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import {VscError} from "react-icons/vsc"
+import { VscError } from "react-icons/vsc";
+import { useDispatch, useSelector } from "react-redux";
+import { CartReducerInitialState } from "@/types/reducer-types";
+import { AppDispatch } from "@/redux/store";
+import { CartItem } from "@/types/types";
+import toast from "react-hot-toast";
+import { addToCart } from "@/redux/reducer/cartReducer";
 
-const cartItems = [
-  {
-    productId : "abgsdjd",
-    photo: "https://resource.logitech.com/w_692,c_lpad,ar_4:3,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/products/mice/mx-master-3s/gallery/mx-master-3s-mouse-top-view-graphite.png?v=1",
-    name: "Mouse",
-    price : 4000, 
-    quantity : 2,
-    stock: 10,
-    }
-];
-const subtotal = 4000;
-const tax = Math.round(subtotal * 0.18);
-const shippingCharges = 100;
-const discount = 400;
-const total = subtotal + tax + shippingCharges;
+
+
 
 export default function Cart() {
+  const { cartItems, subtotal , tax , total , shippingCharges , discount} = useSelector(
+    (state: { cartReducer: CartReducerInitialState }) => state.cartReducer,
+  );
   const [couponCode, setCouponCode] = useState<string>("");
   const [isvalidcouponCode, setIsValidCouponCode] = useState<boolean>(false);
 
-  useEffect(() =>{
-     const timeOut = setTimeout(() =>{
-      if(Math.random() > 0.5){
+  const dispatch = useDispatch<AppDispatch>();
+  const addToCartHandler = (cartItem: CartItem) => {
+    if (cartItem.stock < 1) return toast.error("Out of Stock");
+    
+    dispatch(addToCart(cartItem));
+    toast.success("Added to Cart");
+  };
+
+  useEffect(() => {
+    const timeOut = setTimeout(() => {
+      if (Math.random() > 0.5) {
         setIsValidCouponCode(true);
-      }else{
+      } else {
         setIsValidCouponCode(false);
-      } 
-     }, 1000);
-    return () =>{
+      }
+    }, 1000);
+    return () => {
       clearTimeout(timeOut);
       setIsValidCouponCode(false);
-
-    }
+    };
   }, [couponCode]);
 
   return (
     <div className="cart">
       <main>
-        {
-         cartItems.length > 0 ? cartItems.map((cartItem) => (
-          <CartItem key={cartItem.productId} cartItem={cartItem} />
-         )) : <h1>Cart is empty</h1>
-        }
+        {cartItems.length > 0 ? (
+          cartItems.map((cartItem) => (
+            <CartItemComponent key={cartItem.productId} cartItem={cartItem} />
+          ))
+        ) : (
+          <h1>Cart is empty</h1>
+        )}
       </main>
       <aside>
         <p>Subtotal : ₹{subtotal}</p>
@@ -65,19 +70,18 @@ export default function Cart() {
           value={couponCode}
           onChange={(e) => setCouponCode(e.target.value)}
         />
-        {couponCode && (isvalidcouponCode ? (
-          <span className="green">
-            ₹{discount} off using the <code>{couponCode}</code>
-          </span>
-        ) : (
-          <span className="red">Invalid Coupon <VscError /></span>
-        ))}
+        {couponCode &&
+          (isvalidcouponCode ? (
+            <span className="green">
+              ₹{discount} off using the <code>{couponCode}</code>
+            </span>
+          ) : (
+            <span className="red">
+              Invalid Coupon <VscError />
+            </span>
+          ))}
 
-{
-  cartItems.length > 0 && <Link href="/shipping">Checkout</Link>
-}
-
-
+        {cartItems.length > 0 && <Link href="/shipping">Checkout</Link>}
       </aside>
     </div>
   );

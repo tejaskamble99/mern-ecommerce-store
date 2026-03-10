@@ -46,8 +46,7 @@ export const responseToast = (
 //   return { last12Months, last6Months };
 // };
 
-// export const transformImage = (url: string, width = 200) => {
-//   return url.replace("upload/", `upload/dpr_auto/w_${width}/`);
-// };
-
-
+export const transformImage = (url: string, width = 200) => {
+  if (!url) return "";
+  return url.replace("upload/", `upload/dpr_auto/w_${width}/`);
+};
