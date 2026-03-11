@@ -1,10 +1,20 @@
 "use client";
+import { CartReducerInitialState } from "@/types/reducer-types";
 import { useRouter } from "next/navigation";
-import { ChangeEvent, useState} from "react";
+import { ChangeEvent, use, useEffect, useState } from "react";
 import { BiArrowBack } from "react-icons/bi";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/redux/store";
+import { saveShippingInfo } from "@/redux/reducer/cartReducer";
 
 const Shipping = () => {
+  const { cartItems } = useSelector(
+    (state: { cartReducer: CartReducerInitialState }) => state.cartReducer,
+  );
+
   const navigate = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+
   const [shippingInfo, setshippingInfo] = useState({
     address: "",
     fullName: "",
@@ -14,11 +24,23 @@ const Shipping = () => {
     pinCode: "",
   });
 
-  const changeHandeler = (e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>) => {
+  useEffect(() => {
+    if (cartItems.length <= 0) return navigate.push(`/cart`);
+  }, [cartItems, navigate]);
+
+  const changeHandler = (
+    e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>,
+  ) => {
     setshippingInfo((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
+  };
+
+  const submitHandler = (e: React.FormEvent) => {
+    e.preventDefault();
+    dispatch(saveShippingInfo(shippingInfo));
+    navigate.push("/payment");
   };
 
   return (
@@ -26,16 +48,16 @@ const Shipping = () => {
       <button className="back-btn" onClick={() => navigate.back()}>
         <BiArrowBack />
       </button>
-     
-      <form>
-         <h1>Shipping Info</h1>
+
+      <form onSubmit={submitHandler}>
+        <h1>Shipping Info</h1>
         <input
           required
           type="text"
           placeholder="Enter Address"
           name="address"
           value={shippingInfo.address}
-          onChange={changeHandeler}
+          onChange={changeHandler}
         />
         <input
           required
@@ -43,7 +65,7 @@ const Shipping = () => {
           placeholder="Enter FullName"
           name="fullName"
           value={shippingInfo.fullName}
-          onChange={changeHandeler}
+          onChange={changeHandler}
         />
         <input
           required
@@ -51,7 +73,7 @@ const Shipping = () => {
           placeholder="City"
           name="city"
           value={shippingInfo.city}
-          onChange={changeHandeler}
+          onChange={changeHandler}
         />
         <input
           required
@@ -59,26 +81,29 @@ const Shipping = () => {
           placeholder="Enter State"
           name="state"
           value={shippingInfo.state}
-          onChange={changeHandeler}
+          onChange={changeHandler}
         />
         <select
           name="country"
           required
           value={shippingInfo.country}
-          onChange={changeHandeler}
+          onChange={changeHandler}
         >
           <option value="">Country</option>
           <option value="India">India</option>
           <option value="USA">USA</option>
           <option value="UAE">UAE</option>
         </select>
+
         <input
           required
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]"
           placeholder="Enter PinCode"
           name="pinCode"
           value={shippingInfo.pinCode}
-          onChange={changeHandeler}
+          onChange={changeHandler}
         />
         <button
           type="button"

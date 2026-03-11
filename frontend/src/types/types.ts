@@ -34,6 +34,7 @@ export type Review = {
 };
 
 export type ShippingInfo = {
+  fullName: string;
   address: string;
   city: string;
   state: string;

@@ -35,6 +35,7 @@ const initialState: CartReducerInitialState = {
   total: 0,
   coupon: undefined,
   shippingInfo: {
+    fullName: "",
     address: "",
     city: "",
     state: "",
