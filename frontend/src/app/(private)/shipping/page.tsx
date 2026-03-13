@@ -1,7 +1,7 @@
 "use client";
 import { CartReducerInitialState } from "@/types/reducer-types";
 import { useRouter } from "next/navigation";
-import { ChangeEvent, use, useEffect, useState } from "react";
+import { ChangeEvent,useEffect, useState } from "react";
 import { BiArrowBack } from "react-icons/bi";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/redux/store";
@@ -40,7 +40,7 @@ const Shipping = () => {
   const submitHandler = (e: React.FormEvent) => {
     e.preventDefault();
     dispatch(saveShippingInfo(shippingInfo));
-    navigate.push("/payment");
+    navigate.push("/checkout");
   };
 
   return (
@@ -99,20 +99,13 @@ const Shipping = () => {
           required
           type="text"
           inputMode="numeric"
-          pattern="[0-9]"
+          pattern="[0-9]*"
           placeholder="Enter PinCode"
           name="pinCode"
           value={shippingInfo.pinCode}
           onChange={changeHandler}
         />
-        <button
-          type="button"
-          onClick={() => {
-            console.log(shippingInfo);
-          }}
-        >
-          Use My Location
-        </button>
+        
         <button type="submit">Pay Now</button>
       </form>
     </div>
