@@ -45,7 +45,7 @@ const ProductManagement = () => {
   const [updateProduct] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
 
-  // FIX: "single" — backend uses req.file (single upload)
+ 
   const photoFile = useFileHandler("single", 10);
 
   const submitHandler = async (e: FormEvent<HTMLFormElement>) => {

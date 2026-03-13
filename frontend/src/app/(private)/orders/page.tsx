@@ -1,8 +1,14 @@
 "use client";
-import { useState } from "react";
-import TableHOC from "@/components/admin/TableHOC"; 
-import { ColumnDef } from '@tanstack/react-table';
+import { Skeleton } from "@/components/admin/Loader";
+import TableHOC from "@/components/admin/TableHOC";
+import { useMyOrderQuery } from "@/redux/api/orderApi";
+import { CustomError } from "@/types/api-types";
+import { UserReducerInitialState } from "@/types/reducer-types";
+import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+import { useEffect, useMemo } from "react";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 
 type DataType = {
   _id: string;
@@ -10,7 +16,6 @@ type DataType = {
   quantity: number;
   discount: number;
   status: string;
-  action: string;
 };
 
 const columns: ColumnDef<DataType>[] = [
@@ -18,23 +23,26 @@ const columns: ColumnDef<DataType>[] = [
   { header: "Quantity", accessorKey: "quantity" },
   { header: "Discount", accessorKey: "discount" },
   { header: "Amount", accessorKey: "amount" },
-  { 
-    header: "Status", 
+  {
+    header: "Status",
     accessorKey: "status",
     cell: (info) => {
       const statusValue = info.getValue() as string;
-      // Dynamically assign color based on the text
-      const colorClass = statusValue === "Processing" ? "red" : "green";
+
+      const colorClass =
+        statusValue === "Delivered"
+          ? "purple"
+          : statusValue === "Shipped"
+            ? "green"
+            : "red";
       return <span className={colorClass}>{statusValue}</span>;
-    }
+    },
   },
   {
-    id: "action", // Use 'id' instead of 'accessorKey' for pure UI columns
+    id: "action",
     header: "Action",
     cell: (info) => {
-      // info.row.original gives you access to every piece of data in this specific row
-      const orderId = info.row.original._id; 
-      
+      const orderId = info.row.original._id;
       return (
         <Link href={`/order/${orderId}`} className="manage-btn">
           Manage
@@ -45,28 +53,45 @@ const columns: ColumnDef<DataType>[] = [
 ];
 
 const Orders = () => {
-  
-  const [rows] = useState<DataType[]>([
-    {
-  _id: "dbchsd",
-  amount: 20000,
-  quantity: 23,
-  discount: 5666,
-  status: "Processing",
-  action: "Manage",
-},
-  ]);
+  const { user } = useSelector(
+    (state: { userReducer: UserReducerInitialState }) => state.userReducer,
+  );
+
+  const { data, isLoading, isError, error } = useMyOrderQuery(user?._id!, {
+    skip: !user?._id,
+  });
+
+  useEffect(() => {
+    if (isError) {
+      const err = error as CustomError;
+      toast.error(err.data.message);
+    }
+  }, [isError, error]);
+
+  const rows = useMemo<DataType[]>(
+    () =>
+      data?.orders?.map((i) => ({
+        _id: i._id,
+        amount: i.total,
+        quantity: i.orderItems.length,
+        discount: i.discount,
+        status: i.status,
+      })) ?? [],
+    [data],
+  );
+
   const Table = TableHOC<DataType>(
     columns,
-    rows, 
+    rows,
     "dashboard-product-box",
     "Orders",
-  )();
+  );
 
+  if (isLoading) return <p>Loading orders...</p>;
   return (
     <div className="container">
       <h1>My Orders</h1>
-      {Table}
+      {isLoading ? <Skeleton width="100%" length={20} /> : <Table />}
     </div>
   );
 };

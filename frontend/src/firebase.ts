@@ -1,7 +1,12 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
-import { getAuth } from "firebase/auth"; // Added this if you plan to use Auth
+import { getAuth } from "firebase/auth"; 
 
+console.log("Firebase config:", {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+});
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -10,15 +15,15 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  
 };
 
-// 1. Prevent duplicate initialization in Next.js dev mode
+
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// 2. Export other services you might need (like Auth or Storage)
+
 export const auth = getAuth(app);
 
-// 3. Safely initialize Analytics ONLY on the client side
 let analytics: any = null;
 if (typeof window !== "undefined") {
   isSupported().then((supported) => {

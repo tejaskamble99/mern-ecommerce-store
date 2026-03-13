@@ -2,103 +2,116 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo } from "react";
 import TableHOC from "@/components/admin/TableHOC";
+import { useSelector } from "react-redux";
+import { UserReducerInitialState } from "@/types/reducer-types";
+import { useAllOrderQuery } from "@/redux/api/orderApi";
+import { CustomError } from "@/types/api-types";
+import toast from "react-hot-toast";
+import { Skeleton } from "@/components/admin/Loader";
 
-// 1. Define Data Type (Keep it clean, no JSX here)
+
+
 interface DataType {
   user: string;
   amount: number;
   discount: number;
   quantity: number;
-  status: string; // Changed from ReactElement to string
-  _id: string;    // Changed 'action' to ID for better URL building
+  status: string; 
+  _id: string;    
 }
 
-// 2. The Mock Data (Raw Data only)
-const arr: DataType[] = [
+const columns: ColumnDef<DataType>[] = [
   {
-    user: "Charas",
-    amount: 4500,
-    discount: 400,
-    quantity: 3,
-    status: "Processing",
-    _id: "sajknaskd",
+    header: "User",
+    accessorKey: "user",
   },
   {
-    user: "Xavirors",
-    amount: 6999,
-    discount: 400,
-    quantity: 6,
-    status: "Shipped",
-    _id: "sajknaskd",
+    header: "Amount",
+    accessorKey: "amount",
   },
   {
-    user: "Xavirors",
-    amount: 6999,
-    discount: 400,
-    quantity: 6,
-    status: "Delivered",
-    _id: "sajknaskd",
+    header: "Discount",
+    accessorKey: "discount",
+  },
+  {
+    header: "Quantity",
+    accessorKey: "quantity",
+  },
+  {
+    header: "Status",
+    accessorKey: "status",
+    cell: (info) => {
+     
+      const status = info.getValue<string>();
+      let color = "red";
+      if (status === "Shipped") color = "green";
+      if (status === "Delivered") color = "purple";
+      return <span className={color}>{status}</span>;
+    },
+  },
+  {
+    header: "Action",
+    accessorKey: "_id",
+    cell: (info) => (
+      <Link href={`/admin/transaction/${info.getValue<string>()}`}>Manage</Link>
+    ),
   },
 ];
 
+
 export default function Transaction() {
-  const [rows] = useState<DataType[]>(arr);
+  const { user } = useSelector(
+      (state: { userReducer: UserReducerInitialState }) => state.userReducer
+    );
 
-  // 3. Define Columns (Logic goes here)
-  const columns: ColumnDef<DataType>[] = [
-    {
-      header: "Avatar",
-      accessorKey: "user",
-    },
-    {
-      header: "Amount",
-      accessorKey: "amount",
-    },
-    {
-      header: "Discount",
-      accessorKey: "discount",
-    },
-    {
-      header: "Quantity",
-      accessorKey: "quantity",
-    },
-    {
-      header: "Status",
-      accessorKey: "status",
-      // Custom Renderer for Colors
-      cell: (info) => {
-        const status = info.getValue() as string;
-        let color = "red";
-        if (status === "Shipped") color = "green";
-        if (status === "Delivered") color = "purple";
-
-        return <span className={color}>{status}</span>;
-      },
-    },
-    {
-      header: "Action",
-      accessorKey: "_id",
-      cell: (info) => (
-        <Link href={`/admin/transaction/${info.getValue()}`}>Manage</Link>
-      ),
-    },
-  ];
-
-  // 4. Create Table Component
-  const Table = TableHOC<DataType>(
-    columns,
-    rows,
-    "dashboard-product-box",
-    "Transactions",
-    rows.length > 6
+     const { data, isLoading, isError, error } = useAllOrderQuery(
+    user?._id ?? "",
+    { skip: !user?._id }
   );
+
+  useEffect(() => {
+    if (isError) {
+      const err = error as CustomError;
+      toast.error(err.data.message);
+    }
+  }, [isError, error]);
+
+  const rows = useMemo<DataType[]>(
+    () =>
+      data?.orders?.map((i) => ({
+        user: i.user.name,
+        amount: i.total,
+        discount: i.discount,
+        quantity: i.orderItems.length,
+        status: i.status,
+        _id: i._id,
+      })) ?? [],
+    [data]
+  );
+
+  
+ 
+ 
+  const Table = useMemo(
+    () =>
+      TableHOC<DataType>(
+        columns,
+        rows,
+        "dashboard-product-box",
+        "Transactions",
+        rows.length > 6
+      ),
+    [rows]
+  );
+ 
+  if (isLoading) return <p>Loading...</p>;
 
   return (
    
       <main className="dashboard-product-box">
-        <Table />
+        {isLoading ? <Skeleton width = "100%" length = {20}/> : <Table />}
       </main>
    
   );
