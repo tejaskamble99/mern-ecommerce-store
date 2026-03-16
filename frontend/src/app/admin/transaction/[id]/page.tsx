@@ -37,16 +37,28 @@ const defaultData: Order = {
   _id: "",
 };
 
-const ProductCard = ({ name, photo, price, quantity, _id }: OrderItem) => (
-  <div className="transaction-product-card">
-    <Image src={photo} alt={name} width={100} height={100} />
-    <Link href={`/product/${_id}`}>{name}</Link>
-    <span>
-      ₹{price.toLocaleString("en-IN")} X {quantity} = ₹
-      {(price * quantity).toLocaleString("en-IN")}
-    </span>
-  </div>
-);
+const ProductCard = ({ name, photo, price, quantity, _id }: OrderItem) => {
+  const photoUrl = photo?.startsWith("http")
+    ? photo
+    : `${process.env.NEXT_PUBLIC_SERVER_URL}/${photo}`;
+
+  return (
+    <div className="transaction-product-card">
+      <Image
+  src={photoUrl}
+  alt={name}
+  width={100}
+  height={100}
+  unoptimized={photoUrl.includes("localhost")}
+/>
+      <Link href={`/product/${_id}`}>{name}</Link>
+      <span>
+        ₹{price.toLocaleString("en-IN")} X {quantity} = ₹
+        {(price * quantity).toLocaleString("en-IN")}
+      </span>
+    </div>
+  );
+};
 
 const TransactionManagement = () => {
   const { user } = useSelector(
