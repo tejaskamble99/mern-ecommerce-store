@@ -6,6 +6,7 @@ import { userReducer } from "./reducer/userReducer";
 import { userApi } from "./api/userApi";
 import { productApi } from "./api/productApi";
 import { orderApi } from "./api/orderApi";
+import { dashboardApi } from "./api/dashboardApi";
 
 export const server = process.env.NEXT_PUBLIC_SERVER_URL;
 
@@ -19,7 +20,7 @@ const storage =
   typeof window !== "undefined"
     ? createWebStorage("local")
     : createNoopStorage();
-    
+
 const cartPersistConfig = {
   key: "cart",
   storage,
@@ -34,8 +35,9 @@ export const store = configureStore({
   reducer: {
     [userApi.reducerPath]: userApi.reducer,
     [productApi.reducerPath]: productApi.reducer,
+    dashboardApi: dashboardApi.reducer,
     [userReducer.name]: userReducer.reducer,
-    cartReducer: persistedCartReducer, // 👈 persisted
+    cartReducer: persistedCartReducer,
     [orderApi.reducerPath]: orderApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
@@ -43,7 +45,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
       },
-    }).concat(userApi.middleware, productApi.middleware, orderApi.middleware),
+    }).concat(userApi.middleware, productApi.middleware, orderApi.middleware, dashboardApi.middleware),
 });
 
 export const persistor = persistStore(store);
