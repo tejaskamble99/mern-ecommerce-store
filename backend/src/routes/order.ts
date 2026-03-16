@@ -13,7 +13,7 @@ import {
 const app = express.Router();
 
 // Route - /api/v1/order/new-order
-app.post("/new-order", newOrder);
+app.post("/new", newOrder);
 
 // Route - /api/v1/order/my
 app.get("/my", myOrders);

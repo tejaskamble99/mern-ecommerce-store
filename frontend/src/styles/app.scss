@@ -258,6 +258,66 @@ body {
   }
 }
 
+.checkout-container {
+  max-width: 420px;
+  width: 100%;
+  margin: 4rem auto;
+  padding: 2.5rem;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+
+  > form {
+    @include flex(column, flex-start, stretch, 1.5rem);
+
+    // Stripe PaymentElement wrapper
+    .payment-element-wrapper {
+      padding: 1rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 0.5rem;
+      transition: border-color 0.2s ease;
+
+      &:focus-within {
+        border-color: $color3;
+      }
+    }
+
+    // Error message
+    p[role="alert"] {
+      font-size: 0.875rem;
+      color: #e53e3e;
+      background: #fff5f5;
+      border: 1px solid #feb2b2;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      margin: 0;
+    }
+
+    > button {
+      @include btn(1rem, $color3, $color1);
+      width: 100%;
+      font-size: 1.1rem;
+      border-radius: 0.5rem;
+      transition: opacity 0.2s ease, transform 0.1s ease;
+
+      &:hover:not(:disabled) {
+        opacity: 0.92;
+        transform: translateY(-1px);
+      }
+
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+     
+      &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        transform: none;
+      }
+    }
+  }
+}
 
 .admin-container {
   @include grid(1fr 4fr, 2rem);
@@ -435,15 +495,17 @@ body {
     animation: loading-animation 0.5s linear infinite;
   }
 }
-.skeleton-loader{
+
+.skeleton-loader {
   display: flex;
   flex-direction: column;
 }
-.skeleton-shape{
+
+.skeleton-shape {
   height: 30px;
   width: 100%;
   background-color: #ddd;
-  margin-bottom:10px;
+  margin-bottom: 10px;
   border-radius: 4px;
   animation: skeleton-loading 1.5s infinite;
 
@@ -456,16 +518,19 @@ body {
 }
 
 @keyframes skeleton-loading {
-  0%{
+  0% {
     opacity: 0.6;
   }
-    50%{
+
+  50% {
     opacity: 1;
   }
-    100%{
+
+  100% {
     opacity: 0.6;
   }
 }
+
 @keyframes up-and-down {
   to {
     transform: translate(-50%, -20%);
