@@ -1,47 +1,71 @@
 "use client";
-
+import { useAllUsersQuery, useDeleteUserMutation } from "@/redux/api/userApi";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import toast from "react-hot-toast";
+import { useEffect, useMemo } from "react";
+import { CustomError } from "@/types/api-types";
 import { ColumnDef } from "@tanstack/react-table";
-import { useState } from "react";
 import { FaTrash } from "react-icons/fa";
 import TableHOC from "@/components/admin/TableHOC";
 
-// 1. Clean Data Type (No JSX, just strings)
+
+
 interface DataType {
-  avatar: string; // URL string only
+  avatar: string; 
   name: string;
   email: string;
   gender: string;
   role: string;
-  action: string; // We can use the ID or role here if needed
+  action: string; 
 }
 
-// 2. Mock Data
-const img1 = "https://randomuser.me/api/portraits/women/54.jpg";
-const img2 = "https://randomuser.me/api/portraits/women/50.jpg";
-
-const arr: DataType[] = [
-  {
-    avatar: img1,
-    name: "Emily Palmer",
-    email: "emily.palmer@example.com",
-    gender: "female",
-    role: "user",
-    action: "delete",
-  },
-  {
-    avatar: img2,
-    name: "May Scoot",
-    email: "aunt.may@example.com",
-    gender: "female",
-    role: "user",
-    action: "delete",
-  },
-];
-
 export default function Customers() {
-  const [rows] = useState<DataType[]>(arr);
+  const { user } = useSelector((state: RootState) => state.userReducer);
 
-  // 3. Define Columns (Render images and buttons here)
+  const { data, isLoading, isError, error } = useAllUsersQuery(user?._id!, {
+    skip: !user?._id,
+  });
+
+  useEffect(() => {
+    if (isError) {
+      const err = error as CustomError;
+      toast.error(err.data.message);
+    }
+  }, [isError, error]);
+
+  const [deleteUser] = useDeleteUserMutation();
+
+  const deleteHandler = async (userId: string) => {
+    const confirmed = window.confirm("Delete this user?");
+    if (!confirmed) return;
+    try {
+      await deleteUser({ userId, adminUserId: user?._id! }).unwrap();
+      toast.success("User deleted");
+    } catch {
+      toast.error("Failed to delete user");
+    }
+  };
+
+  const rows = useMemo<DataType[]>(
+  () =>
+    data?.users?.map((u) => {
+      const avatar = u.photo?.startsWith("http")
+        ? u.photo
+        : `${process.env.NEXT_PUBLIC_SERVER_URL}/${u.photo}`;
+      return {
+        avatar,
+        name: u.name,
+        email: u.email,
+        gender: u.gender,
+        role: u.role,
+        action: u._id,
+      };
+    }) ?? [],
+  [data]
+);
+
+
   const columns: ColumnDef<DataType>[] = [
     {
       header: "Avatar",
@@ -77,8 +101,8 @@ export default function Customers() {
     {
       header: "Action",
       accessorKey: "action",
-      cell: () => (
-        <button onClick={() => console.log("Delete user")}>
+      cell: (info) => (
+        <button onClick={() => deleteHandler(info.getValue() as string)}>
           <FaTrash />
         </button>
       ),
@@ -91,14 +115,14 @@ export default function Customers() {
     rows,
     "dashboard-product-box",
     "Customers",
-    rows.length > 6
+    rows.length > 6,
   );
 
+  if (isLoading) return <p>Loading...</p>;
+
   return (
-    
-      <main>
-        <Table />
-      </main>
-   
+    <main>
+      <Table />
+    </main>
   );
 }
