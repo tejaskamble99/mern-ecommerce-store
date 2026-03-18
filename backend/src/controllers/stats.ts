@@ -202,7 +202,7 @@ export const getPieCharts = TryCatch(async (req, res, next) => {
       deliveredOrder,
       categories,
       productsCount,
-      OutofStock,
+     outOfStock,
       allOrders,
       allUsers,
       adminUsers,
@@ -238,8 +238,8 @@ export const getPieCharts = TryCatch(async (req, res, next) => {
     });
 
     const stockAvailability = {
-      inStock: productsCount - OutofStock,
-      OutofStock,
+      inStock: productsCount - outOfStock,
+      outOfStock,
     };
     const grossIncome = allOrders.reduce(
       (prev, order) => prev + order.total,

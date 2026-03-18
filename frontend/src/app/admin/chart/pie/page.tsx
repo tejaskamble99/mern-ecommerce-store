@@ -21,12 +21,7 @@ const PieCharts = () => {
 
   const charts = data?.charts!;
 
-  const categories = data?.charts.productCategories!;
-  const orders = data?.charts.orderFullfillment!;
-  const revenue = data?.charts.revenueDistribution!;
-  const stock = data?.charts.stockAvailablity!;
-  const ageGroup = data?.charts.usersAgeGroup!;
-  const adminCustomer = data?.charts.adminCustomer!;
+  
   
 
 
@@ -46,6 +41,15 @@ const PieCharts = () => {
     );
   }
 
+  console.log("charts data:", data.charts);
+
+const productCategories = data.charts.productCategories;
+const orders = data.charts.orderFullfillment;       
+const revenue = data.charts.revenueDistribution;
+const stocks = data.charts.stockAvailability;      
+const ageGroup = data.charts.usersAgeGroup;
+const adminCustomer = data.charts.adminCustomer;
+
   return (
 
       
@@ -56,7 +60,7 @@ const PieCharts = () => {
           <div>
             <PieChart
               labels={["Processing", "Shipped", "Delivered"]}
-              data={[12, 9, 13]}
+              data={[orders.processing, orders.shipped, orders.delivered]}
               backgroundColor={[
                 `hsl(110,80%, 80%)`,
                 `hsl(110,80%, 50%)`,
@@ -73,8 +77,8 @@ const PieCharts = () => {
 
             
             <DoughnutChart
-              labels={charts.productCategories.map((i) => Object.keys(i)[0])}
-              data={charts.productCategories.map((i) => Object.values(i)[0])}
+              labels={productCategories.map((i) => Object.keys(i)[0])}
+              data={productCategories.map((i) => Object.values(i)[0])}
               backgroundColor={categories.map(
                 (i) => `hsl(${i.value * 4}, ${i.value}%, 50%)`
               )}
@@ -89,7 +93,7 @@ const PieCharts = () => {
           <div>
             <DoughnutChart
               labels={["In Stock", "Out Of Stock"]}
-              data={[charts.stockAvailablity.inStock, charts.stockAvailablity.outOfStock]}
+              data={[stocks.inStock, stocks.outOfStock]}
               backgroundColor={["hsl(269,80%,40%)", "rgb(53, 162, 255)"]}
               legends={false}
               offset={[0, 80]}
@@ -109,7 +113,13 @@ const PieCharts = () => {
                 "Production Cost",
                 "Net Margin",
               ]}
-              data={[32, 18, 5, 20, 25]}
+              data={[
+              revenue.marketingCost,
+              revenue.discount,
+              revenue.burnt,
+              revenue.productionCost,
+              revenue.netMargin,
+            ]}
               backgroundColor={[
                 "hsl(110,80%,40%)",
                 "hsl(19,80%,40%)",
@@ -132,7 +142,7 @@ const PieCharts = () => {
                 "Adult (20-40)",
                 "Older (above 40)",
               ]}
-              data={[30, 250, 70]}
+              data={[ageGroup.teen, ageGroup.adult, ageGroup.old]}
               backgroundColor={[
                 `hsl(10, ${80}%, 80%)`,
                 `hsl(10, ${80}%, 50%)`,
@@ -148,7 +158,7 @@ const PieCharts = () => {
           <div>
             <DoughnutChart
               labels={["Admin", "Customers"]}
-              data={[40, 250]}
+              data={[adminCustomer.admin, adminCustomer.customer]}
               backgroundColor={[`hsl(335, 100%, 38%)`, "hsl(44, 98%, 50%)"]}
               offset={[0, 50]}
             />
