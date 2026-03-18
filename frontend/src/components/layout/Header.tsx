@@ -28,7 +28,7 @@ export default function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { user } = useSelector((state: RootState) => state.userReducer);
-  console.log("THE TRUTH FROM REDUX:", user);
+  
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

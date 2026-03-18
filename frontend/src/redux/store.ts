@@ -35,7 +35,7 @@ export const store = configureStore({
   reducer: {
     [userApi.reducerPath]: userApi.reducer,
     [productApi.reducerPath]: productApi.reducer,
-    dashboardApi: dashboardApi.reducer,
+    [dashboardApi.reducerPath]: dashboardApi.reducer,
     [userReducer.name]: userReducer.reducer,
     cartReducer: persistedCartReducer,
     [orderApi.reducerPath]: orderApi.reducer,
@@ -45,7 +45,12 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
       },
-    }).concat(userApi.middleware, productApi.middleware, orderApi.middleware, dashboardApi.middleware),
+    }).concat(
+      userApi.middleware,
+      productApi.middleware,
+      orderApi.middleware,
+      dashboardApi.middleware,
+    ),
 });
 
 export const persistor = persistStore(store);

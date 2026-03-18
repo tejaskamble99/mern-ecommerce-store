@@ -14,11 +14,11 @@ export default function AuthListener({ children }: { children: React.ReactNode }
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
-          // 1. Wrap the Axios call in a try block
+          
           const data = await getUser(user.uid);
           dispatch(userExist(data.user));
         } catch (error) {
-          // 2. If the backend fails, securely log them out of the frontend
+          
           console.error("Failed to fetch user from database");
           dispatch(userNotExist());
         }
