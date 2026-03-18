@@ -1,9 +1,51 @@
 "use client";
 
 import { DoughnutChart, PieChart } from "@/components/admin/Charts";
-import data from "@/data/data.json";
+import { Skeleton } from "@/components/admin/Loader";
+import { usePieQuery } from "@/redux/api/dashboardApi";
+import { RootState } from "@/redux/store";
+import { CustomError } from "@/types/api-types";
+import { useEffect } from "react";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
+import {categories} from "@/data/data.json";
+
+
 
 const PieCharts = () => {
+  const { user } = useSelector((state: RootState) => state.userReducer);
+
+   const { isLoading, data, error, isError } = usePieQuery(user?._id!, {
+    skip: !user?._id,
+  });
+
+  const charts = data?.charts!;
+
+  const categories = data?.charts.productCategories!;
+  const orders = data?.charts.orderFullfillment!;
+  const revenue = data?.charts.revenueDistribution!;
+  const stock = data?.charts.stockAvailablity!;
+  const ageGroup = data?.charts.usersAgeGroup!;
+  const adminCustomer = data?.charts.adminCustomer!;
+  
+
+
+
+ useEffect(() => {
+    if (isError) {
+      const err = error as CustomError;
+      toast.error(err.data.message);
+    }
+  }, [isError, error]);
+
+  if (isLoading || !data?.charts) {
+    return (
+      <main className="dashboard">
+        <Skeleton length={20} />
+      </main>
+    );
+  }
+
   return (
 
       
@@ -28,10 +70,12 @@ const PieCharts = () => {
 
         <section>
           <div>
+
+            
             <DoughnutChart
-              labels={data.categories.map((i) => i.heading)}
-              data={data.categories.map((i) => i.value)}
-              backgroundColor={data.categories.map(
+              labels={charts.productCategories.map((i) => Object.keys(i)[0])}
+              data={charts.productCategories.map((i) => Object.values(i)[0])}
+              backgroundColor={categories.map(
                 (i) => `hsl(${i.value * 4}, ${i.value}%, 50%)`
               )}
               legends={false}
@@ -45,7 +89,7 @@ const PieCharts = () => {
           <div>
             <DoughnutChart
               labels={["In Stock", "Out Of Stock"]}
-              data={[40, 20]}
+              data={[charts.stockAvailablity.inStock, charts.stockAvailablity.outOfStock]}
               backgroundColor={["hsl(269,80%,40%)", "rgb(53, 162, 255)"]}
               legends={false}
               offset={[0, 80]}
