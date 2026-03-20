@@ -16,11 +16,6 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/firebase";
 import toast from "react-hot-toast";
 
-// const user = { _id: "", role: "" };
-
-
- 
-
 export default function Header() {
   const [isMounted, setIsMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -28,7 +23,7 @@ export default function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { user } = useSelector((state: RootState) => state.userReducer);
-  
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -39,14 +34,8 @@ export default function Header() {
         setIsOpen(false);
       }
     };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
   // Close on Escape key
@@ -57,38 +46,30 @@ export default function Header() {
         setIsMobileMenuOpen(false);
       }
     };
-
     document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, []);
+
+  useEffect(() => {
+    setIsMounted(true);
   }, []);
 
   const logoutHandler = async () => {
     try {
       setIsOpen(false);
       setIsMobileMenuOpen(false);
-      
-      // Tell Firebase to destroy the session token
       await signOut(auth);
       toast.success("Logged out successfully");
-      
-    } catch (error) {
-      toast.success("Error logging out:");
+    } catch {
+      toast.error("Error logging out");
     }
   };
 
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
     <div className="navbar">
-      {/* Hamburger Menu Button */}
+      {/* Hamburger — mobile only */}
       <button
         className="hamburger-menu"
         onClick={() => setIsMobileMenuOpen((prev) => !prev)}
@@ -97,59 +78,58 @@ export default function Header() {
         {isMobileMenuOpen ? <FaTimes /> : <FaBars />}
       </button>
 
-      {/* Logo/Brand (Optional) */}
+      {/* Brand — left */}
       <div className="navbar-brand">
         <Link href="/">MyShop</Link>
       </div>
 
-      <nav className={`header ${isMobileMenuOpen ? "is-open" : ""}`}>
-        <Link href="/" onClick={closeMobileMenu}>
-          Home
-        </Link>
-        <Link href="/products" onClick={closeMobileMenu}>
-          Products
-        </Link>
-        <Link href="/categories" onClick={closeMobileMenu}>
-          Categories
-        </Link>
+      {/* Center nav links — desktop */}
+      <nav className={`header-nav ${isMobileMenuOpen ? "is-open" : ""}`}>
+        <Link href="/search" onClick={closeMobileMenu}>Products</Link>
+        <Link href="/search?category=connector" onClick={closeMobileMenu}>Connector</Link>
+        <Link href="/search?category=charger" onClick={closeMobileMenu}>Charger</Link>
+        <Link href="/search?category=bluetooth-headset" onClick={closeMobileMenu}>Bluetooth Headset</Link>
+        <Link href="/search?category=tws" onClick={closeMobileMenu}>TWS</Link>
+        <Link href="/search?category=power-bank" onClick={closeMobileMenu}>Power Bank</Link>
+        <Link href="/search?category=hands-free" onClick={closeMobileMenu}>Hands-Free</Link>
+      </nav>
+
+      {/* Right actions — icons */}
+      <div className="header-actions">
         <Link href="/search" onClick={closeMobileMenu}>
-          <FaSearch /> <span className="mobile-text">Search</span>
+          <FaSearch />
+          <span className="mobile-text">Search</span>
         </Link>
 
         <Link href="/cart" onClick={closeMobileMenu}>
-          <BsHandbag /> <span className="mobile-text">Cart</span>
+          <BsHandbag />
+          <span className="mobile-text">Cart</span>
         </Link>
 
-        {isMounted &&user?._id ? (
+        {isMounted && user?._id ? (
           <div className="user-container" ref={dropdownRef}>
             <button
               onClick={() => setIsOpen((prev) => !prev)}
               aria-expanded={isOpen}
               aria-haspopup="true"
             >
-              <FaUser /> <span className="mobile-text">Account</span>
+              <FaUser />
+              <span className="mobile-text">Account</span>
             </button>
 
-            {/* Conditional Dropdown Menu */}
             {isOpen && (
               <div className="dropdown-menu">
                 {user.role === "admin" && (
                   <Link
                     href="/admin/dashboard"
-                    onClick={() => {
-                      setIsOpen(false);
-                      closeMobileMenu();
-                    }}
+                    onClick={() => { setIsOpen(false); closeMobileMenu(); }}
                   >
                     Admin
                   </Link>
                 )}
                 <Link
                   href="/orders"
-                  onClick={() => {
-                    setIsOpen(false);
-                    closeMobileMenu();
-                  }}
+                  onClick={() => { setIsOpen(false); closeMobileMenu(); }}
                 >
                   Orders
                 </Link>
@@ -161,10 +141,11 @@ export default function Header() {
           </div>
         ) : (
           <Link href="/login" onClick={closeMobileMenu}>
-            <FaSignInAlt /> <span className="mobile-text">Login</span>
+            <FaSignInAlt />
+            <span className="mobile-text">Login</span>
           </Link>
         )}
-      </nav>
+      </div>
     </div>
   );
 }

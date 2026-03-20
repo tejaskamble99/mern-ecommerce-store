@@ -8,7 +8,7 @@ import { Order } from "../models/order.js";
 
 dotenv.config();
 mongoose.set("strictQuery", true);
-mongoose.set("debug", true);
+
 
 export const connectDB = async (): Promise<void> => {
   const uri = process.env.MONGO_URI;
@@ -42,20 +42,20 @@ export const invalidateCache =  ({
   productId,
 }: InvalidateCacheProps) => {
   if (product) {
-    const productKeys: string[] = [
-      "latest-Products",
-      "categories",
-      "all-Products",
-      `product-${productId}`,
-    ];
+const productKeys: string[] = [
+  "latest-Products",
+  "categories",
+  "categories-with-image",
+  "all-Products",
+];
 
-    if (typeof productId === "string") productKeys.push(`product-${productId}`);
-    if (typeof productId === "object") {
-      productId.forEach((i) => {
-        productKeys.push(`product-${i}`);
-      });
-    }
-    nodeCache.del(productKeys);
+// Only add once based on type
+if (typeof productId === "string") productKeys.push(`product-${productId}`);
+if (typeof productId === "object") {
+  productId.forEach((i) => productKeys.push(`product-${i}`));
+}
+
+nodeCache.del(productKeys);
   }
   if (order) {
     const orderKeys: string[] = [

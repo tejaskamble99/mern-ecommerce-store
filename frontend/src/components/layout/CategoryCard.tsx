@@ -1,26 +1,31 @@
+import { server } from "@/redux/store";
 import Link from "next/link";
 
 interface CategoriesProps {
   photo: string;
   name: string;
-  count: number;
 }
 
-const CategoryCard = ({ photo, name, count }: CategoriesProps) => {
+const CategoryCard = ({ photo, name }: CategoriesProps) => {
   return (
-    // 1. Wrap in Link so it is clickable
-    <Link href={`/search?category=${name.toLowerCase()}`} className="category-card">
-      
-      <img src={photo} alt={name} />
+    <div className="category-card">
+      <Link
+        href={`/search?category=${name.toLowerCase()}`}
+      >
+        <div className="card-img">
+          <img
+            src={photo?.startsWith("http") ? photo : `${server}/${photo}`}
+            alt={name}
+          />
+        </div>
 
-      {/* 2. Use 'cat-overlay' to match your SCSS styles */}
-      <div className="cat-overlay">
-        <h3>{name}</h3>
-        {/* 3. Display the count */}
-        <p>{count} Products</p>
-      </div>
-
-    </Link>
+        <div className="card-body">
+          <div className="row">
+          <h3>{name}</h3>
+          </div>
+        </div>
+      </Link>
+    </div>
   );
 };
 

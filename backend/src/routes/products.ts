@@ -1,6 +1,6 @@
 import express from "express";
 import { adminOnly } from '../middleware/auth.js';
-import { deleteProduct, getAdminProduct, getAllCategories, getAllProducts, getlatestProduct, getSigleProduct, newProduct, updateProduct } from "../controllers/product.js";
+import { deleteProduct, getAdminProduct, getAllCategories, getCategoriesWithImage,getAllProducts, getlatestProduct, getSigleProduct, newProduct, updateProduct } from "../controllers/product.js";
 import { singlUpload } from "../middleware/multer.js";
 
 const app = express.Router();
@@ -13,6 +13,9 @@ app.get("/latest", getlatestProduct);
 
 //To get all unique Categories  - /api/v1/product/categories
 app.get("/categories", getAllCategories);
+
+//To get all unique Categories  - /api/v1/product/categories-with-image
+app.get("/categories-with-image", getCategoriesWithImage);
 
 //To get all Products with filters  - /api/v1/product/all
 app.get("/all", getAllProducts);

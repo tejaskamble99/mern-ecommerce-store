@@ -47,6 +47,13 @@ export type CategoriesResponse = {
   success: boolean;
   categories: string[];
 };
+export type CategoriesWithImageResponse = {
+  success: boolean;
+  categories: {
+    category: string;
+    image: string;
+  }[];
+};
 
 export type SearchProductsResponse = AllProductsResponse & {
   totalPage: number;

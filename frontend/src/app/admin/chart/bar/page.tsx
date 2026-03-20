@@ -1,23 +1,57 @@
 "use client";
 
 import { BarChart } from "@/components/admin/Charts"; // Use @ alias
+import { Skeleton } from "@/components/admin/Loader";
+import { useBarQuery } from "@/redux/api/dashboardApi";
+import { RootState } from "@/redux/store";
+import { CustomError } from "@/types/api-types";
+import { getLastMonths } from "@/utils/features";
+import { useEffect } from "react";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 
-const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "Aug",
-  "Sept",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+
+
+const {last12Months, last6Months} = getLastMonths();
 
 const Barcharts = () => {
+
+    const { user } = useSelector((state: RootState) => state.userReducer);
+
+   const { isLoading, data, error, isError } = useBarQuery(user?._id!, {
+    skip: !user?._id,
+  });
+
+  
+
+  
+  
+
+
+
+ useEffect(() => {
+    if (isError) {
+      const err = error as CustomError;
+      toast.error(err.data.message);
+    }
+  }, [isError, error]);
+
+  if (isLoading || !data?.charts) {
+    return (
+      <main className="dashboard">
+        <Skeleton length={20} />
+      </main>
+    );
+  }
+
+  const products  = data?.charts.products || [];
+  const orders  = data?.charts.orders || [];
+  const users  = data?.charts.users || [];
+
+
+
+
+
   return (
     
       
@@ -25,8 +59,9 @@ const Barcharts = () => {
         <h1>Bar Charts</h1>
         <section>
           <BarChart
-            data_2={[300, 144, 433, 655, 237, 755, 190]}
-            data_1={[200, 444, 343, 556, 778, 455, 990]}
+            data_2={products}
+            data_1={users}
+            labels={last6Months}
             title_1="Products"
             title_2="Users"
             bgColor_1={`hsl(260, 50%, 30%)`}
@@ -38,15 +73,13 @@ const Barcharts = () => {
         <section>
           <BarChart
             horizontal={true}
-            data_1={[
-              200, 444, 343, 556, 778, 455, 990, 444, 122, 334, 890, 909,
-            ]}
+            data_1={orders}
             data_2={[]}
             title_1="Orders"
             title_2=""
             bgColor_1={`hsl(180, 40%, 50%)`}
             bgColor_2=""
-            labels={months}
+            labels={last12Months}
           />
           <h2>Orders throughout the year</h2>
         </section>

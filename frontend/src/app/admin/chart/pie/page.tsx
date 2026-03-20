@@ -19,12 +19,6 @@ const PieCharts = () => {
     skip: !user?._id,
   });
 
-  const charts = data?.charts!;
-
-  
-  
-
-
 
  useEffect(() => {
     if (isError) {
@@ -41,7 +35,7 @@ const PieCharts = () => {
     );
   }
 
-  console.log("charts data:", data.charts);
+
 
 const productCategories = data.charts.productCategories;
 const orders = data.charts.orderFullfillment;       

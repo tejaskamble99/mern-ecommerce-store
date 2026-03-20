@@ -41,6 +41,36 @@ export const getAllCategories = TryCatch(async (req, res, next) => {
   });
 });
 
+export const getCategoriesWithImage = TryCatch(async (req, res, next) => {
+  let categories;
+
+  if (nodeCache.has("categories-with-image")) {
+    categories = JSON.parse(nodeCache.get("categories-with-image") as string);
+  } else {
+   
+    const categoryNames = await Product.distinct("category");
+
+    
+    categories = await Promise.all(
+      categoryNames.map(async (category) => {
+        const product = await Product.findOne({ category }).select("category photo");
+        return {
+          category,
+          image: product?.photo || "",
+        };
+      })
+    );
+
+    nodeCache.set("categories-with-image", JSON.stringify(categories));
+  }
+
+  return res.status(200).json({
+    success: true,
+    categories,
+  });
+});
+
+
 export const getAllProducts = TryCatch(
   async (req: Request<{}, {}, {}, SearchRequestQuery>, res, next) => {
     const { search, category, sort, price } = req.query;
@@ -148,9 +178,7 @@ export const updateProduct = TryCatch(async (req, res, next) => {
   if (!product) return next(new ErrorHandler("Product not found", 404));
 
   if (photo) {
-    rm(product.photo!, () => {
-      console.log("Old Photo Deleted");
-    });
+    rm(product.photo!, () => {});
     product.photo = photo.path;
   }
 
@@ -173,9 +201,7 @@ export const deleteProduct = TryCatch(async (req, res, next) => {
   const product = await Product.findById(req.params.id);
   if (!product) return next(new ErrorHandler("Product not found", 404));
 
-  rm(product.photo!, () => {
-    console.log("Old Photo Deleted");
-  });
+  rm(product.photo!, () => {});
 
   // FIX 3: was Product.deleteOne() — deletes random doc. Must call on instance
   await product.deleteOne();

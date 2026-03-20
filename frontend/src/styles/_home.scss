@@ -11,6 +11,7 @@
         min-height: calc(100vh - 4rem);
     }
 
+    /* --- 1. HERO SECTION --- */
     .hero {
         position: relative;
         width: 100%;
@@ -106,6 +107,45 @@
         }
     }
 
+    /* --- 2. CATEGORY SECTION --- */
+    .category-section {
+        width: 100%;
+        margin-bottom: 4rem;
+
+        > h1 {
+            @include heading;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            @include flex(column, center, center);
+
+            @media only screen and (min-width: 768px) {
+                @include flex(row, space-between, center);
+                text-align: left;
+                margin-bottom: 3rem;
+                font-size: 2.5rem;
+            }
+        }
+
+        .cat-swiper {
+        width: 100%;
+        /* Add padding to prevent Swiper from chopping off the box-shadows */
+        padding: 1rem 0.5rem 2rem 0.5rem; 
+
+        .swiper-button-next,
+        .swiper-button-prev {
+            color: $color3;
+            transform: scale(0.7);
+        }
+
+        .swiper-slide {
+            height: auto; /* Forces Swiper to stretch the slides to equal height */
+        }
+    }
+    }
+
+    /* --- 3. LATEST PRODUCTS HEADING --- */
     > h1 {
         @include heading;
         text-align: center;
@@ -133,16 +173,60 @@
         }
     }
 
-    // FIX: grid layout for product cards
+    /* --- 4. PRODUCTS GRID --- */
     main {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
         gap: 2.6rem;
         width: 100%;
         margin-bottom: 3rem;
+        /* REQUIRED for @container queries on product cards to work */
+        container-type: inline-size; 
     }
-}
 
+    /* --- 5. FEATURES ROW --- */
+    .features {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        margin: 3rem 0;
+        padding: 2rem;
+        background: #f9fafb;
+        border-radius: 1rem;
+
+        @media (min-width: 768px) {
+            flex-direction: row;
+            justify-content: space-around;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+
+            svg {
+                font-size: 2rem;
+                color: $color3;
+                flex-shrink: 0;
+            }
+
+            h4 {
+                font-size: 1rem;
+                font-weight: 600;
+                margin-bottom: 0.25rem;
+            }
+
+            p {
+                font-size: 0.875rem;
+                color: #6b7280;
+            }
+        }
+    }
+} /* END OF .home */
+
+/* =========================================
+   INDIVIDUAL CARDS (OUTSIDE .home)
+========================================= */
 
 .productcard {
     width: 100%;
@@ -324,57 +408,84 @@
     }
 }
 
-.category-section {
-    width: 100%;
-    margin-bottom: 4rem;
-
-    h1 {
-        font-size: 1.8rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 2rem;
-        text-align: center;
-
-        @media (min-width: 768px) {
-            text-align: left;
-        }
-    }
-
-    // FIX: was .card-grid — renamed to match JSX (.cat-grid)
-    .cat-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1.5rem;
-        justify-content: center;
-
-        @media (min-width: 768px) {
-            justify-content: space-between;
-        }
-    }
-}
-
-// Fill in styles when you build CategoryCard
 .category-card {
-    @media (min-width: 768px) {
-        width: 14rem;
-        height: 14rem;
-    }
+   width: 100%;
+    height: 100%; 
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+    margin: 0 auto;
 
-    img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.3s ease;
-    }
-
-    .cat-overlay {
-        h3 {}
-        p {}
-    }
 
     &:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-img {
+        height: 12rem;
+        width: 100%;
+
+        @media only screen and (min-width: 768px) {
+            height: 14rem;
+        }
+
         img {
-            transform: scale(1.15);
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+    }
+
+    /* FIX: Targeted .card-img instead of .card-header */
+    &:hover .card-img img {
+        transform: scale(1.05);
+    }
+
+    @media (hover: none) {
+        /* FIX: Targeted .card-img instead of .card-header */
+        &:hover .card-img img {
+            transform: none;
+        }
+
+        &:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    }
+
+    .card-body {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+
+        @media only screen and (min-width: 768px) {
+            padding: 1.5rem;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+            text-transform: capitalize;
+
+            @media only screen and (min-width: 768px) {
+                font-size: 1.1rem;
+            }
         }
     }
 }
