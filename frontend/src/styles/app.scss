@@ -16,7 +16,7 @@ a {
 }
 
 $color1: white;
-$color2: rgb(46, 46, 46);
+$color2: rgb(39, 39, 39);
 $color3: rgb(0, 104, 136);
 
 body {
@@ -90,7 +90,7 @@ body {
   }
 
   a {
-    color: $color2;
+    color: $color1;
     letter-spacing: 2px;
     font-size: 1.2rem;
     display: flex;
@@ -194,7 +194,7 @@ body {
 }
 
 .navbar {
- background-color: #cccccc;
+ background-color: $color2;
   padding: 1rem;
   box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.093);
   position: relative;
@@ -211,13 +211,18 @@ body {
   .navbar-brand {
     font-size: 1.5rem;
     font-weight: bold;
+    img {
+    height: 2.5rem;
+    width: auto;
+    object-fit: contain;
+  }
  
     @media (min-width: 769px) {
       justify-self: start;
     }
  
     a {
-      color: $color2;
+      color: $color1;
       &:hover { color: $color3; }
     }
  
@@ -232,7 +237,7 @@ body {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: $color2;
+    color: $color1;
     padding: 0.5rem;
     z-index: 1001;
     order: -1; 
@@ -248,6 +253,8 @@ body {
 .header-nav {
   @include flex(row, center, center, 1.2rem);
   flex-wrap: wrap;
+  
+
  
   @media (min-width: 769px) {
     justify-self: center;
@@ -284,13 +291,14 @@ body {
         width: 100vw;
         height: 100vh;
         background-color: rgba(0, 0, 0, 0.5);
+        
         z-index: -1;
       }
     }
   }
  
   a {
-    color: $color2;
+    color: $color1;
     letter-spacing: 2px;
     font-size: 1rem;
     white-space: nowrap;
@@ -318,7 +326,7 @@ body {
   }
  
   a, button {
-    color: $color2;
+    color: $color1;
     font-size: 1.2rem;
     background: none;
     border: none;
@@ -378,6 +386,29 @@ body {
     }
   }
 } 
+
+.cart-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .cart-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: $color3;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+}
 
 .checkout-container {
   max-width: 420px;

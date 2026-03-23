@@ -15,6 +15,7 @@ import { RootState } from "@/redux/store";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase";
 import toast from "react-hot-toast";
+import { CartReducerInitialState } from "@/types/reducer-types";
 
 export default function Header() {
   const [isMounted, setIsMounted] = useState(false);
@@ -23,6 +24,10 @@ export default function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { user } = useSelector((state: RootState) => state.userReducer);
+
+  const { cartItems } = useSelector(
+    (state: { cartReducer: CartReducerInitialState }) => state.cartReducer,
+  );
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -80,29 +85,52 @@ export default function Header() {
 
       {/* Brand — left */}
       <div className="navbar-brand">
-        <Link href="/">MyShop</Link>
+        <Link href="/">
+          <img src="/assets/logo/logo.png" alt="MyStore" />
+        </Link>
       </div>
 
       {/* Center nav links — desktop */}
       <nav className={`header-nav ${isMobileMenuOpen ? "is-open" : ""}`}>
-        <Link href="/search" onClick={closeMobileMenu}>Products</Link>
-        <Link href="/search?category=connector" onClick={closeMobileMenu}>Connector</Link>
-        <Link href="/search?category=charger" onClick={closeMobileMenu}>Charger</Link>
-        <Link href="/search?category=bluetooth-headset" onClick={closeMobileMenu}>Bluetooth Headset</Link>
-        <Link href="/search?category=tws" onClick={closeMobileMenu}>TWS</Link>
-        <Link href="/search?category=power-bank" onClick={closeMobileMenu}>Power Bank</Link>
-        <Link href="/search?category=hands-free" onClick={closeMobileMenu}>Hands-Free</Link>
+        <Link href="/search" onClick={closeMobileMenu}>
+          Products
+        </Link>
+        <Link href="/search?category=connector" onClick={closeMobileMenu}>
+          Connector
+        </Link>
+        <Link href="/search?category=charger" onClick={closeMobileMenu}>
+          Charger
+        </Link>
+        <Link
+          href="/search?category=bluetooth-headset"
+          onClick={closeMobileMenu}
+        >
+          Bluetooth Headset
+        </Link>
+        <Link href="/search?category=tws" onClick={closeMobileMenu}>
+          TWS
+        </Link>
+        <Link href="/search?category=power-bank" onClick={closeMobileMenu}>
+          Power Bank
+        </Link>
+        <Link href="/search?category=hands-free" onClick={closeMobileMenu}>
+          Hands-Free
+        </Link>
       </nav>
 
       {/* Right actions — icons */}
       <div className="header-actions">
         <Link href="/search" onClick={closeMobileMenu}>
           <FaSearch />
-          <span className="mobile-text">Search</span>
         </Link>
 
         <Link href="/cart" onClick={closeMobileMenu}>
-          <BsHandbag />
+          <div className="cart-icon-wrapper">
+            <BsHandbag />
+            {cartItems.length > 0 && (
+              <span className="cart-badge">{cartItems.length}</span>
+            )}
+          </div>
           <span className="mobile-text">Cart</span>
         </Link>
 
@@ -114,7 +142,6 @@ export default function Header() {
               aria-haspopup="true"
             >
               <FaUser />
-              <span className="mobile-text">Account</span>
             </button>
 
             {isOpen && (
@@ -122,14 +149,20 @@ export default function Header() {
                 {user.role === "admin" && (
                   <Link
                     href="/admin/dashboard"
-                    onClick={() => { setIsOpen(false); closeMobileMenu(); }}
+                    onClick={() => {
+                      setIsOpen(false);
+                      closeMobileMenu();
+                    }}
                   >
                     Admin
                   </Link>
                 )}
                 <Link
                   href="/orders"
-                  onClick={() => { setIsOpen(false); closeMobileMenu(); }}
+                  onClick={() => {
+                    setIsOpen(false);
+                    closeMobileMenu();
+                  }}
                 >
                   Orders
                 </Link>
