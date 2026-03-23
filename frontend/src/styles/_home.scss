@@ -1,3 +1,5 @@
+@use "sass:color";
+
 .home {
     padding: 1rem 4%;
     display: flex;
@@ -13,8 +15,9 @@
 
     /* --- 1. HERO SECTION --- */
     .hero {
-        position: relative;
+        position:relative;
         width: 100%;
+        height: 100%;
         aspect-ratio: 16/9;
         min-height: 250px;
         margin: auto;
@@ -107,12 +110,85 @@
         }
     }
 
+    // FIX: width auto + align-self so it fits content and doesn't stretch
+    .hero-btn {
+        width: auto;
+        align-self: flex-start;
+        display: inline-block;
+        margin-top: 1.5rem;
+        padding: 0.75rem 2rem;
+        // FIX: use $color3 (teal) not $color2 (dark grey)
+        background-color: $color3;
+        color: white;
+        border-radius: 2rem;
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 1px;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+
+        &:hover {
+            // FIX: reference $color3 variable instead of hardcoded hex
+            background-color: color.adjust($color3, $lightness: -8%);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+    }
+
+    .promo-banner,
+    .bottom-banner {
+        width: 100%;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        margin: 2rem 0;
+
+        img {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            display: block;
+            max-height: 200px;
+
+            @media (min-width: 768px) {
+                max-height: 300px;
+            }
+        }
+    }
+
+    .promo-text {
+        text-align: center;
+        margin-bottom: 2rem;
+
+        h2 {
+            font-size: 1rem;
+            color: $color3;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            opacity: 0.85;
+
+            @media (min-width: 768px) {
+                font-size: 1.1rem;
+            }
+        }
+    }
+
+    .empty-state {
+        text-align: center;
+        color: #9ca3af;
+        font-size: 1rem;
+        padding: 3rem 0;
+        width: 100%;
+    }
+
     /* --- 2. CATEGORY SECTION --- */
     .category-section {
         width: 100%;
         margin-bottom: 4rem;
 
-        > h1 {
+        >h1 {
             @include heading;
             text-align: center;
             margin-bottom: 1.5rem;
@@ -129,24 +205,23 @@
         }
 
         .cat-swiper {
-        width: 100%;
-        /* Add padding to prevent Swiper from chopping off the box-shadows */
-        padding: 1rem 0.5rem 2rem 0.5rem; 
+            width: 100%;
+            padding: 1rem 0.5rem 2rem 0.5rem;
 
-        .swiper-button-next,
-        .swiper-button-prev {
-            color: $color3;
-            transform: scale(0.7);
-        }
+            .swiper-button-next,
+            .swiper-button-prev {
+                color: $color3;
+                transform: scale(0.7);
+            }
 
-        .swiper-slide {
-            height: auto; /* Forces Swiper to stretch the slides to equal height */
+            .swiper-slide {
+                height: auto;
+            }
         }
-    }
     }
 
     /* --- 3. LATEST PRODUCTS HEADING --- */
-    > h1 {
+    >h1 {
         @include heading;
         text-align: center;
         margin-bottom: 1.5rem;
@@ -180,8 +255,7 @@
         gap: 2.6rem;
         width: 100%;
         margin-bottom: 3rem;
-        /* REQUIRED for @container queries on product cards to work */
-        container-type: inline-size; 
+        container-type: inline-size;
     }
 
     /* --- 5. FEATURES ROW --- */
@@ -222,7 +296,9 @@
             }
         }
     }
-} /* END OF .home */
+}
+
+/* END OF .home */
 
 /* =========================================
    INDIVIDUAL CARDS (OUTSIDE .home)
@@ -409,8 +485,8 @@
 }
 
 .category-card {
-   width: 100%;
-    height: 100%; 
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     background-color: white;
@@ -419,7 +495,6 @@
     overflow: hidden;
     transition: box-shadow 0.3s ease;
     margin: 0 auto;
-
 
     &:hover {
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -441,13 +516,11 @@
         }
     }
 
-    /* FIX: Targeted .card-img instead of .card-header */
     &:hover .card-img img {
         transform: scale(1.05);
     }
 
     @media (hover: none) {
-        /* FIX: Targeted .card-img instead of .card-header */
         &:hover .card-img img {
             transform: none;
         }

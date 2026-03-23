@@ -7,6 +7,7 @@ import { userApi } from "./api/userApi";
 import { productApi } from "./api/productApi";
 import { orderApi } from "./api/orderApi";
 import { dashboardApi } from "./api/dashboardApi";
+import { bannerApi } from "./api/bannerApi";
 
 export const server = process.env.NEXT_PUBLIC_SERVER_URL;
 
@@ -39,6 +40,7 @@ export const store = configureStore({
     [userReducer.name]: userReducer.reducer,
     cartReducer: persistedCartReducer,
     [orderApi.reducerPath]: orderApi.reducer,
+    [bannerApi.reducerPath]: bannerApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -50,6 +52,7 @@ export const store = configureStore({
       productApi.middleware,
       orderApi.middleware,
       dashboardApi.middleware,
+      bannerApi.middleware,
     ),
 });
 

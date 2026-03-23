@@ -2,6 +2,7 @@ import express from "express";
 import userRoute from "./routes/user.js";
 import productRoute from "./routes/products.js";
 import orderRoute from "./routes/order.js";
+import bannerRoute from './routes/banner.js';
 import { config } from "dotenv";
 import { connectDB } from "./utils/features.js";
 import { errorMiddleware } from "./middleware/error.js";
@@ -39,6 +40,7 @@ app.use("/api/v1/product", productRoute);
 app.use("/api/v1/order", orderRoute);
 app.use("/api/v1/payment", paymentRoute);
 app.use("/api/v1/dashboard", dashboardRoute);
+app.use("/api/v1/banner", bannerRoute);
 
 app.use("/uploads", express.static("uploads"));
 app.use(errorMiddleware);

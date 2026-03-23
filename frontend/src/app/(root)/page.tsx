@@ -1,24 +1,29 @@
 "use client";
-import Link from "next/link";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
-import "swiper/css/pagination";
-import "swiper/css/autoplay";
-import { Autoplay, Pagination, Navigation } from "swiper/modules";
-import ProductCard from "@/components/layout/ProductCard";
-import CategoryCard from "@/components/layout/CategoryCard";
-import toast from "react-hot-toast";
-import { useLatestProductsQuery, useCategoriesImageQuery } from "@/redux/api/productApi";
 import { Skeleton } from "@/components/admin/Loader";
-import { CartItem } from "@/types/types";
-import { useDispatch } from "react-redux";
+import CategoryCard from "@/components/layout/CategoryCard";
+import ProductCard from "@/components/layout/ProductCard";
+import { useGetBannersQuery } from "@/redux/api/bannerApi";
+import {
+  useCategoriesImageQuery,
+  useLatestProductsQuery,
+} from "@/redux/api/productApi";
 import { addToCart } from "@/redux/reducer/cartReducer";
-import { AppDispatch } from "@/redux/store";
+import { AppDispatch, server } from "@/redux/store";
+import { CartItem } from "@/types/types";
+import Link from "next/link";
 import { useEffect } from "react";
-import { FaShippingFast, FaLock, FaUndo } from "react-icons/fa";
+import toast from "react-hot-toast";
+import { FaLock, FaShippingFast, FaUndo } from "react-icons/fa";
+import { useDispatch } from "react-redux";
+import "swiper/css";
+import "swiper/css/autoplay";
 import "swiper/css/navigation";
+import "swiper/css/pagination";
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
 
-const banners = [
+// Fallback banners if none in DB
+const FALLBACK_BANNERS = [
   "/assets/images/cover.jpg",
   "/assets/images/cover1.jpg",
   "/assets/images/cover2.jpg",
@@ -26,7 +31,12 @@ const banners = [
 ];
 
 export default function Home() {
-  // FIX: separate queries for products and categories
+  // Banner queries
+  const { data: heroBannerData } = useGetBannersQuery("hero");
+  const { data: promoBannerData } = useGetBannersQuery("promo");
+  const { data: bottomBannerData } = useGetBannersQuery("bottom");
+
+  // Product + category queries
   const {
     data: productData,
     isLoading: productLoading,
@@ -41,7 +51,6 @@ export default function Home() {
 
   const dispatch = useDispatch<AppDispatch>();
 
-  // FIX: toast in useEffect, not during render
   useEffect(() => {
     if (productError) toast.error("Cannot fetch products");
     if (categoryError) toast.error("Cannot fetch categories");
@@ -53,50 +62,67 @@ export default function Home() {
     toast.success("Added to Cart");
   };
 
+  // Build hero banner URLs — fallback to local images if DB is empty
+  const heroUrls =
+    heroBannerData?.banners && heroBannerData.banners.length > 0
+      ? heroBannerData.banners.map((b) =>
+          b.image.startsWith("http") ? b.image : `${server}/${b.image}`
+        )
+      : FALLBACK_BANNERS;
+
+  const promoBanner = promoBannerData?.banners[0];
+  const bottomBanner = bottomBannerData?.banners[0];
+
+  const buildImgUrl = (path: string) =>
+    path.startsWith("http") ? path : `${server}/${path}`;
+
   return (
     <div className="home">
-      {/* Hero Banner */}
+
+      {/* ── Hero Banner ── */}
       <section className="hero">
         <Swiper
           modules={[Autoplay, Pagination]}
           spaceBetween={0}
           slidesPerView={1}
-          loop={true}
+          loop={heroUrls.length > 1}
           autoplay={{ delay: 2500, disableOnInteraction: false }}
           pagination={{ clickable: true }}
           className="hero-swiper"
         >
-          {banners.map((src) => (
+          {heroUrls.map((src) => (
             <SwiperSlide key={src}>
               <img src={src} alt="banner" />
             </SwiperSlide>
           ))}
         </Swiper>
 
-        <div className="hero-content">
+        {/* <div className="hero-content">
           <h1>Tech that Defines You.</h1>
           <p>
-            Upgrade your lifestyle with the latest gadgets. <br />
+            Upgrade your lifestyle with the latest gadgets.
+            <br />
             Best prices, genuine quality.
           </p>
           <Link href="/search" className="hero-btn">
             Shop Now
           </Link>
-        </div>
+        </div> */}
       </section>
 
-      {/* Categories */}
-      {/* Categories */}
+      {/* ── Categories ── */}
       <section className="category-section">
         <h1>POPULAR CATEGORIES</h1>
         {categoryLoading ? (
           <Skeleton width="80vw" length={4} />
+        ) : !categoryData?.categories.length ? (
+          <p className="empty-state">No categories found.</p>
         ) : (
           <Swiper
             modules={[Autoplay, Navigation]}
             spaceBetween={20}
             slidesPerView={2}
-            loop={(categoryData?.categories.length ?? 0) > 2}
+            loop={(categoryData.categories.length ?? 0) > 2}
             autoplay={{ delay: 2500, disableOnInteraction: false }}
             navigation
             breakpoints={{
@@ -107,8 +133,7 @@ export default function Home() {
             }}
             className="cat-swiper"
           >
-            {/* FIX: Removed the <main> tag here! */}
-            {categoryData?.categories.map((i) => (
+            {categoryData.categories.map((i) => (
               <SwiperSlide key={i.category}>
                 <CategoryCard name={i.category} photo={i.image} />
               </SwiperSlide>
@@ -117,7 +142,14 @@ export default function Home() {
         )}
       </section>
 
-      {/* Latest Products */}
+      {/* ── Promo Banner ── */}
+      {promoBanner && (
+        <div className="promo-banner">
+          <img src={buildImgUrl(promoBanner.image)} alt="Promotion" />
+        </div>
+      )}
+
+      {/* ── Latest Products ── */}
       <h1>
         Latest Products
         <Link href="/search" className="findmore">
@@ -125,13 +157,19 @@ export default function Home() {
         </Link>
       </h1>
 
+      <div className="promo-text">
+        <h2>Power Up for Less – Limited Time Deals!</h2>
+      </div>
+
       {productLoading ? (
         <Skeleton width="80vw" length={3} />
       ) : productError ? (
-        <p>Something went wrong. Please try again later.</p>
+        <p className="empty-state">Something went wrong. Please try again later.</p>
+      ) : !productData?.products.length ? (
+        <p className="empty-state">No products available right now.</p>
       ) : (
         <main>
-          {productData?.products.map((i) => (
+          {productData.products.map((i) => (
             <ProductCard
               key={i._id}
               productId={i._id}
@@ -145,7 +183,14 @@ export default function Home() {
         </main>
       )}
 
-      {/* Features Row */}
+      {/* ── Bottom Banner ── */}
+      {bottomBanner && (
+        <div className="bottom-banner">
+          <img src={buildImgUrl(bottomBanner.image)} alt="Promotion" />
+        </div>
+      )}
+
+      {/* ── Features Row ── */}
       <section className="features">
         <div className="feature-item">
           <FaShippingFast />
@@ -169,6 +214,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
     </div>
   );
 }
