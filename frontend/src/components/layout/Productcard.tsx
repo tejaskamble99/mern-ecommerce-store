@@ -1,5 +1,6 @@
 import { server } from "@/redux/store";
 import { CartItem } from "@/types/types";
+import Link from "next/link";
 
 type ProdctsProps = {
   productId: string;
@@ -21,6 +22,7 @@ export default function ProductCard({
   const isOutOfStock = stock < 1;
   return (
     <div className="productcard">
+      <Link href={`/product/${productId}`}>
       <div className="card-header">
         <img src={`${server}/${photo}`} alt={name} />
       </div>
@@ -37,6 +39,7 @@ export default function ProductCard({
           </p>
         </div>
       </div>
+      </Link>
 
       <div className="card-footer">
         <button
