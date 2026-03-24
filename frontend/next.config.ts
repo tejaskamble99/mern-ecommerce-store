@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
     silenceDeprecations: ["legacy-js-api", "import"],
   },
   images: {
+    
+    unoptimized: process.env.NODE_ENV === "development",
     remotePatterns: [
       { protocol: "https", hostname: "encrypted-tbn0.gstatic.com" },
       { protocol: "https", hostname: "m.media-amazon.com" },

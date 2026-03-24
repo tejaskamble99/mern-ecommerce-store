@@ -1,16 +1,21 @@
 "use client";
 
-import { useProductDetailsQuery, useLatestProductsQuery } from "@/redux/api/productApi";
+import {
+  useProductDetailsQuery,
+  useLatestProductsQuery,
+} from "@/redux/api/productApi";
 import { addToCart } from "@/redux/reducer/cartReducer";
 import { AppDispatch, server } from "@/redux/store";
 import { CartItem } from "@/types/types";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { FaMinus, FaPlus, FaShoppingCart, FaTag, FaBox } from "react-icons/fa";
+import { FaMinus, FaPlus, FaShoppingCart, FaTag, FaStar } from "react-icons/fa";
 import { useDispatch } from "react-redux";
 import { Skeleton } from "@/components/admin/Loader";
 import ProductCard from "@/components/layout/ProductCard";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function ProductPage() {
   const params = useParams();
@@ -27,6 +32,7 @@ export default function ProductPage() {
   const { data: latestData } = useLatestProductsQuery();
 
   const [quantity, setQuantity] = useState(1);
+  const [activeThumb, setActiveThumb] = useState(0);
 
   useEffect(() => {
     if (isError) {
@@ -35,13 +41,16 @@ export default function ProductPage() {
     }
   }, [isError, router]);
 
-  // Reset quantity when product changes
   useEffect(() => {
     setQuantity(1);
+    setActiveThumb(0);
   }, [id]);
 
   const product = data?.product;
   const isOutOfStock = (product?.stock ?? 0) < 1;
+
+  const buildImgUrl = (path: string) =>
+    path?.startsWith("http") ? path : `${server}/${path}`;
 
   const incrementQty = () => {
     if (!product) return;
@@ -57,24 +66,18 @@ export default function ProductPage() {
   const addToCartHandler = () => {
     if (!product) return;
     if (isOutOfStock) return toast.error("Out of Stock");
-
-    const cartItem: CartItem = {
-      productId: product._id,
-      photo: product.photo,
-      name: product.name,
-      price: product.price,
-      quantity,
-      stock: product.stock,
-    };
-
-    dispatch(addToCart(cartItem));
+    dispatch(
+      addToCart({
+        productId: product._id,
+        photo: product.photo,
+        name: product.name,
+        price: product.price,
+        quantity,
+        stock: product.stock,
+      }),
+    );
     toast.success("Added to Cart");
   };
-
-  // Related products — same category, exclude current
-  const relatedProducts = latestData?.products.filter(
-    (p) => p.category === product?.category && p._id !== product?._id
-  );
 
   const addRelatedToCart = (cartItem: CartItem) => {
     if (cartItem.stock < 1) return toast.error("Out of Stock");
@@ -82,40 +85,86 @@ export default function ProductPage() {
     toast.success("Added to Cart");
   };
 
-  const buildImgUrl = (path: string) =>
-    path?.startsWith("http") ? path : `${server}/${path}`;
+  const relatedProducts = latestData?.products.filter(
+    (p) => p.category === product?.category && p._id !== product?._id,
+  );
 
   if (isLoading) {
     return (
       <div className="product-page">
-        <Skeleton length={8} />
+        <Skeleton length={10} />
       </div>
     );
   }
 
   if (!product) return null;
 
+  const imgUrl = buildImgUrl(product.photo);
+
   return (
     <div className="product-page">
+      <nav className="product-breadcrumb">
+        <Link href="/">Home</Link>
+        <span>/</span>
+        <Link href={`/search?category=${product.category}`}>
+          {product.category}
+        </Link>
+        <span>/</span>
+        <span>{product.name}</span>
+      </nav>
 
-      {/* ── Main Product Section ── */}
       <section className="product-detail">
-
-        {/* Left — Image */}
-        <div className="product-image">
-          <img src={buildImgUrl(product.photo)} alt={product.name} />
-        </div>
-
-        {/* Right — Info */}
-        <div className="product-info">
-
-          <div className="product-category">
-            <FaTag />
-            <span>{product.category}</span>
+        {/* LEFT — Image Gallery */}
+        <div className="product-gallery">
+          <div className="gallery-main">
+            <Image
+              src={imgUrl}
+              alt={product.name}
+              width={500}
+              height={500}
+              style={{ objectFit: "cover", width: "100%", height: "100%" }}
+              priority
+            />
           </div>
 
-          <h1>{product.name}</h1>
+          <div className="gallery-thumbs">
+            {[imgUrl, imgUrl, imgUrl].map((src, i) => (
+              <button
+                key={i}
+                className={`thumb ${activeThumb === i ? "active" : ""}`}
+                onClick={() => setActiveThumb(i)}
+              >
+                <Image
+                  src={src}
+                  alt={`view ${i + 1}`}
+                  width={100}
+                  height={100}
+                  style={{ objectFit: "cover", width: "100%", height: "100%" }}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
 
+        <div className="product-info">
+          <div className="product-tags">
+            <span className="tag category">
+              <FaTag /> {product.category}
+            </span>
+            {!isOutOfStock && <span className="tag new">New Arrival</span>}
+          </div>
+
+          <h1 className="product-name">{product.name}</h1>
+
+          <div className="product-rating">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <FaStar key={s} className={s <= 4 ? "filled" : "empty"} />
+            ))}
+            <span>4.0</span>
+            <span className="review-count">· 120 reviews</span>
+          </div>
+
+          
           <p className="product-price">
             {product.price.toLocaleString("en-IN", {
               style: "currency",
@@ -123,28 +172,26 @@ export default function ProductPage() {
               maximumFractionDigits: 0,
             })}
           </p>
+          <h5>Inclusive of all taxes</h5>
 
-          <div className={`product-stock ${isOutOfStock ? "out" : "in"}`}>
-            <FaBox />
-            <span>{isOutOfStock ? "Out of Stock" : `${product.stock} in stock`}</span>
-          </div>
-
-          <p className="product-description">{product.description}</p>
-
-          {/* Quantity Selector */}
           {!isOutOfStock && (
-            <div className="product-qty">
-              <button onClick={decrementQty} disabled={quantity <= 1}>
-                <FaMinus />
-              </button>
-              <span>{quantity}</span>
-              <button onClick={incrementQty} disabled={quantity >= product.stock}>
-                <FaPlus />
-              </button>
+            <div className="product-qty-row">
+              <span>Quantity</span>
+              <div className="product-qty">
+                <button onClick={decrementQty} disabled={quantity <= 1}>
+                  <FaMinus />
+                </button>
+                <span>{quantity}</span>
+                <button
+                  onClick={incrementQty}
+                  disabled={quantity >= product.stock}
+                >
+                  <FaPlus />
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Add to Cart */}
           <button
             className={`product-add-btn ${isOutOfStock ? "disabled" : ""}`}
             onClick={addToCartHandler}
@@ -153,14 +200,26 @@ export default function ProductPage() {
             <FaShoppingCart />
             {isOutOfStock ? "Out of Stock" : "Add to Cart"}
           </button>
-
         </div>
       </section>
+      <div className="product-detail-divider">
+        <p>{product.description}</p>
+      </div>
 
-      {/* ── Related Products ── */}
       {relatedProducts && relatedProducts.length > 0 && (
         <section className="related-products">
-          <h2>Related Products</h2>
+          <div className="related-header">
+            <div>
+              <h2>You May Like</h2>
+              <p>More products from the same category</p>
+            </div>
+            <Link
+              href={`/search?category=${product.category}`}
+              className="view-more-btn"
+            >
+              View More
+            </Link>
+          </div>
           <div className="related-grid">
             {relatedProducts.slice(0, 4).map((i) => (
               <ProductCard
@@ -176,7 +235,6 @@ export default function ProductPage() {
           </div>
         </section>
       )}
-
     </div>
   );
 }
