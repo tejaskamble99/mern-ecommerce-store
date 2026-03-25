@@ -18,8 +18,8 @@ const Dashboard = () => {
   const { user } = useSelector((state: RootState) => state.userReducer);
 
   const { isLoading, data, error, isError } = useStatsQuery(user?._id!, {
-  skip: !user?._id,
-});
+    skip: !user?._id,
+  });
 
   const stats = data?.stats!;
 
@@ -51,6 +51,10 @@ const Dashboard = () => {
             "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"
           }
           alt={user?.name || "Admin"}
+          onError={(e) => {
+            e.currentTarget.src =
+              "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
+          }}
         />
       </div>
 

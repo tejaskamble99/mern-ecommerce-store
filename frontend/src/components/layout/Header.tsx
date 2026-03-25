@@ -140,6 +140,15 @@ export default function Header() {
                   </Link>
                 )}
                 <Link
+                  href="/profile"
+                  onClick={() => {
+                    setIsOpen(false);
+                    closeMobileMenu();
+                  }}
+                >
+                  Profile
+                </Link>
+                <Link
                   href="/orders"
                   onClick={() => {
                     setIsOpen(false);
