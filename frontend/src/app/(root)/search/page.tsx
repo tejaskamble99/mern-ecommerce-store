@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import ProductCard from "./../../../components/layout/ProductCard";
 import {
   useCategoriesQuery,
@@ -12,19 +12,36 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { CartItem } from "@/types/types";
 import { addToCart } from "@/redux/reducer/cartReducer";
+import { useSearchParams } from "next/navigation";
 
-export default function Search() {
+function SearchContent() {
+
+  const searchParams = useSearchParams();
+
+  
+  const [sort, setSort] = useState("");
+  const [maxPrice, setMaxPrice] = useState(200000);
+  const [category, setCategory] = useState(
+    searchParams.get("category") ?? ""
+  );
+  const [search, setSearch] = useState(
+    searchParams.get("search") ?? ""
+  );
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    setCategory(searchParams.get("category") ?? "");
+    setSearch(searchParams.get("search") ?? "");
+    setPage(1);
+  }, [searchParams]);
+
+
   const {
-    data: categoriesResponce,
+    data: categoriesResponse,
     isLoading: loadingCategories,
     isError,
     error,
   } = useCategoriesQuery();
-  const [sort, setSort] = useState("");
-  const [maxPrice, setMaxPrice] = useState(200000);
-  const [category, setCategory] = useState("");
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
 
   const {
     isLoading: productLoading,
@@ -40,6 +57,7 @@ export default function Search() {
   });
 
   const dispatch = useDispatch<AppDispatch>();
+
   const addToCartHandler = (cartItem: CartItem) => {
     if (cartItem.stock < 1) return toast.error("Out of Stock");
 
@@ -68,8 +86,10 @@ export default function Search() {
     <div className="search-page">
       <aside>
         <h2>Filters</h2>
+
         <div>
           <h4>Sort</h4>
+
           <select
             value={sort}
             onChange={(e) => {
@@ -108,7 +128,7 @@ export default function Search() {
           >
             <option value="">All</option>
             {!loadingCategories &&
-              categoriesResponce?.categories.map((i) => (
+              categoriesResponse?.categories.map((i) => (
                 <option key={i} value={i}>
                   {i.toUpperCase()}
                 </option>
@@ -166,5 +186,13 @@ export default function Search() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function Search() {
+  return (
+    <Suspense fallback={<Skeleton />}>
+      <SearchContent />
+    </Suspense>
   );
 }

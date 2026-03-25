@@ -18,14 +18,14 @@ export const responseToast = (
   router: AppRouterInstance | null,
   url: string,
 ) => {
-    if("data" in res) {
-      toast.success(res.data.message);
-      if (router) router.push(url);
-    } else{
-        const error = res.error as FetchBaseQueryError ;
-        const messageResponse = error.data as MessageResponse;
-        toast.error(messageResponse.message);
-    }
+  if ("data" in res) {
+    toast.success(res.data.message);
+    if (router) setTimeout(() => router.push(url), 100); // 👈 small delay
+  } else {
+    const error = res.error as FetchBaseQueryError;
+    const messageResponse = error.data as MessageResponse;
+    toast.error(messageResponse.message);
+  }
 };
 
 export const getLastMonths = () => {

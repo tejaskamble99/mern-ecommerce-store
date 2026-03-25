@@ -25,6 +25,7 @@ const storage =
 const cartPersistConfig = {
   key: "cart",
   storage,
+  version: 1,
 };
 
 const persistedCartReducer = persistReducer(

@@ -92,30 +92,12 @@ export default function Header() {
 
       {/* Center nav links — desktop */}
       <nav className={`header-nav ${isMobileMenuOpen ? "is-open" : ""}`}>
-        <Link href="/search" onClick={closeMobileMenu}>
-          Products
-        </Link>
-        <Link href="/search?category=connector" onClick={closeMobileMenu}>
-          Connector
-        </Link>
-        <Link href="/search?category=charger" onClick={closeMobileMenu}>
-          Charger
-        </Link>
-        <Link
-          href="/search?category=bluetooth-headset"
-          onClick={closeMobileMenu}
-        >
-          Bluetooth Headset
-        </Link>
-        <Link href="/search?category=tws" onClick={closeMobileMenu}>
-          TWS
-        </Link>
-        <Link href="/search?category=power-bank" onClick={closeMobileMenu}>
-          Power Bank
-        </Link>
-        <Link href="/search?category=hands-free" onClick={closeMobileMenu}>
-          Hands-Free
-        </Link>
+        <Link href="/search?category=connector">Connector</Link>
+        <Link href="/search?category=charger">Charger</Link>
+        <Link href="/search?category=bluetooth-headset">Bluetooth Headset</Link>
+        <Link href="/search?category=tws">TWS</Link>
+        <Link href="/search?category=power-bank">Power Bank</Link>
+        <Link href="/search?category=hands-free">Hands-Free</Link>
       </nav>
 
       {/* Right actions — icons */}
