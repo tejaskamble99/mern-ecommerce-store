@@ -6,17 +6,21 @@ import { Skeleton } from "@/components/admin/Loader";
 import { useStatsQuery } from "@/redux/api/dashboardApi";
 import { RootState } from "@/redux/store";
 import { CustomError } from "@/types/api-types";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { BiMaleFemale } from "react-icons/bi";
 import { BsSearch } from "react-icons/bs";
 import { FaRegBell } from "react-icons/fa";
 import { HiTrendingDown, HiTrendingUp } from "react-icons/hi";
 import { useSelector } from "react-redux";
+import Image from "next/image";
+
+const fallback =
+  "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
 
 const Dashboard = () => {
   const { user } = useSelector((state: RootState) => state.userReducer);
-
+  const [src, setSrc] = useState(user?.photo || fallback);
   const { isLoading, data, error, isError } = useStatsQuery(user?._id!, {
     skip: !user?._id,
   });
@@ -45,16 +49,14 @@ const Dashboard = () => {
         <BsSearch />
         <input type="text" placeholder="Search for data, users, docs" />
         <FaRegBell />
-        <img
-          src={
-            user?.photo ||
-            "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg"
-          }
-          alt={user?.name || "Admin"}
-          onError={(e) => {
-            e.currentTarget.src =
-              "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
-          }}
+        <Image
+          src={src}
+          alt={user?.name || "User"}
+          width={40}
+          height={40}
+          className="w-10 h-10 rounded-full object-cover"
+          onError={() => setSrc(fallback)}
+          priority
         />
       </div>
 

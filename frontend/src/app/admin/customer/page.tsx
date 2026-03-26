@@ -3,11 +3,12 @@ import { useAllUsersQuery, useDeleteUserMutation } from "@/redux/api/userApi";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import toast from "react-hot-toast";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CustomError } from "@/types/api-types";
 import { ColumnDef } from "@tanstack/react-table";
 import { FaTrash } from "react-icons/fa";
 import TableHOC from "@/components/admin/TableHOC";
+import Image from "next/image";
 
 
 
@@ -19,10 +20,10 @@ interface DataType {
   role: string;
   action: string; 
 }
+const fallback = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
 
 export default function Customers() {
   const { user } = useSelector((state: RootState) => state.userReducer);
-
   const { data, isLoading, isError, error } = useAllUsersQuery(user?._id!, {
     skip: !user?._id,
   });
@@ -50,9 +51,12 @@ export default function Customers() {
   const rows = useMemo<DataType[]>(
   () =>
     data?.users?.map((u) => {
-      const avatar = u.photo?.startsWith("http")
-        ? u.photo
-        : `${process.env.NEXT_PUBLIC_SERVER_URL}/${u.photo}`;
+      const avatar = u.photo
+        ? u.photo.startsWith("http")
+          ? u.photo
+          : `${process.env.NEXT_PUBLIC_SERVER_URL}/${u.photo}`
+        : fallback;
+
       return {
         avatar,
         name: u.name,
@@ -69,17 +73,18 @@ export default function Customers() {
   const columns: ColumnDef<DataType>[] = [
     {
       header: "Avatar",
-      accessorKey: "avatar",
-      cell: (info) => (
-        <img
-          style={{
-            borderRadius: "50%",
-            width: "40px",
-            height: "40px",
-          }}
-          src={info.getValue() as string}
-          alt="User Avatar"
-        />
+    accessorKey: "avatar",
+    cell: ({ row }) => (
+      <Image
+        src={row.original.avatar || fallback}
+        alt={row.original.name}
+        width={40}
+        height={40}
+        style={{
+          borderRadius: "50%",
+          objectFit: "cover",
+        }}
+      />
       ),
     },
     {

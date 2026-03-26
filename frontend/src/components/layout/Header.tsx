@@ -140,7 +140,7 @@ export default function Header() {
                   </Link>
                 )}
                 <Link
-                  href="/profile"
+                  href="/dashboard"
                   onClick={() => {
                     setIsOpen(false);
                     closeMobileMenu();
