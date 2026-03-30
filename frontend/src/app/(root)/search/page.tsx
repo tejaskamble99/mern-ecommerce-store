@@ -15,26 +15,13 @@ import { addToCart } from "@/redux/reducer/cartReducer";
 import { useSearchParams } from "next/navigation";
 
 function SearchContent() {
-
   const searchParams = useSearchParams();
 
-  
   const [sort, setSort] = useState("");
   const [maxPrice, setMaxPrice] = useState(200000);
-  const [category, setCategory] = useState(
-    searchParams.get("category") ?? ""
-  );
-  const [search, setSearch] = useState(
-    searchParams.get("search") ?? ""
-  );
+  const [category, setCategory] = useState(searchParams.get("category") ?? "");
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    setCategory(searchParams.get("category") ?? "");
-    setSearch(searchParams.get("search") ?? "");
-    setPage(1);
-  }, [searchParams]);
-
 
   const {
     data: categoriesResponse,
@@ -72,7 +59,7 @@ function SearchContent() {
   useEffect(() => {
     if (isError) {
       const err = error as CustomError;
-      toast.error(err.data.message);
+      toast.error(err?.data?.message || "Something went wrong");
     }
   }, [isError, error]);
   useEffect(() => {

@@ -25,9 +25,9 @@ export default function ProductPage() {
   const rawId = params.id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
-  const { data, isLoading, isError } = useProductDetailsQuery(id!, {
-    skip: !id,
-  });
+ const { data, isLoading, isError } = useProductDetailsQuery(id ?? "", {
+  skip: !id,
+});
 
   const { data: latestData } = useLatestProductsQuery();
 
@@ -41,16 +41,12 @@ export default function ProductPage() {
     }
   }, [isError, router]);
 
-  useEffect(() => {
-    setQuantity(1);
-    setActiveThumb(0);
-  }, [id]);
 
   const product = data?.product;
   const isOutOfStock = (product?.stock ?? 0) < 1;
 
-  const buildImgUrl = (path: string) =>
-    path?.startsWith("http") ? path : `${server}/${path}`;
+  const buildImgUrl = (path?: string) =>
+  path && path.startsWith("http") ? path : `${server}/${path}`;
 
   const incrementQty = () => {
     if (!product) return;
@@ -85,9 +81,10 @@ export default function ProductPage() {
     toast.success("Added to Cart");
   };
 
-  const relatedProducts = latestData?.products.filter(
-    (p) => p.category === product?.category && p._id !== product?._id,
-  );
+  const relatedProducts =
+  latestData?.products?.filter(
+    (p) => p.category === product?.category && p._id !== product?._id
+  ) ?? [];
 
   if (isLoading) {
     return (
@@ -102,7 +99,7 @@ export default function ProductPage() {
   const imgUrl = buildImgUrl(product.photo);
 
   return (
-    <div className="product-page">
+    <div key={id} className="product-page">
       <nav className="product-breadcrumb">
         <Link href="/">Home</Link>
         <span>/</span>

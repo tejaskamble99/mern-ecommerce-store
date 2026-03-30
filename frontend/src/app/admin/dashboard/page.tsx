@@ -21,16 +21,17 @@ const fallback =
 const Dashboard = () => {
   const { user } = useSelector((state: RootState) => state.userReducer);
   const [src, setSrc] = useState(user?.photo || fallback);
-  const { isLoading, data, error, isError } = useStatsQuery(user?._id!, {
-    skip: !user?._id,
-  });
 
-  const stats = data?.stats!;
+  const userId = user?._id;
+
+  const { isLoading, data, error, isError } = useStatsQuery(userId ?? "", {
+    skip: !userId,
+  });
 
   useEffect(() => {
     if (isError) {
       const err = error as CustomError;
-      toast.error(err.data.message);
+      toast.error(err?.data?.message || "Something went wrong");
     }
   }, [isError, error]);
 
@@ -41,6 +42,8 @@ const Dashboard = () => {
       </main>
     );
   }
+
+  const stats = data.stats;
 
   return (
     <main className="dashboard">

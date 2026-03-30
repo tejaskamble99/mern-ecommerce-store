@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { FaShoppingBag, FaRupeeSign, FaHeart } from "react-icons/fa";
+import { Skeleton } from "@/components/admin/Loader";
 
 const fallback =
   "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
@@ -33,13 +34,15 @@ const Dashboard = () => {
   const { user } = useSelector((state: RootState) => state.userReducer);
   const [src, setSrc] = useState(user?.photo || fallback);
 
-  const { data: ordersData } = useMyOrderQuery(user?._id!, {
-    skip: !user?._id,
-  });
+  const userId = user?._id;
+
+  const { data: ordersData, isLoading } = useMyOrderQuery(userId ?? "", {
+  skip: !userId,
+});
 
   const orders = ordersData?.orders ?? [];
 
-  // Orders in last 30 days
+  
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const recentOrders = orders.filter(
@@ -52,6 +55,7 @@ const Dashboard = () => {
     (o) => o.status === "Processing" || o.status === "Shipped",
   ).length;
 
+  if (isLoading) return <Skeleton width="100%" length={20} />;
   return (
     <main className="user-dashboard">
       <div className="user-profile">
@@ -106,6 +110,7 @@ const Dashboard = () => {
             <tbody>
               {orders.map((o) => {
                 const item = o.orderItems[0];
+                if (!item) return null;
                 const image = item.photo?.startsWith("http")
                   ? item.photo
                   : `${server}/${item.photo.replace(/\\/g, "/")}`;
@@ -120,14 +125,14 @@ const Dashboard = () => {
                         height={40}
                         style={{ borderRadius: "50%", objectFit: "cover" }}
                       />
-                      {item.name.split("|")[0]}
+                      <p className="product-name">{item.name.split("|")[0]}</p>
                     </td>
                     <td data-label="Date">
                       {o.createdAt
                         ? new Date(o.createdAt).toLocaleDateString("en-IN")
                         : "-"}
                     </td>
-                    <td data-label="Amount">{o.total}</td>
+                    <td data-label="Amount">₹{o.total.toLocaleString("en-IN")}</td>
                     <td data-label="Status">{o.status}</td>
                   </tr>
                 );

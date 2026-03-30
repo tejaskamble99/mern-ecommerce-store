@@ -14,16 +14,20 @@ import {
 import { RootState } from "@/redux/store";
 import { responseToast } from "@/utils/features";
 import { server } from "@/redux/store";
+import Image from "next/image";
 
 const ProductManagement = () => {
   const { user } = useSelector((state: RootState) => state.userReducer);
 
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const userId = user?._id;
+  const productId = params?.id;
 
-  const { data, isLoading, isError } = useProductDetailsQuery(params.id!);
+  const { data, isLoading, isError } = useProductDetailsQuery(productId ?? "", {
+    skip: !productId,
+  });
 
-  // FIX: photo is now a string, not an object array
   const { price, photo, name, stock, category, description } =
     data?.product || {
       photo: "",
@@ -45,7 +49,6 @@ const ProductManagement = () => {
   const [updateProduct] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
 
- 
   const photoFile = useFileHandler("single", 10);
 
   const submitHandler = async (e: FormEvent<HTMLFormElement>) => {
@@ -68,8 +71,8 @@ const ProductManagement = () => {
 
       const res = await updateProduct({
         formData,
-        userId: user?._id!,
-        productId: data?.product._id!,
+        userId: userId ?? "",
+        productId: productId ?? "",
       });
 
       responseToast(res, router, "/admin/product");
@@ -84,8 +87,8 @@ const ProductManagement = () => {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
     const res = await deleteProduct({
-      userId: user?._id!,
-      productId: data?.product._id!,
+      userId: user?._id ?? "",
+      productId: data?.product?._id ?? "",
     });
     responseToast(res, router, "/admin/product");
   };
@@ -105,99 +108,107 @@ const ProductManagement = () => {
 
   return (
     <main className="product-management">
-     {
-      isLoading? <Skeleton length={20} />:
-      <>
-       <section>
-        <strong>ID - {data?.product._id}</strong>
-        {photo && <img src={`${server}/${photo}`} alt={name} />}
-        <p>{name}</p>
-        {stock > 0 ? (
-          <span className="green">{stock} Available</span>
-        ) : (
-          <span className="red">Not Available</span>
-        )}
-        <h3>₹{price.toLocaleString("en-IN")}</h3>
-      </section>
+      {isLoading ? (
+        <Skeleton length={20} />
+      ) : (
+        <>
+          <section>
+            <strong>ID - {data?.product._id}</strong>
+            {photo && (
+              <Image
+                src={`${server}/${photo}`}
+                alt={name}
+                width={200}
+                height={200}
+              />
+            )}
+            <p>{name}</p>
+            {stock > 0 ? (
+              <span className="green">{stock} Available</span>
+            ) : (
+              <span className="red">Not Available</span>
+            )}
+            <h3>₹{price.toLocaleString("en-IN")}</h3>
+          </section>
 
-      <article>
-        <button className="product-delete-btn" onClick={deleteHandler}>
-          <FaTrash />
-        </button>
-        <form onSubmit={submitHandler}>
-          <h2>Manage</h2>
-          <div>
-            <label>Name</label>
-            <input
-              type="text"
-              placeholder="Name"
-              value={nameUpdate}
-              onChange={(e) => setNameUpdate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label>Description</label>
-            <textarea
-              required
-              placeholder="Description"
-              value={descriptionUpdate}
-              onChange={(e) => setDescriptionUpdate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label>Price</label>
-            <input
-              type="number"
-              placeholder="Price"
-              value={priceUpdate}
-              onChange={(e) => setPriceUpdate(Number(e.target.value))}
-            />
-          </div>
-          <div>
-            <label>Stock</label>
-            <input
-              type="number"
-              placeholder="Stock"
-              value={stockUpdate}
-              onChange={(e) => setStockUpdate(Number(e.target.value))}
-            />
-          </div>
-          <div>
-            <label>Category</label>
-            <input
-              type="text"
-              placeholder="eg. laptop, camera etc"
-              value={categoryUpdate}
-              onChange={(e) => setCategoryUpdate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label>Photo</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={photoFile.changeHandler}
-            />
-          </div>
+          <article>
+            <button className="product-delete-btn" onClick={deleteHandler}>
+              <FaTrash />
+            </button>
+            <form onSubmit={submitHandler}>
+              <h2>Manage</h2>
+              <div>
+                <label>Name</label>
+                <input
+                  type="text"
+                  placeholder="Name"
+                  value={nameUpdate}
+                  onChange={(e) => setNameUpdate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label>Description</label>
+                <textarea
+                  required
+                  placeholder="Description"
+                  value={descriptionUpdate}
+                  onChange={(e) => setDescriptionUpdate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label>Price</label>
+                <input
+                  type="number"
+                  placeholder="Price"
+                  value={priceUpdate}
+                  onChange={(e) => setPriceUpdate(Number(e.target.value))}
+                />
+              </div>
+              <div>
+                <label>Stock</label>
+                <input
+                  type="number"
+                  placeholder="Stock"
+                  value={stockUpdate}
+                  onChange={(e) => setStockUpdate(Number(e.target.value))}
+                />
+              </div>
+              <div>
+                <label>Category</label>
+                <input
+                  type="text"
+                  placeholder="eg. laptop, camera etc"
+                  value={categoryUpdate}
+                  onChange={(e) => setCategoryUpdate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label>Photo</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={photoFile.changeHandler}
+                />
+              </div>
 
-          {photoFile.error && <p>{photoFile.error}</p>}
+              {photoFile.error && <p>{photoFile.error}</p>}
 
-          {photoFile.preview && (
-            <img
-              src={photoFile.preview as string}
-              alt="New Preview"
-              style={{ width: 100, height: 100, objectFit: "cover" }}
-            />
-          )}
+              {photoFile.preview && (
+                <Image
+                  src={photoFile.preview as string}
+                  alt="New Preview"
+                  width={100}
+                  height={100}
+                />
+              )}
 
-          <button disabled={btnLoading} type="submit">
-            {btnLoading ? "Updating..." : "Update"}
-          </button>
-        </form>
-      </article>
-      </>
-      
-     }
+              <button disabled={btnLoading} type="submit">
+                {btnLoading ? "Updating..." : "Update"}
+              </button>
+            </form>
+          </article>
+        </>
+      )}
     </main>
   );
 };

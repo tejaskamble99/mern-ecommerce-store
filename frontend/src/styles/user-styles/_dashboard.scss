@@ -1,5 +1,7 @@
 .user-dashboard {
-  padding: 1.5rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
 
   @media (min-width: 768px) {
     padding: 2rem;
@@ -107,13 +109,14 @@
  
   .card{
   margin: 1rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-radius: 0.75rem;
   padding: 0.2rem 0.5rem;
-  border-radius: 2rem;
+  
 
   .table{
     width: 100%;
     border-collapse: collapse;
+    border-radius: 2rem;
 
     .head{
       background-color:$color2;

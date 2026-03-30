@@ -18,9 +18,11 @@ const Barcharts = () => {
 
     const { user } = useSelector((state: RootState) => state.userReducer);
 
-   const { isLoading, data, error, isError } = useBarQuery(user?._id!, {
-    skip: !user?._id,
-  });
+const userId = user?._id;
+
+const { isLoading, data, error, isError } = useBarQuery(userId ?? "", {
+  skip: !userId,
+});
 
   
 
@@ -32,7 +34,7 @@ const Barcharts = () => {
  useEffect(() => {
     if (isError) {
       const err = error as CustomError;
-      toast.error(err.data.message);
+      toast.error(err?.data?.message || "Something went wrong");
     }
   }, [isError, error]);
 

@@ -16,16 +16,18 @@ const Linecharts = () => {
 
   const { last12Months } = useMemo(() => getLastMonths(), []);
 
-   const { isLoading, data, error, isError } = useLineQuery(user?._id!, {
-    skip: !user?._id,
-  });
+   const userId = user?._id;
+
+const { isLoading, data, error, isError } = useLineQuery(userId ?? "", {
+  skip: !userId,
+});
 
 
 
  useEffect(() => {
     if (isError) {
       const err = error as CustomError;
-      toast.error(err.data.message);
+      toast.error(err?.data?.message || "Something went wrong");
     }
   }, [isError, error]);
 

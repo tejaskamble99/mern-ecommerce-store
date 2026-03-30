@@ -3,12 +3,13 @@ import { useAllUsersQuery, useDeleteUserMutation } from "@/redux/api/userApi";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import toast from "react-hot-toast";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { CustomError } from "@/types/api-types";
 import { ColumnDef } from "@tanstack/react-table";
 import { FaTrash } from "react-icons/fa";
 import TableHOC from "@/components/admin/TableHOC";
 import Image from "next/image";
+import { Skeleton } from "@/components/admin/Loader";
 
 
 
@@ -24,7 +25,9 @@ const fallback = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pf
 
 export default function Customers() {
   const { user } = useSelector((state: RootState) => state.userReducer);
-  const { data, isLoading, isError, error } = useAllUsersQuery(user?._id!, {
+
+  const userId = user?._id;
+  const { data, isLoading, isError, error } = useAllUsersQuery(userId ?? "", {
     skip: !user?._id,
   });
 
@@ -37,16 +40,23 @@ export default function Customers() {
 
   const [deleteUser] = useDeleteUserMutation();
 
-  const deleteHandler = async (userId: string) => {
-    const confirmed = window.confirm("Delete this user?");
-    if (!confirmed) return;
-    try {
-      await deleteUser({ userId, adminUserId: user?._id! }).unwrap();
-      toast.success("User deleted");
-    } catch {
-      toast.error("Failed to delete user");
-    }
-  };
+
+
+  const deleteHandler = async (targetUserId: string) => {
+  const confirmed = window.confirm("Delete this user?");
+  if (!confirmed) return;
+
+  try {
+    await deleteUser({
+      userId: targetUserId,
+      adminUserId: userId ?? "",
+    }).unwrap();
+
+    toast.success("User deleted");
+  } catch {
+    toast.error("Failed to delete user");
+  }
+};
 
   const rows = useMemo<DataType[]>(
   () =>
@@ -123,7 +133,7 @@ export default function Customers() {
     rows.length > 6,
   );
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading) return <Skeleton width="100%" length={20} />;
 
   return (
     <main>

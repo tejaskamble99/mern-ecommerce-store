@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { UserReducerInitialState } from "@/types/reducer-types";
 import { Skeleton } from "@/components/admin/Loader";
+import Image from "next/image";
 
 interface DataType {
   photo: string;
@@ -25,7 +26,14 @@ const columns: ColumnDef<DataType>[] = [
   {
     header: "Photo",
     accessorKey: "photo",
-    cell: (info) => <img src={info.getValue() as string} alt="Product" />,
+    cell: (info) => (
+      <Image
+        src={info.getValue() as string}
+        alt="Product"
+        width={50}
+        height={50}
+      />
+    ),
   },
   {
     header: "Name",
@@ -56,23 +64,29 @@ const columns: ColumnDef<DataType>[] = [
 
 export default function Products() {
   const { user } = useSelector(
-    (state: { userReducer: UserReducerInitialState }) => state.userReducer
+    (state: { userReducer: UserReducerInitialState }) => state.userReducer,
   );
 
-  const { data, isLoading, isError, error } = useAllAdminProductsQuery(user?._id!);
+  const userId = user?._id;
 
-  
+  const { data, isLoading, isError, error } = useAllAdminProductsQuery(
+    userId ?? "",
+    {
+      skip: !userId,
+    },
+  );
+
   const rows = useMemo<DataType[]>(
-  () =>
-    data?.products?.map((i) => ({   
-      photo: `${server}/${i.photo}`,
-      name: i.name,
-      price: i.price,
-      stock: i.stock,
-      _id: i._id,
-    })) ?? [],
-  [data]
-);
+    () =>
+      data?.products?.map((i) => ({
+        photo: `${server}/${i.photo}`,
+        name: i.name,
+        price: i.price,
+        stock: i.stock,
+        _id: i._id,
+      })) ?? [],
+    [data],
+  );
 
   const Table = useMemo(
     () =>
@@ -81,16 +95,15 @@ export default function Products() {
         rows,
         "dashboard-product-box",
         "Products",
-        rows.length > 6
+        rows.length > 6,
       ),
-    [rows]
+    [rows],
   );
 
-  // FIX 1: useEffect above early returns — hooks must never be conditional
   useEffect(() => {
     if (isError) {
       const err = error as CustomError;
-      toast.error(err.data.message);
+      toast.error(err?.data?.message || "Something went wrong");
     }
   }, [isError, error]);
 
@@ -100,7 +113,7 @@ export default function Products() {
   return (
     <>
       <main className="dashboard-product-box">
-       {isLoading ? <Skeleton width = "100%" length = {20}/> : <Table />} 
+        {isLoading ? <Skeleton width="100%" length={20} /> : <Table />}
       </main>
       <Link href="/admin/product/new" className="create-product-btn">
         <FaPlus />

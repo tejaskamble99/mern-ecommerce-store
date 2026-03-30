@@ -16,6 +16,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/firebase";
 import toast from "react-hot-toast";
 import { CartReducerInitialState } from "@/types/reducer-types";
+import Image from "next/image";
 
 export default function Header() {
   const [isMounted, setIsMounted] = useState(false);
@@ -55,10 +56,6 @@ export default function Header() {
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   const logoutHandler = async () => {
     try {
       setIsOpen(false);
@@ -86,7 +83,12 @@ export default function Header() {
       {/* Brand — left */}
       <div className="navbar-brand">
         <Link href="/">
-          <img src="/assets/logo/logo.png" alt="MyStore" />
+          <Image
+            src="/assets/logo/logo.png"
+            alt="MyStore"
+            width={120}
+            height={40}
+          />
         </Link>
       </div>
 
@@ -116,7 +118,7 @@ export default function Header() {
           <span className="mobile-text">Cart</span>
         </Link>
 
-        {isMounted && user?._id ? (
+        {user?._id ? (
           <div className="user-container" ref={dropdownRef}>
             <button
               onClick={() => setIsOpen((prev) => !prev)}

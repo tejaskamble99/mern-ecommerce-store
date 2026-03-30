@@ -54,17 +54,19 @@ const columns: ColumnDef<DataType>[] = [
 
 const Orders = () => {
   const { user } = useSelector(
-    (state: { userReducer: UserReducerInitialState }) => state.userReducer,
-  );
+  (state: { userReducer: UserReducerInitialState }) => state.userReducer
+);
 
-  const { data, isLoading, isError, error } = useMyOrderQuery(user?._id!, {
-    skip: !user?._id,
-  });
+const userId = user?._id;
+
+const { data, isLoading, isError, error } = useMyOrderQuery(userId ?? "", {
+  skip: !userId,
+});
 
   useEffect(() => {
     if (isError) {
       const err = error as CustomError;
-      toast.error(err.data.message);
+      toast.error(err?.data?.message || "Something went wrong");
     }
   }, [isError, error]);
 
@@ -87,7 +89,7 @@ const Orders = () => {
     "Orders",
   );
 
-  if (isLoading) return <p>Loading orders...</p>;
+   
   return (
     <div className="container">
       <h1>My Orders</h1>

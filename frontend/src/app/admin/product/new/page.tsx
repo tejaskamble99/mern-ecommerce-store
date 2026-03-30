@@ -7,6 +7,7 @@ import { useNewProductsMutation } from "@/redux/api/productApi";
 import { responseToast } from "@/utils/features";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 const NewProduct = () => {
   const { user } = useSelector((state: RootState) => state.userReducer);
@@ -52,9 +53,14 @@ const NewProduct = () => {
     formData.set("description", description);
     formData.set("photo", photo);
 
-    const res = await newProduct({ id: user?._id!, formData });
+    const userId = user?._id;
 
-    responseToast(res, router, "/admin/product" );
+    const res = await newProduct({
+      id: userId ?? "",
+      formData,
+    });
+
+    responseToast(res, router, "/admin/product");
   };
   return (
     <main className="product-management">
@@ -117,7 +123,9 @@ const NewProduct = () => {
             <input required type="file" onChange={changeImageHandler} />
           </div>
 
-          {photoPrev && <img src={photoPrev} alt="New Image" />}
+          {photoPrev && (
+            <Image src={photoPrev} alt="New Image" width={150} height={150} />
+          )}
 
           <button type="submit">Create</button>
         </form>

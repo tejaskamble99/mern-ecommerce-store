@@ -13,7 +13,7 @@ import { useState } from "react";
 import { AiOutlineSortAscending, AiOutlineSortDescending } from "react-icons/ai";
 
 function TableHOC<T>(
-  columns: ColumnDef<T, any>[],
+  columns: ColumnDef<T, unknown>[],
   data: T[],
   containerClassname: string,
   heading: string,

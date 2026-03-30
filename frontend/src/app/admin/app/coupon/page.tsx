@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent,useState } from "react";
 
 const allLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 const allNumbers = "1234567890";
@@ -17,8 +17,12 @@ const Coupon = () => {
   const [coupon, setCoupon] = useState<string>("");
 
   const copyText = async (coupon: string) => {
-    await window.navigator.clipboard.writeText(coupon);
+    await navigator.clipboard.writeText(coupon);
     setIsCopied(true);
+
+    setTimeout(() => {
+      setIsCopied(false);
+    }, 2000);
   };
 
   const submitHandler = (e: FormEvent<HTMLFormElement>) => {
@@ -36,78 +40,72 @@ const Coupon = () => {
       if (includeNumbers) entireString += allNumbers;
       if (includeSymbols) entireString += allSymbols;
 
-      const randomNum: number = ~~(Math.random() * entireString.length);
+      const randomNum = Math.floor(Math.random() * entireString.length);
       result += entireString[randomNum];
     }
 
     setCoupon(result);
   };
 
-  useEffect(() => {
-    setIsCopied(false);
-  }, [coupon]);
-
   return (
-    
-      <main className="dashboard-app-container">
-        <h1>Coupon</h1>
-        <section>
-          <form className="coupon-form" onSubmit={submitHandler}>
-            <input
-              type="text"
-              placeholder="Text to include"
-              value={prefix}
-              onChange={(e) => setPrefix(e.target.value)}
-              maxLength={size}
-            />
+    <main className="dashboard-app-container">
+      <h1>Coupon</h1>
+      <section>
+        <form className="coupon-form" onSubmit={submitHandler}>
+          <input
+            type="text"
+            placeholder="Text to include"
+            value={prefix}
+            onChange={(e) => setPrefix(e.target.value)}
+            maxLength={size}
+          />
+
+          <input
+            type="number"
+            placeholder="Coupon Length"
+            value={size}
+            onChange={(e) => setSize(Number(e.target.value))}
+            min={8}
+            max={25}
+          />
+
+          <fieldset>
+            <legend>Include</legend>
 
             <input
-              type="number"
-              placeholder="Coupon Length"
-              value={size}
-              onChange={(e) => setSize(Number(e.target.value))}
-              min={8}
-              max={25}
+              type="checkbox"
+              checked={includeNumbers}
+              onChange={() => setIncludeNumbers((prev) => !prev)}
             />
+            <span>Numbers</span>
 
-            <fieldset>
-              <legend>Include</legend>
+            <input
+              type="checkbox"
+              checked={includeCharacters}
+              onChange={() => setIncludeCharacters((prev) => !prev)}
+            />
+            <span>Characters</span>
 
-              <input
-                type="checkbox"
-                checked={includeNumbers}
-                onChange={() => setIncludeNumbers((prev) => !prev)}
-              />
-              <span>Numbers</span>
+            <input
+              type="checkbox"
+              checked={includeSymbols}
+              onChange={() => setIncludeSymbols((prev) => !prev)}
+            />
+            <span>Symbols</span>
+          </fieldset>
+          <button type="submit">Generate</button>
+        </form>
 
-              <input
-                type="checkbox"
-                checked={includeCharacters}
-                onChange={() => setIncludeCharacters((prev) => !prev)}
-              />
-              <span>Characters</span>
-
-              <input
-                type="checkbox"
-                checked={includeSymbols}
-                onChange={() => setIncludeSymbols((prev) => !prev)}
-              />
-              <span>Symbols</span>
-            </fieldset>
-            <button type="submit">Generate</button>
-          </form>
-
-          {coupon && (
-            <code>
-              {coupon}{" "}
-              <span onClick={() => copyText(coupon)}>
-                {isCopied ? "Copied" : "Copy"}
-              </span>{" "}
-            </code>
-          )}
-        </section>
-      </main>
-  
+        {coupon && (
+          <code>
+            {coupon}{" "}
+            <span onClick={() => copyText(coupon)}>
+              {isCopied ? "Copied" : "Copy"}
+            </span>{" "}
+          </code>
+        )}
+      </section>
+    </main>
   );
 };
 
