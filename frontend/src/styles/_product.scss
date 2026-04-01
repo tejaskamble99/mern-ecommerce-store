@@ -395,4 +395,24 @@
       @media (min-width: 768px) { gap: 2rem; }
     }
   }
+
+  .review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.rating-stars span {
+  margin-right: 5px;
+}
+
+.review-preview {
+  display: flex;
+  gap: 10px;
+}
+
+.review-preview img {
+  border-radius: 6px;
+}
 }

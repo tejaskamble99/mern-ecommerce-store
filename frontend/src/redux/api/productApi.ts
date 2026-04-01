@@ -13,17 +13,15 @@ import {
 
 export const productApi = createApi({
   reducerPath: "productApi",
-  
-  baseQuery: baseQueryWithAuth, 
+
+  baseQuery: baseQueryWithAuth,
   tagTypes: ["Products"],
   endpoints: (builder) => ({
-    
     latestProducts: builder.query<AllProductsResponse, void>({
-      query: () => `product/latest`, 
+      query: () => `product/latest`,
       providesTags: ["Products"],
     }),
 
-    
     allAdminProducts: builder.query<AllProductsResponse, void>({
       query: () => `product/admin-products`,
       providesTags: ["Products"],
@@ -44,7 +42,10 @@ export const productApi = createApi({
       providesTags: ["Products"],
     }),
 
-    searchProducts: builder.query<SearchProductsResponse, SearchProductsRequest>({
+    searchProducts: builder.query<
+      SearchProductsResponse,
+      SearchProductsRequest
+    >({
       query: ({ price, search, sort, category, page }) => {
         let base = `product/all?search=${search}&page=${page}`;
         if (price) base += `&price=${price}`;
@@ -60,7 +61,6 @@ export const productApi = createApi({
       providesTags: ["Products"],
     }),
 
-    
     newProducts: builder.mutation<MessageResponse, FormData>({
       query: (formData) => ({
         url: `product/new`,
@@ -70,8 +70,10 @@ export const productApi = createApi({
       invalidatesTags: ["Products"],
     }),
 
-    
-    updateProduct: builder.mutation<MessageResponse, { productId: string; formData: FormData }>({
+    updateProduct: builder.mutation<
+      MessageResponse,
+      { productId: string; formData: FormData }
+    >({
       query: ({ formData, productId }) => ({
         url: `product/${productId}`,
         method: "PUT",
@@ -80,13 +82,24 @@ export const productApi = createApi({
       invalidatesTags: ["Products"],
     }),
 
-   
     deleteProduct: builder.mutation<MessageResponse, string>({
       query: (productId) => ({
         url: `product/${productId}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Products"],
+    }),
+
+    addReview: builder.mutation<MessageResponse, FormData>({
+      query: (formData) => ({
+        url: "product/review",
+        method: "POST",
+        body: formData,
+      }),
+      invalidatesTags: ["Products"],
+    }),
+    getReviews: builder.query({
+      query: (productId) => `product/reviews/${productId}`,
     }),
   }),
 });
@@ -102,4 +115,6 @@ export const {
   useProductDetailsQuery,
   useUpdateProductMutation,
   useDeleteProductMutation,
+  useAddReviewMutation,
+  useGetReviewsQuery,
 } = productApi;

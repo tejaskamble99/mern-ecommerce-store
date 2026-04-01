@@ -171,15 +171,19 @@ export const newProduct = TryCatch(
 export const updateProduct = TryCatch(async (req, res, next) => {
   const { id } = req.params;
   const { name, price, stock, description, category } = req.body;
-  const photo = req.file;
+  const photo = req.file; // The NEW uploaded file
 
   const product = await Product.findById(id);
   if (!product) return next(new ErrorHandler("Product not found", 404));
 
   if (photo) {
-    rm(photo.path, (err) => {
-  if (err) console.error(err);
-});
+    // ✅ FIX: Delete the OLD photo from the server (if it exists)
+    if (product.photo) {
+      rm(product.photo, (err) => {
+        if (err) console.error("Error deleting old photo:", err);
+      });
+    }
+    // Assign the new photo path to the database
     product.photo = photo.path;
   }
 
@@ -211,5 +215,90 @@ export const deleteProduct = TryCatch(async (req, res, next) => {
   return res.status(200).json({
     success: true,
     message: "Product Deleted successfully",
+  });
+});
+
+export const addOrUpdateReview = TryCatch(async (req, res, next) => {
+  const { rating, comment, productId } = req.body;
+  const user = req.user!;
+
+  const product = await Product.findById(productId);
+
+  if (!product)
+    return next(new ErrorHandler("Product not found", 404));
+
+  const images =
+    (req.files as Express.Multer.File[])?.map((file) => ({
+      url: file.path,
+    })) || [];
+
+  const existingReview = product.reviews.find(
+    (r) => r.user.toString() === user._id.toString()
+  );
+
+  if (existingReview) {
+    existingReview.rating = Number(rating);
+    existingReview.comment = comment;
+
+    if (images.length > 0) existingReview.images = images as any;
+  } else {
+    product.reviews.push({
+      user: user._id,
+      name: user.name,
+      rating: Number(rating),
+      comment,
+      images,
+    } as any);
+  }
+
+  (product as any).calculateRatings();
+
+  await product.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    success: true,
+    message: "Review submitted successfully",
+  });
+});
+
+export const getProductReviews = TryCatch(async (req, res, next) => {
+  const { id } = req.params;
+
+  const product = await Product.findById(id);
+
+  if (!product)
+    return next(new ErrorHandler("Product not found", 404));
+
+  const reviews = product.reviews.sort(
+    (a: any, b: any) => b.createdAt - a.createdAt
+  );
+
+  res.status(200).json({
+    success: true,
+    reviews,
+    ratings: product.ratings,
+    totalReviews: product.numOfReviews,
+  });
+});
+
+export const deleteReview = TryCatch(async (req, res, next) => {
+  const { productId, reviewId } = req.query;
+
+  const product = await Product.findById(productId);
+
+  if (!product)
+    return next(new ErrorHandler("Product not found", 404));
+
+  product.reviews = product.reviews.filter(
+    (review: any) => review._id.toString() !== reviewId
+  ) as any;
+
+  (product as any).calculateRatings();
+
+  await product.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    success: true,
+    message: "Review deleted",
   });
 });

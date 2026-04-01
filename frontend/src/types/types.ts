@@ -5,31 +5,37 @@ export type User = {
   gender: string;
   role: string;
   dob: string;
- _id: string;
-
+  _id: string;
 };
 
+// ✅ Added ReviewImage type
+export type ReviewImage = {
+  url: string;
+  _id?: string;
+};
+
+// ✅ Updated Review type to match our new backend logic
+export type Review = {
+  _id: string;
+  user: string; // User ID
+  name: string;
+  rating: number;
+  comment: string;
+  images?: ReviewImage[];
+  createdAt?: string;
+};
+
+// ✅ Uncommented ratings, numOfReviews, and added the reviews array
 export type Product = {
   name: string;
   price: number;
   stock: number;
   category: string;
-  // ratings: number;
-  // numOfReviews: number;
+  ratings: number;
+  numOfReviews: number;
   description: string;
   photo: string;
-  _id: string;
-};
-
-export type Review = {
-  rating: number;
-  comment: string;
-  product: string;
-  user: {
-    name: string;
-    photo: string;
-    _id: string;
-  };
+  reviews: Review[]; 
   _id: string;
 };
 
@@ -50,6 +56,7 @@ export type CartItem = {
   quantity: number;
   stock: number;
 };
+
 export type OrderItem = Omit<CartItem, "stock"> & { _id: string };
 
 export type Order = {
@@ -139,6 +146,7 @@ export type Bar = {
   products: number[];
   orders: number[];
 };
+
 export type Line = {
   users: number[];
   products: number[];

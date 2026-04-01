@@ -16,6 +16,9 @@ import { Skeleton } from "@/components/admin/Loader";
 import ProductCard from "@/components/layout/ProductCard";
 import Link from "next/link";
 import Image from "next/image";
+import ReviewForm from "@/components/layout/product/ReviewForm";
+import ReviewList from "@/components/layout/product/ReviewList";
+import RatingBreakdown from "@/components/layout/product/RatingBreakdown";
 
 export default function ProductPage() {
   const params = useParams();
@@ -25,9 +28,9 @@ export default function ProductPage() {
   const rawId = params.id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
- const { data, isLoading, isError } = useProductDetailsQuery(id ?? "", {
-  skip: !id,
-});
+  const { data, isLoading, isError } = useProductDetailsQuery(id ?? "", {
+    skip: !id,
+  });
 
   const { data: latestData } = useLatestProductsQuery();
 
@@ -41,12 +44,11 @@ export default function ProductPage() {
     }
   }, [isError, router]);
 
-
   const product = data?.product;
   const isOutOfStock = (product?.stock ?? 0) < 1;
 
   const buildImgUrl = (path?: string) =>
-  path && path.startsWith("http") ? path : `${server}/${path}`;
+    path && path.startsWith("http") ? path : `${server}/${path}`;
 
   const incrementQty = () => {
     if (!product) return;
@@ -82,9 +84,9 @@ export default function ProductPage() {
   };
 
   const relatedProducts =
-  latestData?.products?.filter(
-    (p) => p.category === product?.category && p._id !== product?._id
-  ) ?? [];
+    latestData?.products?.filter(
+      (p) => p.category === product?.category && p._id !== product?._id
+    ) ?? [];
 
   if (isLoading) {
     return (
@@ -153,15 +155,22 @@ export default function ProductPage() {
 
           <h1 className="product-name">{product.name}</h1>
 
+          {/* ✅ Dynamic Product Ratings */}
           <div className="product-rating">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <FaStar key={s} className={s <= 4 ? "filled" : "empty"} />
-            ))}
-            <span>4.0</span>
-            <span className="review-count">· 120 reviews</span>
+            {[1, 2, 3, 4, 5].map((s) => {
+              const ratingVal = Math.round(product.ratings || 0);
+              return (
+                <FaStar 
+                  key={s} 
+                  className={s <= ratingVal ? "filled" : "empty"} 
+                  color={s <= ratingVal ? "#f59e0b" : "#ddd"} 
+                />
+              );
+            })}
+            <span>{product.ratings?.toFixed(1) || "0.0"}</span>
+            <span className="review-count">· {product.numOfReviews || 0} reviews</span>
           </div>
 
-          
           <p className="product-price">
             {product.price.toLocaleString("en-IN", {
               style: "currency",
@@ -199,6 +208,7 @@ export default function ProductPage() {
           </button>
         </div>
       </section>
+      
       <div className="product-detail-divider">
         <p>{product.description}</p>
       </div>
@@ -232,6 +242,31 @@ export default function ProductPage() {
           </div>
         </section>
       )}
+
+      {/* ✅ Complete Review System Integration */}
+      <section className="product-reviews-section" style={{ marginTop: "40px" }}>
+        <h2>Customer Reviews</h2>
+        
+        <div 
+          className="reviews-layout" 
+          style={{ display: "flex", gap: "2rem", flexWrap: "wrap", marginTop: "20px" }}
+        >
+          {/* Left Column: Stats & Form */}
+          <div className="reviews-left" style={{ flex: "1", minWidth: "300px" }}>
+            <RatingBreakdown reviews={product.reviews || []} />
+            
+            <div style={{ marginTop: "30px" }}>
+              <h3>Write a Review</h3>
+              <ReviewForm productId={product._id} />
+            </div>
+          </div>
+
+          {/* Right Column: The actual reviews */}
+          <div className="reviews-right" style={{ flex: "2", minWidth: "300px" }}>
+            <ReviewList reviews={product.reviews || []} />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

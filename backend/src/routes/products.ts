@@ -7,31 +7,53 @@ import {
   getCategoriesWithImage,
   getAllProducts,
   getlatestProduct,
-getSingleProduct,
+  getSingleProduct,
   newProduct,
   updateProduct,
+  addOrUpdateReview,
+  getProductReviews,
+  deleteReview
 } from "../controllers/product.js";
-import { singlUpload } from "../middleware/multer.js";
+import { singlUpload, multiUpload } from "../middleware/multer.js";
 
 const app = express.Router();
 
-// Create New Product
+
+
 app.post("/new", isAuthenticated, adminOnly, singlUpload, newProduct);
 
-// Public Routes
+
 app.get("/latest", getlatestProduct);
 app.get("/categories", getAllCategories);
 app.get("/categories-with-image", getCategoriesWithImage);
 app.get("/all", getAllProducts);
 
-// Admin Products
+
 app.get("/admin-products", isAuthenticated, adminOnly, getAdminProduct);
 
-// Single Product Routes
+
 app
   .route("/:id")
-  .get( getSingleProduct)
+  .get(getSingleProduct)
   .put(isAuthenticated, adminOnly, singlUpload, updateProduct)
   .delete(isAuthenticated, adminOnly, deleteProduct);
+
+
+
+
+
+app.post(
+  "/review",
+  isAuthenticated,
+  multiUpload,
+  addOrUpdateReview
+);
+
+
+app.get("/reviews/:id", getProductReviews);
+
+// Delete Review
+app.delete("/review", isAuthenticated, deleteReview);
+
 
 export default app;
