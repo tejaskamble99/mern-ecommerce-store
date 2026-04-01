@@ -1,17 +1,18 @@
-import express from "express";
-import userRoute from "./routes/user.js";
-import productRoute from "./routes/products.js";
-import orderRoute from "./routes/order.js";
-import bannerRoute from './routes/banner.js';
-import { config } from "dotenv";
-import { connectDB } from "./utils/features.js";
-import { errorMiddleware } from "./middleware/error.js";
-import NodeCache from "node-cache";
-import morgan from "morgan";
-import paymentRoute from "./routes/payment.js";
-import dashboardRoute from "./routes/stats.js";
-import Stripe from "stripe";
 import cors from "cors";
+import { config } from "dotenv";
+import express from "express";
+import morgan from "morgan";
+import NodeCache from "node-cache";
+import Stripe from "stripe";
+import { errorMiddleware } from "./middleware/error.js";
+import bannerRoute from './routes/banner.js';
+import orderRoute from "./routes/order.js";
+import paymentRoute from "./routes/payment.js";
+import productRoute from "./routes/products.js";
+import dashboardRoute from "./routes/stats.js";
+import userRoute from "./routes/user.js";
+import { connectDB } from "./utils/features.js";
+
 
 config({
   path: "./.env",

@@ -7,6 +7,7 @@ export const errorMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
+  console.log("🔥 FATAL BACKEND CRASH:", err.message || err);
   err.message ||= "something went wrong";
   err.statusCode ||= 500;
 

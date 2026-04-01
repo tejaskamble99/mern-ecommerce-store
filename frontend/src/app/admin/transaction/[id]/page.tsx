@@ -16,6 +16,7 @@ import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { FaTrash } from "react-icons/fa";
 import { useSelector } from "react-redux";
+import { Skeleton } from "@/components/admin/Loader";
 
 const defaultData: Order = {
   shippingInfo: {
@@ -108,7 +109,8 @@ const TransactionManagement = () => {
     if (!confirmed) return;
 
     try {
-      await updateOrder({ userId: user._id, orderId }).unwrap();
+     
+      await updateOrder(orderId).unwrap(); 
       toast.success("Order status updated");
     } catch {
       toast.error("Failed to update order status");
@@ -124,14 +126,15 @@ const TransactionManagement = () => {
     if (!confirmed) return;
 
     try {
-      const res = await deleteOrder({ userId: user._id, orderId });
+      
+      const res = await deleteOrder(orderId); 
       responseToast(res, router, "/admin/transaction");
     } catch {
       toast.error("Failed to delete order");
     }
   };
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading) return <Skeleton width="100%" length={20} />;
 
   return (
     <main className="product-management">

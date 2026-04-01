@@ -42,12 +42,6 @@ const ProfileSidebar = () => {
               close={close}
             />
             <Li
-              url="/dashboard/address"
-              text="Address"
-              Icon={FaAddressCard}
-              location={pathname}
-            />
-            <Li
               url="/dashboard/orders"
               text="Orders"
               Icon={AiFillFileText}

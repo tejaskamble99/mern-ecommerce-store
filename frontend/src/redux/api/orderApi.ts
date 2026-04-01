@@ -3,60 +3,72 @@ import {
   MessageResponse,
   NewOrderRequest,
   OrderDetailsResponse,
-  UpdateOrderRequest,
 } from "@/types/api-types";
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQueryWithAuth } from "./baseQuery";
 
 export const orderApi = createApi({
   reducerPath: "orderApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${process.env.NEXT_PUBLIC_SERVER_URL}/api/v1/order/`,
-  }),
+  baseQuery: baseQueryWithAuth,
   tagTypes: ["orders"],
+
   endpoints: (builder) => ({
+    // Create new order
     newOrder: builder.mutation<MessageResponse, NewOrderRequest>({
       query: (order) => ({
-        url: "new",
+        url: "order/new",
         method: "POST",
         body: order,
       }),
       invalidatesTags: ["orders"],
     }),
-    updateOrder: builder.mutation<MessageResponse, UpdateOrderRequest>({
-      query: ({userId , orderId}) => ({
-        url:`${orderId}?id=${userId}`,
+
+    // Update order status (admin)
+    // FIX: Removed userId. The backend knows who you are from the token!
+    updateOrder: builder.mutation<MessageResponse, string>({
+      query: (orderId) => ({
+        url: `order/${orderId}`, // FIX: Added "order/" prefix
         method: "PUT",
-   
       }),
       invalidatesTags: ["orders"],
     }),
-     deleteOrder: builder.mutation<MessageResponse, UpdateOrderRequest>({
-      query: ({userId , orderId}) => ({
-        url:`${orderId}?id=${userId}`,
+
+    // Delete order (admin)
+    // FIX: Removed userId.
+    deleteOrder: builder.mutation<MessageResponse, string>({
+      query: (orderId) => ({
+        url: `order/${orderId}`, // FIX: Added "order/" prefix
         method: "DELETE",
-   
       }),
-      invalidatesTags: ["orders"],
+      invalidatesTags: ["orders"], // FIX: Added invalidation so the UI updates automatically!
     }),
-    myOrder: builder.query<AllOrdersResponse, string>({
-      query: (id) => `my?id=${id}`,
+
+    // Current user orders
+    myOrders: builder.query<AllOrdersResponse, void>({
+      query: () => "order/my",
       providesTags: ["orders"],
     }),
-    allOrder: builder.query<AllOrdersResponse, string>({
-      query: (id) => `all?id=${id}`,
+
+    // Admin orders list
+    allOrders: builder.query<AllOrdersResponse, void>({
+      query: () => "order/all",
       providesTags: ["orders"],
     }),
+
+    // Single order details
     orderDetails: builder.query<OrderDetailsResponse, string>({
-      query: (id) => id,
+      query: (id) => `order/${id}`,
       providesTags: ["orders"],
     }),
   }),
 });
 
-export const { useNewOrderMutation ,
-    useUpdateOrderMutation,
-    useDeleteOrderMutation,
-    useMyOrderQuery,
-    useAllOrderQuery,
-    useOrderDetailsQuery
- } = orderApi;
+export const {
+  useNewOrderMutation,
+  useUpdateOrderMutation,
+  useDeleteOrderMutation,
+  useMyOrdersQuery,
+  useAllOrdersQuery,
+  useOrderDetailsQuery,
+} = orderApi;

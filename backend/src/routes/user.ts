@@ -1,17 +1,24 @@
 import express from "express";
-import { newUser , getAllUsers ,getUser , deleteUser } from "../controllers/user.js";
-import { adminOnly } from './../middleware/auth.js';
+import { newUser, getAllUsers, getUser, deleteUser } from "../controllers/user.js";
+import { adminOnly, isAuthenticated } from "../middleware/auth.js";
 
 const app = express.Router();
 
-// Route - /api/v1/user/new
+
 app.post("/new", newUser);
 
-// Route - /api/v1/user/all
-app.get("/all", adminOnly, getAllUsers); 
+app.get("/me", isAuthenticated, (req, res) => {
+  res.json({
+    success: true,
+    user: req.user,
+  });
+});
 
-// Route - /api/v1/user/dynamicID
+
+app.get("/all", isAuthenticated, adminOnly, getAllUsers);
+
+
 app.get("/:id", getUser);
-app.delete("/:id",adminOnly, deleteUser);
+app.delete("/:id", isAuthenticated, adminOnly, deleteUser);
 
 export default app;

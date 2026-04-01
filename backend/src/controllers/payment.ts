@@ -50,7 +50,7 @@ export const applyDiscount= TryCatch(async (req, res, next) => {
   });
 });
 
-export const allCoupon= TryCatch(async (req, res, next) => {
+export const getAllCoupons = TryCatch(async (req, res, next) => {
 
   const coupons =  await Coupon.findOne({ });
 

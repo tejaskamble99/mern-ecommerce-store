@@ -1,5 +1,6 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
 import { MessageResponse } from "@/types/api-types";
+import { baseQueryWithAuth } from "./baseQuery";
 
 export type BannerSlot = "hero" | "promo" | "bottom";
 
@@ -16,34 +17,40 @@ export type BannersResponse = {
 
 export const bannerApi = createApi({
   reducerPath: "bannerApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${process.env.NEXT_PUBLIC_SERVER_URL}/api/v1/banner/`,
-  }),
+  baseQuery: baseQueryWithAuth,
   tagTypes: ["banners"],
+
   endpoints: (builder) => ({
     getBanners: builder.query<BannersResponse, BannerSlot | void>({
-      query: (slot) => (slot ? `all?slot=${slot}` : "all"),
+      query: (slot) =>
+        slot ? `banner/all?slot=${slot}` : "banner/all",
       providesTags: ["banners"],
     }),
-    addBanner: builder.mutation<MessageResponse, { formData: FormData; userId: string }>({
-      query: ({ formData, userId }) => ({
-        url: `new?id=${userId}`,
+
+    addBanner: builder.mutation<MessageResponse, FormData>({
+      query: (formData) => ({
+        url: "banner/new",
         method: "POST",
         body: formData,
       }),
       invalidatesTags: ["banners"],
     }),
-    updateBanner: builder.mutation<MessageResponse, { formData: FormData; userId: string; bannerId: string }>({
-      query: ({ formData, userId, bannerId }) => ({
-        url: `${bannerId}?id=${userId}`,
+
+    updateBanner: builder.mutation<
+      MessageResponse,
+      { bannerId: string; formData: FormData }
+    >({
+      query: ({ bannerId, formData }) => ({
+        url: `banner/${bannerId}`,
         method: "PUT",
         body: formData,
       }),
       invalidatesTags: ["banners"],
     }),
-    deleteBanner: builder.mutation<MessageResponse, { bannerId: string; userId: string }>({
-      query: ({ bannerId, userId }) => ({
-        url: `${bannerId}?id=${userId}`,
+
+    deleteBanner: builder.mutation<MessageResponse, string>({
+      query: (bannerId) => ({
+        url: `banner/${bannerId}`,
         method: "DELETE",
       }),
       invalidatesTags: ["banners"],

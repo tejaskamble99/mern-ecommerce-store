@@ -1,61 +1,84 @@
 "use client";
 
-import { useDeleteOrderMutation, useOrderDetailsQuery } from "@/redux/api/orderApi";
-import { RootState, server } from "@/redux/store";
+import {
+  useDeleteOrderMutation,
+  useOrderDetailsQuery,
+} from "@/redux/api/orderApi";
+import { server } from "@/redux/store";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { useSelector } from "react-redux";
-import { responseToast } from "@/utils/features";
 import { Skeleton } from "@/components/admin/Loader";
+import { auth } from "@/firebase";
 
 const OrderDetails = () => {
- const params = useParams();
-const id = params?.id as string;
-  const router = useRouter();
-  const { user } = useSelector((state: RootState) => state.userReducer);
+  const params = useParams();
+  const id = params?.id as string;
 
-  const { data, isLoading } = useOrderDetailsQuery(id as string, {
+  const router = useRouter();
+
+  const { data, isLoading } = useOrderDetailsQuery(id, {
     skip: !id,
   });
 
   const [deleteOrder] = useDeleteOrderMutation();
 
- 
   if (isLoading) return <Skeleton width="100%" length={20} />;
 
   const order = data?.order;
   if (!order) return <p>Order not found</p>;
 
   const cancelHandler = async () => {
-  if (!confirm("Are you sure you want to cancel this order?")) return;
+    if (!confirm("Are you sure you want to cancel this order?")) return;
 
-  try {
-    const res = await deleteOrder({
-      orderId: id as string,
-      userId: user?._id ?? "",
-    });
+    try {
+      const res = await deleteOrder(id).unwrap();
+      toast.success(res.message);
+      router.push("/orders");
+    } catch {
+      toast.error("Failed to cancel order");
+    }
+  };
 
-    responseToast(res, router, "/dashboard/orders");
-  } catch {
-    toast.error("Failed to cancel order");
-  }
-};
+  const downloadInvoice = async () => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
 
- if (isLoading) return <Skeleton width="100%" length={20} />;
+      const res = await fetch(
+        `${server}/api/v1/order/invoice/${order._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to download invoice");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${order._id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (error) {
+      toast.error("Unable to download invoice");
+    }
+  };
 
   return (
     <main className="order-details-page">
       <h1>Order Details</h1>
 
-    
       <p className="order-details-id">
         Order #{order._id.slice(-8).toUpperCase()}
       </p>
 
-      
       <div className="order-status">
-        Status:{" "}
+        Status{" "}
         <span className={`status status-${order.status.toLowerCase()}`}>
           {order.status}
         </span>
@@ -73,23 +96,26 @@ const id = params?.id as string;
         </p>
       </div>
 
-   
       <div className="order-items">
         <h3>Items</h3>
+
         {order.orderItems.map((item) => {
-          const image = item.photo && item.photo.startsWith("http")
-  ? item.photo
-  : `${server}/${item.photo?.replace(/\\/g, "/")}`;
+          const image =
+            item.photo && item.photo.startsWith("http")
+              ? item.photo
+              : `${server}/${item.photo?.replace(/\\/g, "/")}`;
 
           return (
             <div key={item._id} className="order-item">
               <Image src={image} alt={item.name} width={70} height={70} />
+
               <div className="order-item-info">
                 <h4>{item.name}</h4>
-                
+
                 <p>
                   ₹{item.price.toLocaleString("en-IN")} × {item.quantity}
                 </p>
+
                 <p className="order-item-total">
                   ₹{(item.price * item.quantity).toLocaleString("en-IN")}
                 </p>
@@ -99,18 +125,19 @@ const id = params?.id as string;
         })}
       </div>
 
-      
       <div className="order-summary">
         <h3>Price Summary</h3>
-       
+
         <div className="summary-row">
           <span>Subtotal</span>
           <span>₹{order.subtotal.toLocaleString("en-IN")}</span>
         </div>
+
         <div className="summary-row">
           <span>Tax</span>
           <span>₹{Math.round(order.tax).toLocaleString("en-IN")}</span>
         </div>
+
         <div className="summary-row">
           <span>Shipping</span>
           <span>
@@ -119,17 +146,24 @@ const id = params?.id as string;
               : `₹${order.shippingCharges.toLocaleString("en-IN")}`}
           </span>
         </div>
+
         {order.discount > 0 && (
           <div className="summary-row discount">
             <span>Discount</span>
             <span>- ₹{order.discount.toLocaleString("en-IN")}</span>
           </div>
         )}
+
         <div className="summary-row total">
           <span>Total</span>
           <span>₹{order.total.toLocaleString("en-IN")}</span>
         </div>
       </div>
+
+      <button onClick={downloadInvoice} className="invoice-btn">
+        Download Invoice
+      </button>
+
       {order.status === "Processing" && (
         <button className="cancel-btn" onClick={cancelHandler}>
           Cancel Order

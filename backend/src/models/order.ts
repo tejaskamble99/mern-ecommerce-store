@@ -3,6 +3,11 @@ import mongoose from "mongoose";
 const schema = new mongoose.Schema(
   {
     shippingInfo: {
+      fullName:{
+        type: String,
+        required: [true, "Please enter address"],
+        trim: true,
+      },
       address: {
         type: String,
         required: [true, "Please enter address"],

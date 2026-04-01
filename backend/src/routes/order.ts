@@ -1,29 +1,32 @@
 import express from "express";
-
-import { adminOnly } from "./../middleware/auth.js";
+import { adminOnly, isAuthenticated } from "../middleware/auth.js";
 import {
   allOrders,
+  cancelOrder,
   deleteOrder,
   getSingleOrder,
   myOrders,
   newOrder,
   processOrder,
+  generateInvoice,
 } from "../controllers/order.js";
 
 const app = express.Router();
 
-// Route - /api/v1/order/new-order
-app.post("/new", newOrder);
+app.post("/new", isAuthenticated, newOrder);
 
-// Route - /api/v1/order/my
-app.get("/my", myOrders);
+app.get("/my", isAuthenticated, myOrders);
 
-app.get("/all", adminOnly, allOrders);
+app.patch("/cancel/:id", isAuthenticated, cancelOrder);
+
+app.get("/all", isAuthenticated, adminOnly, allOrders);
+
+app.get("/invoice/:id", isAuthenticated, generateInvoice);
 
 app
   .route("/:id")
-  .get(getSingleOrder)
-  .put(adminOnly, processOrder)
-  .delete(adminOnly, deleteOrder);
+  .get(isAuthenticated, getSingleOrder)
+  .put(isAuthenticated, adminOnly, processOrder)
+  .delete(isAuthenticated, adminOnly, deleteOrder);
 
 export default app;

@@ -1,5 +1,5 @@
 "use client";
-import { useMyOrderQuery } from "@/redux/api/orderApi";
+import { useMyOrdersQuery } from "@/redux/api/orderApi";
 import { RootState, server } from "@/redux/store";
 import Image from "next/image";
 import { useState } from "react";
@@ -34,11 +34,8 @@ const Dashboard = () => {
   const { user } = useSelector((state: RootState) => state.userReducer);
   const [src, setSrc] = useState(user?.photo || fallback);
 
-  const userId = user?._id;
 
-  const { data: ordersData, isLoading } = useMyOrderQuery(userId ?? "", {
-  skip: !userId,
-});
+  const { data: ordersData, isLoading } = useMyOrdersQuery();
 
   const orders = ordersData?.orders ?? [];
 

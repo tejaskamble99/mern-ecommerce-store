@@ -19,7 +19,6 @@ import { CartReducerInitialState } from "@/types/reducer-types";
 import Image from "next/image";
 
 export default function Header() {
-  const [isMounted, setIsMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

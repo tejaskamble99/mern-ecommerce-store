@@ -1,38 +1,44 @@
-import { BarResponse, LineResponse, PieResponse, StatsResponse } from "@/types/api-types";
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import {
+BarResponse,
+LineResponse,
+PieResponse,
+StatsResponse,
+} from "@/types/api-types";
 
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQueryWithAuth } from "./baseQuery";
 
 export const dashboardApi = createApi({
-  reducerPath: "dashboardApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${process.env.NEXT_PUBLIC_SERVER_URL}/api/v1/dashboard/`,
-  }),
-  
-  endpoints: (builder) => ({
-   stats: builder.query<StatsResponse , string>({
-     query: (id) => `stats?id=${id}`,
-     keepUnusedDataFor: 0,
-     }),
-   pie: builder.query<PieResponse , string>({
-     query: (id) => `pie?id=${id}`,
-      keepUnusedDataFor: 0,
-   }),
-      bar: builder.query<BarResponse , string>({
-     query: (id) => `bar?id=${id}`,
-      keepUnusedDataFor: 0,
-   }),
-      line: builder.query<LineResponse , string>({
-     query: (id) => `line?id=${id}`,
-      keepUnusedDataFor: 0,
-   }),
-  }),
+reducerPath: "dashboardApi",
+baseQuery: baseQueryWithAuth,
+
+endpoints: (builder) => ({
+stats: builder.query<StatsResponse, void>({
+query: () => "dashboard/stats",
+keepUnusedDataFor: 0,
+}),
+
+pie: builder.query<PieResponse, void>({
+  query: () => "dashboard/pie",
+  keepUnusedDataFor: 0,
+}),
+
+bar: builder.query<BarResponse, void>({
+  query: () => "dashboard/bar",
+  keepUnusedDataFor: 0,
+}),
+
+line: builder.query<LineResponse, void>({
+  query: () => "dashboard/line",
+  keepUnusedDataFor: 0,
+}),
+
+}),
 });
 
-
-
-export const { 
- useStatsQuery,
- usePieQuery,
- useBarQuery,
- useLineQuery
- } = dashboardApi;
+export const {
+useStatsQuery,
+usePieQuery,
+useBarQuery,
+useLineQuery,
+} = dashboardApi;

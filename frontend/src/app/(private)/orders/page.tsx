@@ -1,14 +1,13 @@
 "use client";
+
 import { Skeleton } from "@/components/admin/Loader";
 import TableHOC from "@/components/admin/TableHOC";
-import { useMyOrderQuery } from "@/redux/api/orderApi";
+import { useMyOrdersQuery } from "@/redux/api/orderApi";
 import { CustomError } from "@/types/api-types";
-import { UserReducerInitialState } from "@/types/reducer-types";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
-import { useSelector } from "react-redux";
 
 type DataType = {
   _id: string;
@@ -23,6 +22,7 @@ const columns: ColumnDef<DataType>[] = [
   { header: "Quantity", accessorKey: "quantity" },
   { header: "Discount", accessorKey: "discount" },
   { header: "Amount", accessorKey: "amount" },
+
   {
     header: "Status",
     accessorKey: "status",
@@ -33,19 +33,22 @@ const columns: ColumnDef<DataType>[] = [
         statusValue === "Delivered"
           ? "purple"
           : statusValue === "Shipped"
-            ? "green"
-            : "red";
+          ? "green"
+          : "red";
+
       return <span className={colorClass}>{statusValue}</span>;
     },
   },
+
   {
     id: "action",
     header: "Action",
     cell: (info) => {
-      const orderId = info.row.original._id;
+      const ordersId = info.row.original._id;
+
       return (
-        <Link href={`/order/${orderId}`} className="manage-btn">
-          Manage
+        <Link href={`/orders/${ordersId}`} className="manage-btn">
+          View
         </Link>
       );
     },
@@ -53,15 +56,7 @@ const columns: ColumnDef<DataType>[] = [
 ];
 
 const Orders = () => {
-  const { user } = useSelector(
-  (state: { userReducer: UserReducerInitialState }) => state.userReducer
-);
-
-const userId = user?._id;
-
-const { data, isLoading, isError, error } = useMyOrderQuery(userId ?? "", {
-  skip: !userId,
-});
+  const { data, isLoading, isError, error } = useMyOrdersQuery();
 
   useEffect(() => {
     if (isError) {
@@ -79,17 +74,16 @@ const { data, isLoading, isError, error } = useMyOrderQuery(userId ?? "", {
         discount: i.discount,
         status: i.status,
       })) ?? [],
-    [data],
+    [data]
   );
 
   const Table = TableHOC<DataType>(
     columns,
     rows,
     "dashboard-product-box",
-    "Orders",
+    "Orders"
   );
 
-   
   return (
     <div className="container">
       <h1>My Orders</h1>

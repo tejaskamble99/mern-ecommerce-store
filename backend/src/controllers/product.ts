@@ -13,11 +13,11 @@ import { invalidateCache } from "../utils/features.js";
 
 export const getlatestProduct = TryCatch(async (req, res, next) => {
   let products = [];
-  if (nodeCache.has("latest-Products"))
-    products = JSON.parse(nodeCache.get("latest-Products") as string);
+  if (nodeCache.has("latest-products"))
+    products = JSON.parse(nodeCache.get("latest-products") as string);
   else {
     products = await Product.find({}).sort({ createdAt: -1 }).limit(5);
-    nodeCache.set("latest-Products", JSON.stringify(products));
+    nodeCache.set("latest-products", JSON.stringify(products));
   }
 
   return res.status(200).json({
@@ -119,7 +119,7 @@ export const getAdminProduct = TryCatch(async (req, res, next) => {
   });
 });
 
-export const getSigleProduct = TryCatch(async (req, res, next) => {
+export const  getSingleProduct = TryCatch(async (req, res, next) => {
   let product;
   const id = req.params.id;
   if (nodeCache.has(`product-${id}`))
@@ -156,7 +156,6 @@ export const newProduct = TryCatch(
       stock,
       description,
       category: category.toLowerCase(),
-      // FIX 2: was `photos` — now consistent with updateProduct and model
       photo: photo.path,
     });
 
@@ -178,7 +177,9 @@ export const updateProduct = TryCatch(async (req, res, next) => {
   if (!product) return next(new ErrorHandler("Product not found", 404));
 
   if (photo) {
-    rm(product.photo!, () => {});
+    rm(photo.path, (err) => {
+  if (err) console.error(err);
+});
     product.photo = photo.path;
   }
 
@@ -203,7 +204,7 @@ export const deleteProduct = TryCatch(async (req, res, next) => {
 
   rm(product.photo!, () => {});
 
-  // FIX 3: was Product.deleteOne() — deletes random doc. Must call on instance
+ 
   await product.deleteOne();
   invalidateCache({ product: true, productId: String(product._id), admin: true });
 

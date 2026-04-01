@@ -134,7 +134,7 @@ export type NewOrderRequest = {
   shippingCharges: number;
   discount: number;
   total: number;
-  user: string;
+  // user: string;
 };
 
 export type UpdateOrderRequest = {

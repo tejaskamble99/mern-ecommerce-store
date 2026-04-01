@@ -1,48 +1,52 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQueryWithAuth } from "./baseQuery"; // ✅ Import your secure base query
 
 import {
   AllProductsResponse,
   CategoriesResponse,
   CategoriesWithImageResponse,
-  DeleteProductRequest,
   MessageResponse,
-  NewProductRequest,
   ProductResponse,
   SearchProductsRequest,
   SearchProductsResponse,
-  UpdateProductRequest,
 } from "@/types/api-types";
 
 export const productApi = createApi({
   reducerPath: "productApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${process.env.NEXT_PUBLIC_SERVER_URL}/api/v1/product/`,
-  }),
+  
+  baseQuery: baseQueryWithAuth, 
   tagTypes: ["Products"],
   endpoints: (builder) => ({
+    
     latestProducts: builder.query<AllProductsResponse, void>({
-      query: () => `latest`,
+      query: () => `product/latest`, 
       providesTags: ["Products"],
     }),
-    allAdminProducts: builder.query<AllProductsResponse, string>({
-      query: (id) => `admin-products?id=${id}`,
+
+    
+    allAdminProducts: builder.query<AllProductsResponse, void>({
+      query: () => `product/admin-products`,
       providesTags: ["Products"],
     }),
+
     allProducts: builder.query<AllProductsResponse, void>({
-      query: () => `all`,
+      query: () => `product/all`,
       providesTags: ["Products"],
     }),
+
     categories: builder.query<CategoriesResponse, void>({
-      query: () => `categories`,
+      query: () => `product/categories`,
       providesTags: ["Products"],
     }),
-      categoriesImage: builder.query<CategoriesWithImageResponse, void>({
-      query: () => `categories-with-image`,
+
+    categoriesImage: builder.query<CategoriesWithImageResponse, void>({
+      query: () => `product/categories-with-image`,
       providesTags: ["Products"],
     }),
-    searchProducts: builder.query<SearchProductsResponse,SearchProductsRequest>({
+
+    searchProducts: builder.query<SearchProductsResponse, SearchProductsRequest>({
       query: ({ price, search, sort, category, page }) => {
-        let base = `all?search=${search}&page=${page}`;
+        let base = `product/all?search=${search}&page=${page}`;
         if (price) base += `&price=${price}`;
         if (sort) base += `&sort=${sort}`;
         if (category) base += `&category=${category}`;
@@ -50,35 +54,40 @@ export const productApi = createApi({
       },
       providesTags: ["Products"],
     }),
-     productDetails: builder.query<ProductResponse, string>({
-      query: (id) => id,
+
+    productDetails: builder.query<ProductResponse, string>({
+      query: (id) => `product/${id}`,
       providesTags: ["Products"],
     }),
-    newProducts: builder.mutation<MessageResponse, NewProductRequest>({
-      query: ({formData, id}) => ({
-        url: `new?id=${id}`,
+
+    
+    newProducts: builder.mutation<MessageResponse, FormData>({
+      query: (formData) => ({
+        url: `product/new`,
         method: "POST",
         body: formData,
       }),
       invalidatesTags: ["Products"],
     }),
-     updateProduct: builder.mutation<MessageResponse, UpdateProductRequest>({
-      query: ({ formData, userId, productId }) => ({
-        url: `${productId}?id=${userId}`,
+
+    
+    updateProduct: builder.mutation<MessageResponse, { productId: string; formData: FormData }>({
+      query: ({ formData, productId }) => ({
+        url: `product/${productId}`,
         method: "PUT",
         body: formData,
       }),
       invalidatesTags: ["Products"],
     }),
 
-    deleteProduct: builder.mutation<MessageResponse, DeleteProductRequest>({
-      query: ({ userId, productId }) => ({
-        url: `${productId}?id=${userId}`,
+   
+    deleteProduct: builder.mutation<MessageResponse, string>({
+      query: (productId) => ({
+        url: `product/${productId}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Products"],
     }),
- 
   }),
 });
 
@@ -88,7 +97,7 @@ export const {
   useAllProductsQuery,
   useCategoriesQuery,
   useCategoriesImageQuery,
-  useSearchProductsQuery, 
+  useSearchProductsQuery,
   useNewProductsMutation,
   useProductDetailsQuery,
   useUpdateProductMutation,

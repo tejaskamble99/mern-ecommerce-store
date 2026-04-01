@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/admin/Loader";
-import { useMyOrderQuery } from "@/redux/api/orderApi";
+import { useMyOrdersQuery } from "@/redux/api/orderApi";
 import { RootState, server } from "@/redux/store";
 import Image from "next/image"; // FIX #2: import added
 import Link from "next/link";
@@ -10,11 +10,8 @@ import { useSelector } from "react-redux";
 const OrdersPage = () => {
   const { user } = useSelector((state: RootState) => state.userReducer);
 
-  const userId = user?._id;
 
-  const { data, isLoading } = useMyOrderQuery(userId!, {
-    skip: !userId,
-  });
+  const { data, isLoading } = useMyOrdersQuery();
 
   const orders = data?.orders ?? [];
 

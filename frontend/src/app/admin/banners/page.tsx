@@ -16,13 +16,15 @@ import { useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/admin/Loader";
+import Image from "next/image";
 
 // ── Slot config ──────────────────────────────────────────
 const SLOTS: { key: BannerSlot; label: string; description: string }[] = [
   {
     key: "hero",
     label: "Hero Banners",
-    description: "Main carousel at the top of the home page. Multiple banners supported.",
+    description:
+      "Main carousel at the top of the home page. Multiple banners supported.",
   },
   {
     key: "promo",
@@ -39,7 +41,6 @@ const SLOTS: { key: BannerSlot; label: string; description: string }[] = [
 // ── Banner Card ──────────────────────────────────────────
 const BannerCard = ({
   banner,
-  userId,
   slot,
 }: {
   banner: Banner;
@@ -58,7 +59,9 @@ const BannerCard = ({
   const deleteHandler = async () => {
     const confirmed = window.confirm("Delete this banner?");
     if (!confirmed) return;
-    const res = await deleteBanner({ bannerId: banner._id, userId });
+
+    // ✅ Matches: builder.mutation<MessageResponse, string>
+    const res = await deleteBanner(banner._id);
     responseToast(res, router, "/admin/banners");
   };
 
@@ -67,20 +70,20 @@ const BannerCard = ({
     if (!file) return;
 
     const formData = new FormData();
-    formData.append("photo", file);
+    formData.append("photo", file); // Ensure backend looks for "photo"
     formData.append("slot", slot);
 
+    // ✅ Matches: { bannerId: string; formData: FormData }
     const res = await updateBanner({
-      formData,
-      userId,
       bannerId: banner._id,
+      formData,
     });
     responseToast(res, router, "/admin/banners");
   };
 
   return (
     <div className="banner-card">
-      <img src={imgSrc} alt={`${slot} banner`} />
+      <Image src={imgSrc} alt={`${slot} banner`} width={200} height={100} />
       <div className="banner-card-actions">
         <button
           className="banner-edit-btn"
@@ -108,14 +111,7 @@ const BannerCard = ({
   );
 };
 
-// ── Upload Form ──────────────────────────────────────────
-const UploadForm = ({
-  slot,
-  userId,
-}: {
-  slot: BannerSlot;
-  userId: string;
-}) => {
+const UploadForm = ({ slot }: { slot: BannerSlot; userId: string }) => {
   const router = useRouter();
   const [addBanner, { isLoading }] = useAddBannerMutation();
   const [preview, setPreview] = useState<string | null>(null);
@@ -135,7 +131,8 @@ const UploadForm = ({
     formData.append("photo", file);
     formData.append("slot", slot);
 
-    const res = await addBanner({ formData, userId });
+    const res = await addBanner(formData);
+
     responseToast(res, router, "/admin/banners");
     setFile(null);
     setPreview(null);
@@ -145,7 +142,8 @@ const UploadForm = ({
     <div className="banner-upload-form">
       {preview && (
         <div className="banner-upload-preview">
-          <img src={preview} alt="Preview" />
+          
+          <Image src={preview} alt="Preview" width={200} height={100} />
         </div>
       )}
       <label className="banner-upload-label">
@@ -171,7 +169,7 @@ const UploadForm = ({
   );
 };
 
-// ── Slot Section ─────────────────────────────────────────
+
 const SlotSection = ({
   slotKey,
   label,
@@ -193,7 +191,8 @@ const SlotSection = ({
           <p>{description}</p>
         </div>
         <span className="banner-count">
-          {data?.banners.length ?? 0} banner{data?.banners.length !== 1 ? "s" : ""}
+          {data?.banners.length ?? 0} banner
+          {data?.banners.length !== 1 ? "s" : ""}
         </span>
       </div>
 
@@ -211,7 +210,7 @@ const SlotSection = ({
   );
 };
 
-// ── Main Page ─────────────────────────────────────────────
+// 
 const BannerManagement = () => {
   const { user } = useSelector((state: RootState) => state.userReducer);
 

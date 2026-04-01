@@ -64,15 +64,14 @@ const ProductManagement = () => {
         formData.set("stock", stockUpdate.toString());
       if (categoryUpdate) formData.set("category", categoryUpdate);
 
-      // FIX: field name "photo", single file — matches multer + req.file
       if (photoFile.file) {
         formData.set("photo", photoFile.file as Blob);
       }
 
+     
       const res = await updateProduct({
         formData,
-        userId: userId ?? "",
-        productId: productId ?? "",
+        productId: productId ?? "", 
       });
 
       responseToast(res, router, "/admin/product");
@@ -86,10 +85,9 @@ const ProductManagement = () => {
   const deleteHandler = async () => {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
-    const res = await deleteProduct({
-      userId: user?._id ?? "",
-      productId: data?.product?._id ?? "",
-    });
+    
+    const res = await deleteProduct(productId ?? "");
+    
     responseToast(res, router, "/admin/product");
   };
 

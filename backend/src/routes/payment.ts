@@ -1,10 +1,10 @@
 import express from "express";
+import { adminOnly, isAuthenticated } from "../middleware/auth.js";
 
-import { adminOnly } from "./../middleware/auth.js";
 import {
   newCoupon,
   applyDiscount,
-  allCoupon,
+  getAllCoupons,
   deleteCoupon,
   updateCoupon,
   getCoupon,
@@ -13,23 +13,20 @@ import {
 
 const app = express.Router();
 
-// Route - /api/v1/user/payment/create
-app.post("/create", createPaymentIntent);
+// Payment
+app.post("/create", isAuthenticated, createPaymentIntent);
 
-// Route - /api/v1/user/payment/coupon/new
-app.post("/coupon/new",adminOnly,  newCoupon); 
+// Coupon routes
+app.post("/coupon/new", isAuthenticated, adminOnly, newCoupon);
 
-// Route - /api/v1/user/payment/discount
 app.get("/discount", applyDiscount);
 
-// Route - /api/v1/user/payment/coupon/all
-app.get("/coupon/all",adminOnly,  allCoupon); 
+app.get("/coupon/all", isAuthenticated, adminOnly, getAllCoupons);
 
-// Route - /api/v1/user/payment/coupon/:id
 app
   .route("/coupon/:id")
-  .delete(adminOnly, deleteCoupon)
-  .put( adminOnly,updateCoupon) 
-  .get(adminOnly,getCoupon);
+  .delete(isAuthenticated, adminOnly, deleteCoupon)
+  .put(isAuthenticated, adminOnly, updateCoupon)
+  .get(isAuthenticated, adminOnly, getCoupon);
 
 export default app;

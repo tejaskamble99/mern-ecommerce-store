@@ -6,7 +6,7 @@ import { useEffect, useMemo } from "react";
 import TableHOC from "@/components/admin/TableHOC";
 import { useSelector } from "react-redux";
 import { UserReducerInitialState } from "@/types/reducer-types";
-import { useAllOrderQuery } from "@/redux/api/orderApi";
+import { useAllOrdersQuery } from "@/redux/api/orderApi";
 import { CustomError } from "@/types/api-types";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/admin/Loader";
@@ -66,10 +66,7 @@ export default function Transaction() {
       (state: { userReducer: UserReducerInitialState }) => state.userReducer
     );
 
-     const { data, isLoading, isError, error } = useAllOrderQuery(
-    user?._id ?? "",
-    { skip: !user?._id }
-  );
+     const { data, isLoading, isError, error } = useAllOrdersQuery();
 
   useEffect(() => {
     if (isError) {

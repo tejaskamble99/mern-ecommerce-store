@@ -2,12 +2,14 @@ import { Request } from "express";
 import { TryCatch } from "../middleware/error.js";
 import { NewOrderRequestBody } from "../types/types.js";
 import { Order } from "../models/order.js";
+import { Product } from "../models/product.js";
 import { invalidateCache, reduceStock } from "../utils/features.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { nodeCache } from "../server.js";
+import PDFDocument from "pdfkit";
 
 export const myOrders = TryCatch(async (req, res, next) => {
-  const { id: user } = req.query;
+  const user = req.user!._id;
   const key = `my-orders-${user}`;
   let orders;
 
@@ -17,10 +19,7 @@ export const myOrders = TryCatch(async (req, res, next) => {
     nodeCache.set(key, JSON.stringify(orders));
   }
 
-  return res.status(200).json({
-    success: true,
-    orders,
-  });
+  return res.status(200).json({ success: true, orders });
 });
 
 export const allOrders = TryCatch(async (req, res, next) => {
@@ -33,16 +32,14 @@ export const allOrders = TryCatch(async (req, res, next) => {
     nodeCache.set(key, JSON.stringify(orders));
   }
 
-  return res.status(200).json({
-    success: true,
-    orders,
-  });
+  return res.status(200).json({ success: true, orders });
 });
 
 export const getSingleOrder = TryCatch(async (req, res, next) => {
   const { id } = req.params;
   const key = `order-${id}`;
   let order;
+
   if (nodeCache.has(key)) order = JSON.parse(nodeCache.get(key) as string);
   else {
     order = await Order.findById(id).populate("user", "name");
@@ -50,10 +47,21 @@ export const getSingleOrder = TryCatch(async (req, res, next) => {
     nodeCache.set(key, JSON.stringify(order));
   }
 
-  return res.status(200).json({
-    success: true,
-    order,
-  });
+  // FIX #2: ownership check — user can only see their own orders
+  const requestingUser = req.user!;
+  const orderUserId =
+    typeof order.user === "object"
+      ? order.user._id.toString()
+      : order.user.toString();
+
+  if (
+    orderUserId !== requestingUser._id.toString() &&
+    requestingUser.role !== "admin"
+  ) {
+    return next(new ErrorHandler("Unauthorized", 403));
+  }
+
+  return res.status(200).json({ success: true, order });
 });
 
 export const newOrder = TryCatch(
@@ -61,7 +69,6 @@ export const newOrder = TryCatch(
     const {
       shippingInfo,
       orderItems,
-      user,
       subtotal,
       tax,
       shippingCharges,
@@ -69,8 +76,12 @@ export const newOrder = TryCatch(
       total,
     } = req.body;
 
-    if (!shippingInfo || !orderItems || !user || !subtotal || !tax || !total)
+    // User from verified token — not from client
+    const user = req.user!._id;
+
+    if (!shippingInfo || !orderItems || !subtotal || !tax || !total)
       return next(new ErrorHandler("Please enter all fields", 400));
+
     const order = await Order.create({
       shippingInfo,
       orderItems,
@@ -81,6 +92,7 @@ export const newOrder = TryCatch(
       discount,
       total,
     });
+
     await reduceStock(orderItems);
 
     invalidateCache({
@@ -91,12 +103,56 @@ export const newOrder = TryCatch(
       productId: order.orderItems.map((i) => String(i.productId)),
     });
 
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
       message: "Order placed successfully",
     });
   }
 );
+
+// FIX #1: cancelOrder restocks items + invalidates cache
+export const cancelOrder = TryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const order = await Order.findById(id);
+
+  if (!order) return next(new ErrorHandler("Order not found", 404));
+
+  // Only the owner can cancel their order
+  if (order.user.toString() !== req.user!._id.toString()) {
+    return next(new ErrorHandler("Unauthorized", 403));
+  }
+
+  if (order.status !== "Processing") {
+    return next(
+      new ErrorHandler("Only Processing orders can be cancelled", 400)
+    );
+  }
+
+  // Restock each item
+  for (const item of order.orderItems) {
+    const product = await Product.findById(item.productId);
+    if (product) {
+      product.stock += item.quantity;
+      await product.save();
+    }
+  }
+
+  order.status = "Cancelled";
+  await order.save();
+
+  invalidateCache({
+    product: true,
+    order: true,
+    admin: true,
+    _id: String(order.user), // ✅ FIX: Cast ObjectId to String
+    orderId: String(order._id),
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Order cancelled and stock restored",
+  });
+});
 
 export const processOrder = TryCatch(async (req, res, next) => {
   const { id } = req.params;
@@ -104,8 +160,11 @@ export const processOrder = TryCatch(async (req, res, next) => {
   if (!order) return next(new ErrorHandler("Order not found", 404));
 
   if (order.status === "Delivered") {
-    return next(new ErrorHandler("You have already delivered this order", 400));
+    return next(
+      new ErrorHandler("You have already delivered this order", 400)
+    );
   }
+
   switch (order.status) {
     case "Processing":
       order.status = "Shipped";
@@ -114,15 +173,17 @@ export const processOrder = TryCatch(async (req, res, next) => {
       order.status = "Delivered";
       break;
     default:
-      // If status is "Cancelled" or anything else, we shouldn't auto-update it to Delivered.
-      return next(new ErrorHandler("Cannot process this order status", 400));
+      return next(
+        new ErrorHandler("Cannot process this order status", 400)
+      );
   }
+
   await order.save();
 
   invalidateCache({
     order: true,
     admin: true,
-    _id: order.user,
+    _id: String(order.user), // ✅ FIX: Cast ObjectId to String
     orderId: String(order._id),
   });
 
@@ -143,7 +204,7 @@ export const deleteOrder = TryCatch(async (req, res, next) => {
   invalidateCache({
     order: true,
     admin: true,
-   _id: order.user,
+    _id: String(order.user), // ✅ FIX: Cast ObjectId to String
     orderId: String(order._id),
   });
 
@@ -151,4 +212,196 @@ export const deleteOrder = TryCatch(async (req, res, next) => {
     success: true,
     message: "Order deleted successfully",
   });
+});
+
+// FIX #4: generateInvoice with ownership check
+export const generateInvoice = TryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const order = await Order.findById(id).populate("user", "name email");
+
+  if (!order) return next(new ErrorHandler("Order not found", 404));
+
+  // Ownership check
+  const requestingUser = req.user!;
+  if (
+  order.user.toString() !== requestingUser._id.toString() &&
+  requestingUser.role !== "admin"
+) {
+  return next(new ErrorHandler("Unauthorized", 403));
+}
+
+  const doc = new PDFDocument({ margin: 50 });
+
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=invoice-${order._id}.pdf`
+  );
+  res.setHeader("Content-Type", "application/pdf");
+
+  doc.pipe(res);
+
+  // ── Header ──
+  doc
+    .fontSize(24)
+    .font("Helvetica-Bold")
+    .text("MyShop", { align: "left" });
+
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .fillColor("#9ca3af")
+    .text("Mobile Phone Accessories", { align: "left" });
+
+  doc
+    .fontSize(24)
+    .font("Helvetica-Bold")
+    .fillColor("#000")
+    .text("INVOICE", { align: "right" });
+
+  doc.moveDown();
+
+  // ── Order Meta ──
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .fillColor("#374151")
+    .text(`Invoice #: ${String(order._id).slice(-8).toUpperCase()}`)
+    .text(`Date: ${new Date().toLocaleDateString("en-IN")}`)
+    .text(`Status: ${order.status}`);
+
+  doc.moveDown();
+
+  // ── Divider ──
+  doc
+    .moveTo(50, doc.y)
+    .lineTo(545, doc.y)
+    .strokeColor("#e5e7eb")
+    .stroke();
+
+  doc.moveDown(0.5);
+
+  // ── Shipping Info ──
+  doc
+    .fontSize(12)
+    .font("Helvetica-Bold")
+    .fillColor("#111827")
+    .text("Bill To:");
+
+  doc
+  .fontSize(14)
+  .text("Shipping Address", { underline: true })
+  .fontSize(12)
+  .text(order.shippingInfo?.address ?? "")
+  .text(
+    `${order.shippingInfo?.city ?? ""}, ${order.shippingInfo?.state ?? ""}`
+  )
+  .text(
+    `${order.shippingInfo?.country ?? ""} — ${order.shippingInfo?.pinCode ?? ""}`
+  )
+  .moveDown();
+
+  doc.moveDown();
+
+  // ── Items Table Header ──
+  doc
+    .moveTo(50, doc.y)
+    .lineTo(545, doc.y)
+    .strokeColor("#e5e7eb")
+    .stroke();
+
+  doc.moveDown(0.5);
+
+  doc.font("Helvetica-Bold").fontSize(10).fillColor("#6b7280");
+  doc.text("ITEM", 50, doc.y, { width: 250 });
+  doc.text("QTY", 300, doc.y - doc.currentLineHeight(), { width: 80 });
+  doc.text("PRICE", 380, doc.y - doc.currentLineHeight(), { width: 80 });
+  doc.text("TOTAL", 460, doc.y - doc.currentLineHeight(), { width: 80, align: "right" });
+
+  doc.moveDown(0.5);
+  doc
+    .moveTo(50, doc.y)
+    .lineTo(545, doc.y)
+    .strokeColor("#e5e7eb")
+    .stroke();
+  doc.moveDown(0.5);
+
+  // ── Items ──
+  doc.font("Helvetica").fontSize(10).fillColor("#111827");
+
+  for (const item of order.orderItems) {
+    const y = doc.y;
+    doc.text(item.name, 50, y, { width: 250 });
+    doc.text(String(item.quantity), 300, y, { width: 80 });
+    doc.text(`Rs.${item.price.toLocaleString("en-IN")}`, 380, y, { width: 80 });
+    doc.text(
+      `Rs.${(item.price * item.quantity).toLocaleString("en-IN")}`,
+      460,
+      y,
+      { width: 80, align: "right" }
+    );
+    doc.moveDown();
+  }
+
+  doc.moveDown(0.5);
+  doc
+    .moveTo(50, doc.y)
+    .lineTo(545, doc.y)
+    .strokeColor("#e5e7eb")
+    .stroke();
+  doc.moveDown(0.5);
+
+  // ── Summary ──
+  const summaryLeft = 380;
+  const summaryRight = 545;
+
+  const summaryRow = (label: string, value: string, bold = false) => {
+    const y = doc.y;
+    doc
+      .font(bold ? "Helvetica-Bold" : "Helvetica")
+      .fontSize(10)
+      .fillColor(bold ? "#111827" : "#374151")
+      .text(label, summaryLeft, y, { width: 80 })
+      .text(value, 460, y, { width: summaryRight - 460, align: "right" });
+    doc.moveDown(0.4);
+  };
+
+  summaryRow("Subtotal", `Rs.${order.subtotal.toLocaleString("en-IN")}`);
+  summaryRow("Tax (GST)", `Rs.${Math.round(order.tax).toLocaleString("en-IN")}`);
+  summaryRow(
+    "Shipping",
+    order.shippingCharges === 0
+      ? "FREE"
+      : `Rs.${order.shippingCharges.toLocaleString("en-IN")}`
+  );
+  if (order.discount > 0) {
+    summaryRow(
+      "Discount",
+      `- Rs.${order.discount.toLocaleString("en-IN")}`
+    );
+  }
+
+  doc.moveDown(0.5);
+  doc
+    .moveTo(380, doc.y)
+    .lineTo(545, doc.y)
+    .strokeColor("#111827")
+    .stroke();
+  doc.moveDown(0.5);
+
+  summaryRow(
+    "Total Paid",
+    `Rs.${order.total.toLocaleString("en-IN")}`,
+    true
+  );
+
+  // ── Footer ──
+  doc.moveDown(2);
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor("#9ca3af")
+    .text("Thank you for shopping with MyShop!", { align: "center" })
+    .text("For queries: support@myshop.com", { align: "center" });
+
+  doc.end();
 });

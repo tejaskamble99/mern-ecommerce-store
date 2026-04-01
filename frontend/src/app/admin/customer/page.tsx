@@ -1,4 +1,5 @@
 "use client";
+
 import { useAllUsersQuery, useDeleteUserMutation } from "@/redux/api/userApi";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -11,90 +12,91 @@ import TableHOC from "@/components/admin/TableHOC";
 import Image from "next/image";
 import { Skeleton } from "@/components/admin/Loader";
 
-
-
 interface DataType {
-  avatar: string; 
+  avatar: string;
   name: string;
   email: string;
   gender: string;
   role: string;
-  action: string; 
+  action: string;
 }
-const fallback = "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
+
+const fallback =
+  "https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg";
 
 export default function Customers() {
   const { user } = useSelector((state: RootState) => state.userReducer);
 
   const userId = user?._id;
-  const { data, isLoading, isError, error } = useAllUsersQuery(userId ?? "", {
-    skip: !user?._id,
-  });
+
+  const { data, isLoading, isError, error } = useAllUsersQuery();
+
+  const [deleteUser] = useDeleteUserMutation();
 
   useEffect(() => {
     if (isError) {
       const err = error as CustomError;
-      toast.error(err.data.message);
+      toast.error(err?.data?.message || "Failed to load users");
     }
   }, [isError, error]);
 
-  const [deleteUser] = useDeleteUserMutation();
-
-
-
   const deleteHandler = async (targetUserId: string) => {
-  const confirmed = window.confirm("Delete this user?");
-  if (!confirmed) return;
+    if (!userId) return;
 
-  try {
-    await deleteUser({
-      userId: targetUserId,
-      adminUserId: userId ?? "",
-    }).unwrap();
+    if (targetUserId === userId) {
+      toast.error("You cannot delete your own account");
+      return;
+    }
 
-    toast.success("User deleted");
-  } catch {
-    toast.error("Failed to delete user");
-  }
-};
+    const confirmed = window.confirm("Delete this user?");
+    if (!confirmed) return;
+
+    try {
+      
+      await deleteUser(targetUserId).unwrap();
+
+      toast.success("User deleted successfully");
+    } catch {
+      toast.error("Failed to delete user");
+    }
+  };
 
   const rows = useMemo<DataType[]>(
-  () =>
-    data?.users?.map((u) => {
-      const avatar = u.photo
-        ? u.photo.startsWith("http")
-          ? u.photo
-          : `${process.env.NEXT_PUBLIC_SERVER_URL}/${u.photo}`
-        : fallback;
+    () =>
+      data?.users?.map((u) => {
+        const avatar = u.photo
+          ? u.photo.startsWith("http")
+            ? u.photo
+            : `${process.env.NEXT_PUBLIC_SERVER_URL}/${u.photo}`
+          : fallback;
 
-      return {
-        avatar,
-        name: u.name,
-        email: u.email,
-        gender: u.gender,
-        role: u.role,
-        action: u._id,
-      };
-    }) ?? [],
-  [data]
-);
-
+        return {
+          avatar,
+          name: u.name,
+          email: u.email,
+          gender: u.gender,
+          role: u.role,
+          action: u._id,
+        };
+      }) ?? [],
+    [data]
+  );
 
   const columns: ColumnDef<DataType>[] = [
     {
       header: "Avatar",
-    accessorKey: "avatar",
-    cell: ({ row }) => (
-      <Image
-        src={row.original.avatar || fallback}
-        alt={row.original.name}
-        width={40}
-        height={40}
-        style={{
-          borderRadius: "50%",
-          objectFit: "cover",
-        }}
-      />
+      accessorKey: "avatar",
+      cell: ({ row }) => (
+        <Image
+          src={row.original.avatar || fallback}
+          alt={row.original.name}
+          width={40}
+          height={40}
+          style={{
+            borderRadius: "50%",
+            objectFit: "cover",
+          }}
+        />
       ),
     },
     {
@@ -112,25 +114,37 @@ export default function Customers() {
     {
       header: "Role",
       accessorKey: "role",
+      cell: ({ row }) => (
+        <span className={row.original.role === "admin" ? "purple" : ""}>
+          {row.original.role}
+        </span>
+      ),
     },
     {
       header: "Action",
       accessorKey: "action",
       cell: (info) => (
-        <button onClick={() => deleteHandler(info.getValue() as string)}>
+        <button
+          onClick={() => deleteHandler(info.getValue() as string)}
+          style={{
+            cursor: "pointer",
+            color: "red",
+            background: "none",
+            border: "none",
+          }}
+        >
           <FaTrash />
         </button>
       ),
     },
   ];
 
-  // 4. Initialize Table
   const Table = TableHOC<DataType>(
     columns,
     rows,
     "dashboard-product-box",
     "Customers",
-    rows.length > 6,
+    rows.length > 6
   );
 
   if (isLoading) return <Skeleton width="100%" length={20} />;

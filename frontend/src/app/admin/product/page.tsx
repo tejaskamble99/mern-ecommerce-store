@@ -69,12 +69,7 @@ export default function Products() {
 
   const userId = user?._id;
 
-  const { data, isLoading, isError, error } = useAllAdminProductsQuery(
-    userId ?? "",
-    {
-      skip: !userId,
-    },
-  );
+  const { data, isLoading, isError, error } = useAllAdminProductsQuery();
 
   const rows = useMemo<DataType[]>(
     () =>
