@@ -60,6 +60,7 @@ export type SearchProductsResponse = AllProductsResponse & {
 };
 export type SearchProductsRequest = {
   price: number;
+  salePrice: number;
   page: number;
   category: string;
   search: string;

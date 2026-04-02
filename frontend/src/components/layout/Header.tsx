@@ -114,7 +114,6 @@ export default function Header() {
               <span className="cart-badge">{cartItems.length}</span>
             )}
           </div>
-          <span className="mobile-text">Cart</span>
         </Link>
 
         {user?._id ? (

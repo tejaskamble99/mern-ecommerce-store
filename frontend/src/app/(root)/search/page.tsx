@@ -1,6 +1,7 @@
 "use client";
+
 import { useState, useEffect, Suspense } from "react";
-import ProductCard from "./../../../components/layout/ProductCard";
+import ProductCard from "@/components/layout/ProductCard";
 import {
   useCategoriesQuery,
   useSearchProductsQuery,
@@ -12,34 +13,49 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { CartItem } from "@/types/types";
 import { addToCart } from "@/redux/reducer/cartReducer";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation"; // ✅ Added useRouter
 
 function SearchContent() {
   const searchParams = useSearchParams();
+  const router = useRouter(); // ✅ Initialize Next.js router
+
+  // Category comes directly from URL
+  const category = searchParams.get("category") ?? "";
+  const searchFromUrl = searchParams.get("search") ?? "";
 
   const [sort, setSort] = useState("");
   const [maxPrice, setMaxPrice] = useState(200000);
-  const [category, setCategory] = useState(searchParams.get("category") ?? "");
-  const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [page, setPage] = useState(1);
+
+  // ✅ UX Upgrade: Debounced Search State
+  const [searchInput, setSearchInput] = useState(searchFromUrl);
+  const [debouncedSearch, setDebouncedSearch] = useState(searchFromUrl);
+
+  // ✅ Wait 500ms after the user stops typing before making the API call
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+      setPage(1); // Reset to page 1 on new search
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const {
     data: categoriesResponse,
     isLoading: loadingCategories,
-    isError,
-    error,
   } = useCategoriesQuery();
 
   const {
     isLoading: productLoading,
     data: searchData,
-    isError: productIsError, // FIX 3
+    isError: productIsError,
     error: productError,
   } = useSearchProductsQuery({
-    search,
+    search: debouncedSearch, // ✅ Use debounced value here!
     sort,
     category,
     page,
+    salePrice: maxPrice,
     price: maxPrice,
   });
 
@@ -56,16 +72,11 @@ function SearchContent() {
   const isPrevPage = page > 1;
   const isNextPage = page < totalPages;
 
-  useEffect(() => {
-    if (isError) {
-      const err = error as CustomError;
-      toast.error(err?.data?.message || "Something went wrong");
-    }
-  }, [isError, error]);
+
   useEffect(() => {
     if (productIsError) {
       const err = productError as CustomError;
-      toast.error(err.data.message);
+      toast.error(err?.data?.message || "Something went wrong");
     }
   }, [productIsError, productError]);
 
@@ -76,7 +87,6 @@ function SearchContent() {
 
         <div>
           <h4>Sort</h4>
-
           <select
             value={sort}
             onChange={(e) => {
@@ -86,7 +96,7 @@ function SearchContent() {
           >
             <option value="">None</option>
             <option value="asc">Price (Low to High)</option>
-            <option value="dsc">Price (High to Low )</option>
+            <option value="dsc">Price (High to Low)</option>
           </select>
         </div>
 
@@ -109,8 +119,8 @@ function SearchContent() {
           <select
             value={category}
             onChange={(e) => {
-              setCategory(e.target.value);
-              setPage(1);
+              // ✅ Smooth client-side transition instead of hard reload!
+              router.push(`/search?category=${e.target.value}`);
             }}
           >
             <option value="">All</option>
@@ -123,19 +133,19 @@ function SearchContent() {
           </select>
         </div>
       </aside>
+
       <main>
         <h1>Products</h1>
+
         <input
           type="text"
           placeholder="Search by name..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)} // Just updates local input instantly
         />
+
         {productLoading ? (
-          <Skeleton />
+          <Skeleton length={10} />
         ) : (
           <div className="search-product-list">
             {searchData?.products.map((i) => (
@@ -144,6 +154,7 @@ function SearchContent() {
                 productId={i._id}
                 name={i.name}
                 price={i.price}
+                salePrice={i.salePrice} 
                 stock={i.stock}
                 photo={i.photo}
                 handler={addToCartHandler}

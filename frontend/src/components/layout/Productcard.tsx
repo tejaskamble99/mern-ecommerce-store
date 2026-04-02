@@ -1,5 +1,6 @@
 import { server } from "@/redux/store";
 import { CartItem } from "@/types/types";
+import Image from "next/image";
 import Link from "next/link";
 
 type ProdctsProps = {
@@ -7,6 +8,7 @@ type ProdctsProps = {
   photo: string;
   name: string;
   price: number;
+  salePrice?: number;
   stock: number;
   handler: (cartItem: CartItem) => string | undefined;
 };
@@ -24,7 +26,8 @@ export default function ProductCard({
     <div className="productcard">
       <Link href={`/product/${productId}`}>
       <div className="card-header">
-        <img src={`${server}/${photo}`} alt={name} />
+        <Image src={`${server}/${photo}`} alt={name} width={200} height={200} />
+        
       </div>
 
       <div className="card-body">
