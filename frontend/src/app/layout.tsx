@@ -3,6 +3,7 @@ import "@/styles/app.scss";
 import Providers from '@/components/Providers'; // Assuming this wraps Redux/Session
 import { ToasterProvider } from "@/components/ToasterProvider";
 import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 // This ONLY works because we removed "use client"
 export const metadata = {
@@ -25,7 +26,7 @@ export default function RootLayout({
         <Providers>
           <Header/>
           {children}
-          
+          <Footer/>
         </Providers>
        <ToasterProvider />
       </body>

@@ -85,7 +85,7 @@ export default function ProductPage() {
 
   const relatedProducts =
     latestData?.products?.filter(
-      (p) => p.category === product?.category && p._id !== product?._id
+      (p) => p.category === product?.category && p._id !== product?._id,
     ) ?? [];
 
   if (isLoading) {
@@ -113,7 +113,7 @@ export default function ProductPage() {
       </nav>
 
       <section className="product-detail">
-        {/* LEFT — Image Gallery */}
+      
         <div className="product-gallery">
           <div className="gallery-main">
             <Image
@@ -155,29 +155,54 @@ export default function ProductPage() {
 
           <h1 className="product-name">{product.name}</h1>
 
-          {/* ✅ Dynamic Product Ratings */}
+         
           <div className="product-rating">
             {[1, 2, 3, 4, 5].map((s) => {
               const ratingVal = Math.round(product.ratings || 0);
               return (
-                <FaStar 
-                  key={s} 
-                  className={s <= ratingVal ? "filled" : "empty"} 
-                  color={s <= ratingVal ? "#f59e0b" : "#ddd"} 
+                <FaStar
+                  key={s}
+                  className={s <= ratingVal ? "filled" : "empty"}
+                  color={s <= ratingVal ? "#f59e0b" : "#ddd"}
                 />
               );
             })}
             <span>{product.ratings?.toFixed(1) || "0.0"}</span>
-            <span className="review-count">· {product.numOfReviews || 0} reviews</span>
+            <span className="review-count">
+              · {product.numOfReviews || 0} reviews
+            </span>
           </div>
 
-          <p className="product-price">
-            {product.price.toLocaleString("en-IN", {
-              style: "currency",
-              currency: "INR",
-              maximumFractionDigits: 0,
-            })}
-          </p>
+          <div className="product-price-container">
+            <p className="product-price">
+              {(product.salePrice || product.price).toLocaleString("en-IN", {
+                style: "currency",
+                currency: "INR",
+                maximumFractionDigits: 0,
+              })}
+            </p>
+
+            {product.salePrice && product.salePrice < product.price && (
+              <>
+                <p className="original-price">
+                  {product.price.toLocaleString("en-IN", {
+                    style: "currency",
+                    currency: "INR",
+                    maximumFractionDigits: 0,
+                  })}
+                </p>
+                <span className="discount-badge">
+                  -
+                  {product.discountPercent ||
+                    Math.round(
+                      ((product.price - product.salePrice) / product.price) *
+                        100,
+                    )}
+                  % OFF
+                </span>
+              </>
+            )}
+          </div>
           <h5>Inclusive of all taxes</h5>
 
           {!isOutOfStock && (
@@ -208,9 +233,21 @@ export default function ProductPage() {
           </button>
         </div>
       </section>
+
       
-      <div className="product-detail-divider">
-        <p>{product.description}</p>
+      <div className="product-detail-divider" style={{ marginTop: "40px" }}>
+        <h3 style={{ marginBottom: "15px", fontSize: "20px" }}>
+          Product Description
+        </h3>
+        <p
+          style={{
+            whiteSpace: "pre-wrap",
+            lineHeight: "1.8",
+            color: "#4b5563",
+          }}
+        >
+          {product.description}
+        </p>
       </div>
 
       {relatedProducts && relatedProducts.length > 0 && (
@@ -243,26 +280,61 @@ export default function ProductPage() {
         </section>
       )}
 
-      {/* ✅ Complete Review System Integration */}
-      <section className="product-reviews-section" style={{ marginTop: "40px" }}>
-        <h2>Customer Reviews</h2>
-        
-        <div 
-          className="reviews-layout" 
-          style={{ display: "flex", gap: "2rem", flexWrap: "wrap", marginTop: "20px" }}
+      
+      <section
+        className="product-reviews-section"
+        style={{
+          marginTop: "60px",
+          borderTop: "1px solid #eee",
+          paddingTop: "40px",
+        }}
+      >
+        <h2 style={{ marginBottom: "30px", fontSize: "24px" }}>
+          Customer Reviews
+        </h2>
+
+        <div
+          className="reviews-layout"
+          style={{ display: "flex", gap: "4rem", flexWrap: "wrap" }}
         >
-          {/* Left Column: Stats & Form */}
-          <div className="reviews-left" style={{ flex: "1", minWidth: "300px" }}>
+         
+          <div
+            className="reviews-left"
+            style={{ flex: "1", minWidth: "300px", maxWidth: "400px" }}
+          >
             <RatingBreakdown reviews={product.reviews || []} />
-            
-            <div style={{ marginTop: "30px" }}>
-              <h3>Write a Review</h3>
+
+            <div
+              style={{
+                marginTop: "40px",
+                padding: "20px",
+                backgroundColor: "#f9fafb",
+                borderRadius: "8px",
+                border: "1px solid #e5e7eb",
+              }}
+            >
+              <h3 style={{ marginBottom: "10px", fontSize: "18px" }}>
+                Share your thoughts
+              </h3>
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: "#6b7280",
+                  marginBottom: "20px",
+                }}
+              >
+                If you’ve used this product, share your thoughts with other
+                customers.
+              </p>
               <ReviewForm productId={product._id} />
             </div>
           </div>
 
-          {/* Right Column: The actual reviews */}
-          <div className="reviews-right" style={{ flex: "2", minWidth: "300px" }}>
+         
+          <div
+            className="reviews-right"
+            style={{ flex: "2", minWidth: "300px" }}
+          >
             <ReviewList reviews={product.reviews || []} />
           </div>
         </div>

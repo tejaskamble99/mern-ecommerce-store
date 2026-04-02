@@ -10,36 +10,51 @@ import {
   useDeleteProductMutation,
   useProductDetailsQuery,
   useUpdateProductMutation,
+  useDeleteReviewMutation,
 } from "@/redux/api/productApi";
 import { RootState } from "@/redux/store";
 import { responseToast } from "@/utils/features";
 import { server } from "@/redux/store";
 import Image from "next/image";
+import ReviewForm from "@/components/layout/product/ReviewForm";
+import { Review } from "@/types/types";
 
 const ProductManagement = () => {
   const { user } = useSelector((state: RootState) => state.userReducer);
 
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const userId = user?._id;
   const productId = params?.id;
 
   const { data, isLoading, isError } = useProductDetailsQuery(productId ?? "", {
     skip: !productId,
   });
 
-  const { price, photo, name, stock, category, description } =
-    data?.product || {
-      photo: "",
-      category: "",
-      name: "",
-      stock: 0,
-      price: 0,
-      description: "",
-    };
+  const {
+    price,
+    salePrice,
+    photo,
+    name,
+    stock,
+    category,
+    description,
+    reviews,
+  } = data?.product || {
+    photo: "",
+    category: "",
+    name: "",
+    stock: 0,
+    price: 0,
+    salePrice: 0,
+    description: "",
+    reviews: [],
+  };
 
   const [btnLoading, setBtnLoading] = useState<boolean>(false);
   const [priceUpdate, setPriceUpdate] = useState<number>(price);
+  const [salePriceUpdate, setSalePriceUpdate] = useState<number | "">(
+    salePrice || "",
+  );
   const [stockUpdate, setStockUpdate] = useState<number>(stock);
   const [nameUpdate, setNameUpdate] = useState<string>(name);
   const [categoryUpdate, setCategoryUpdate] = useState<string>(category);
@@ -48,6 +63,7 @@ const ProductManagement = () => {
 
   const [updateProduct] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
+  const [deleteReview] = useDeleteReviewMutation();
 
   const photoFile = useFileHandler("single", 10);
 
@@ -60,6 +76,8 @@ const ProductManagement = () => {
       if (nameUpdate) formData.set("name", nameUpdate);
       if (descriptionUpdate) formData.set("description", descriptionUpdate);
       if (priceUpdate) formData.set("price", priceUpdate.toString());
+      if (salePriceUpdate !== "")
+        formData.set("salePrice", salePriceUpdate.toString());
       if (stockUpdate !== undefined)
         formData.set("stock", stockUpdate.toString());
       if (categoryUpdate) formData.set("category", categoryUpdate);
@@ -68,10 +86,9 @@ const ProductManagement = () => {
         formData.set("photo", photoFile.file as Blob);
       }
 
-     
       const res = await updateProduct({
         formData,
-        productId: productId ?? "", 
+        productId: productId ?? "",
       });
 
       responseToast(res, router, "/admin/product");
@@ -84,17 +101,21 @@ const ProductManagement = () => {
 
   const deleteHandler = async () => {
     if (!confirm("Are you sure you want to delete this product?")) return;
-
-    
     const res = await deleteProduct(productId ?? "");
-    
     responseToast(res, router, "/admin/product");
+  };
+
+  const reviewDeleteHandler = async (reviewId: string) => {
+    if (!confirm("Are you sure you want to delete this review?")) return;
+    const res = await deleteReview({ productId: productId ?? "", reviewId });
+    responseToast(res, router, ""); // Stay on same page, RTK will auto-refresh
   };
 
   useEffect(() => {
     if (data) {
       setNameUpdate(data.product.name);
       setPriceUpdate(data.product.price);
+      setSalePriceUpdate(data.product.salePrice || "");
       setStockUpdate(data.product.stock);
       setCategoryUpdate(data.product.category);
       setDescriptionUpdate(data.product.description);
@@ -126,7 +147,24 @@ const ProductManagement = () => {
             ) : (
               <span className="red">Not Available</span>
             )}
-            <h3>₹{price.toLocaleString("en-IN")}</h3>
+
+            {salePrice ? (
+              <h3>
+                <span
+                  style={{
+                    textDecoration: "line-through",
+                    color: "#9ca3af",
+                    marginRight: "10px",
+                    fontSize: "1rem",
+                  }}
+                >
+                  ₹{price.toLocaleString("en-IN")}
+                </span>
+                ₹{salePrice.toLocaleString("en-IN")}
+              </h3>
+            ) : (
+              <h3>₹{price.toLocaleString("en-IN")}</h3>
+            )}
           </section>
 
           <article>
@@ -135,6 +173,7 @@ const ProductManagement = () => {
             </button>
             <form onSubmit={submitHandler}>
               <h2>Manage</h2>
+              {/* Form fields stay exactly the same */}
               <div>
                 <label>Name</label>
                 <input
@@ -160,6 +199,19 @@ const ProductManagement = () => {
                   placeholder="Price"
                   value={priceUpdate}
                   onChange={(e) => setPriceUpdate(Number(e.target.value))}
+                />
+              </div>
+              <div>
+                <label>Sale Price (Optional)</label>
+                <input
+                  type="number"
+                  placeholder="Leave blank for no sale"
+                  value={salePriceUpdate}
+                  onChange={(e) =>
+                    setSalePriceUpdate(
+                      e.target.value ? Number(e.target.value) : "",
+                    )
+                  }
                 />
               </div>
               <div>
@@ -205,6 +257,41 @@ const ProductManagement = () => {
               </button>
             </form>
           </article>
+          <div className="admin-review-section">
+            <h2>Manage Reviews</h2>
+
+            <div className="review-section-inner">
+              {/* Left: Add/Edit Form */}
+              <div className="admin-review-card">
+                <h3>Add / Edit Review as Admin</h3>
+                <ReviewForm productId={productId ?? ""} />
+              </div>
+
+              {/* Right: Existing Reviews List */}
+              <div className="admin-reviews-list">
+                <h3>Existing Reviews ({reviews?.length || 0})</h3>
+                {reviews && reviews.length > 0 ? (
+                  reviews.map((review: Review) => (
+                    <div key={review._id}>
+                      <div>
+                        <strong>{review.name}</strong>
+                        <span>{review.rating} ★</span>
+                        <p>{review.comment}</p>
+                      </div>
+                      <button
+                        onClick={() => reviewDeleteHandler(review._id)}
+                        title="Delete Review"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p>No reviews found for this product.</p>
+                )}
+              </div>
+            </div>
+          </div>
         </>
       )}
     </main>

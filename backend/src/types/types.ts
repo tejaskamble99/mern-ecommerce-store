@@ -12,12 +12,13 @@ export interface NewUserRequestBody {
 export interface NewProductRequestBody {
     name: string;
     photo: string;
-    price: number;  
-    stock : number;
+    price: number;
+    salePrice?: number | null;
+    stock: number;
     description: string;
     category: string;
-   
 }
+
 export type  Controllertype = (
     req: Request,
     res:Response,

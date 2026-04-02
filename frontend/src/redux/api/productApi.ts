@@ -1,5 +1,5 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { baseQueryWithAuth } from "./baseQuery"; // ✅ Import your secure base query
+import { baseQueryWithAuth } from "./baseQuery";
 
 import {
   AllProductsResponse,
@@ -13,9 +13,9 @@ import {
 
 export const productApi = createApi({
   reducerPath: "productApi",
-
   baseQuery: baseQueryWithAuth,
   tagTypes: ["Products"],
+
   endpoints: (builder) => ({
     latestProducts: builder.query<AllProductsResponse, void>({
       query: () => `product/latest`,
@@ -98,8 +98,21 @@ export const productApi = createApi({
       }),
       invalidatesTags: ["Products"],
     }),
+
     getReviews: builder.query({
       query: (productId) => `product/reviews/${productId}`,
+    }),
+
+  
+    deleteReview: builder.mutation<
+      MessageResponse,
+      { productId: string; reviewId: string }
+    >({
+      query: ({ productId, reviewId }) => ({
+        url: `product/review?productId=${productId}&reviewId=${reviewId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Products"],
     }),
   }),
 });
@@ -116,5 +129,6 @@ export const {
   useUpdateProductMutation,
   useDeleteProductMutation,
   useAddReviewMutation,
+  useDeleteReviewMutation,
   useGetReviewsQuery,
 } = productApi;

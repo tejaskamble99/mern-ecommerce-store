@@ -138,7 +138,7 @@ export const  getSingleProduct = TryCatch(async (req, res, next) => {
 
 export const newProduct = TryCatch(
   async (req: Request<{}, {}, NewProductRequestBody>, res, next) => {
-    const { name, price, stock, description, category } = req.body;
+    const { name, price, salePrice, stock, description, category } = req.body;
     const photo = req.file;
 
     if (!photo) return next(new ErrorHandler("Please upload photo", 400));
@@ -150,9 +150,27 @@ export const newProduct = TryCatch(
       return next(new ErrorHandler("Please enter all fields", 400));
     }
 
+    
+    if (salePrice && Number(salePrice) >= Number(price)) {
+      return next(
+        new ErrorHandler("Sale price must be less than original price", 400)
+      );
+    }
+
+   
+    let discountPercent = 0;
+
+    if (salePrice) {
+      discountPercent = Math.round(
+        ((Number(price) - Number(salePrice)) / Number(price)) * 100
+      );
+    }
+
     await Product.create({
       name,
       price,
+      salePrice: salePrice || undefined,
+      discountPercent,
       stock,
       description,
       category: category.toLowerCase(),
@@ -170,31 +188,50 @@ export const newProduct = TryCatch(
 
 export const updateProduct = TryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const { name, price, stock, description, category } = req.body;
-  const photo = req.file; // The NEW uploaded file
+  const { name, price, salePrice, stock, description, category } = req.body;
+  const photo = req.file;
 
   const product = await Product.findById(id);
   if (!product) return next(new ErrorHandler("Product not found", 404));
 
   if (photo) {
-    // ✅ FIX: Delete the OLD photo from the server (if it exists)
     if (product.photo) {
       rm(product.photo, (err) => {
         if (err) console.error("Error deleting old photo:", err);
       });
     }
-    // Assign the new photo path to the database
     product.photo = photo.path;
   }
 
   if (name) product.name = name;
-  if (price) product.price = price;
-  if (stock) product.stock = stock;
+  if (price) product.price = Number(price);
+  if (stock) product.stock = Number(stock);
   if (description) product.description = description;
   if (category) product.category = category.toLowerCase();
 
+  /* ---------- SALE PRICE LOGIC ---------- */
+
+  if (salePrice !== undefined && salePrice !== "") {
+  const sale = Number(salePrice);
+
+  if (sale >= product.price) {
+    return next(
+      new ErrorHandler("Sale price must be less than original price", 400)
+    );
+  }
+
+  product.salePrice = sale;
+} else {
+  product.salePrice = null as any;
+}
+
   await product.save();
-  invalidateCache({ product: true, productId: String(product._id), admin: true });
+
+  invalidateCache({
+    product: true,
+    productId: String(product._id),
+    admin: true,
+  });
 
   return res.status(200).json({
     success: true,
@@ -232,8 +269,9 @@ export const addOrUpdateReview = TryCatch(async (req, res, next) => {
       url: file.path,
     })) || [];
 
+
   const existingReview = product.reviews.find(
-    (r) => r.user.toString() === user._id.toString()
+    (r) => r.user?.toString() === user._id?.toString()
   );
 
   if (existingReview) {
@@ -254,6 +292,13 @@ export const addOrUpdateReview = TryCatch(async (req, res, next) => {
   (product as any).calculateRatings();
 
   await product.save({ validateBeforeSave: false });
+
+
+  invalidateCache({
+    product: true,
+    productId: String(product._id),
+    admin: true,
+  });
 
   res.status(200).json({
     success: true,
@@ -282,23 +327,40 @@ export const getProductReviews = TryCatch(async (req, res, next) => {
 });
 
 export const deleteReview = TryCatch(async (req, res, next) => {
-  const { productId, reviewId } = req.query;
+  const { productId, reviewId } = req.query as {
+    productId?: string;
+    reviewId?: string;
+  };
+
+  if (!productId || !reviewId) {
+    return next(new ErrorHandler("productId and reviewId are required", 400));
+  }
 
   const product = await Product.findById(productId);
+  if (!product) return next(new ErrorHandler("Product not found", 404));
 
-  if (!product)
-    return next(new ErrorHandler("Product not found", 404));
+  // Find the subdocument by id
+  const reviewDoc = product.reviews.id(reviewId);
+  if (!reviewDoc) {
+    return next(new ErrorHandler("Review not found", 404));
+  }
 
-  product.reviews = product.reviews.filter(
-    (review: any) => review._id.toString() !== reviewId
-  ) as any;
+  // Remove it safely
+  reviewDoc.deleteOne(); // or reviewDoc.remove() if using older Mongoose
 
-  (product as any).calculateRatings();
+  // Recalculate ratings
+  (product as any).calculateRatings?.();
 
   await product.save({ validateBeforeSave: false });
 
+  invalidateCache({
+    product: true,
+    productId: String(product._id),
+    admin: true,
+  });
+
   res.status(200).json({
     success: true,
-    message: "Review deleted",
+    message: "Review deleted successfully",
   });
 });

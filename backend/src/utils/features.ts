@@ -42,21 +42,22 @@ export const invalidateCache =  ({
   productId,
 }: InvalidateCacheProps) => {
   if (product) {
-const productKeys: string[] = [
-  "latest-Products",
-  "categories",
-  "categories-with-image",
-  "all-Products",
-];
+    const productKeys: string[] = [
+      "latest-products", // ✅ FIX: lowercase p
+      "categories",
+      "categories-with-image",
+      "all-Products",
+    ];
 
-// Only add once based on type
-if (typeof productId === "string") productKeys.push(`product-${productId}`);
-if (typeof productId === "object") {
-  productId.forEach((i) => productKeys.push(`product-${i}`));
-}
+    // ✅ FIX: Use Array.isArray for perfect safety
+    if (typeof productId === "string") productKeys.push(`product-${productId}`);
+    if (Array.isArray(productId)) {
+      productId.forEach((i) => productKeys.push(`product-${i}`));
+    }
 
-nodeCache.del(productKeys);
+    nodeCache.del(productKeys);
   }
+  
   if (order) {
     const orderKeys: string[] = [
       `my-orders-${_id}`,

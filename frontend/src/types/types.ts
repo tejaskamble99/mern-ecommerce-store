@@ -8,16 +8,16 @@ export type User = {
   _id: string;
 };
 
-// ✅ Added ReviewImage type
+
 export type ReviewImage = {
   url: string;
   _id?: string;
 };
 
-// ✅ Updated Review type to match our new backend logic
+
 export type Review = {
   _id: string;
-  user: string; // User ID
+  user: string; 
   name: string;
   rating: number;
   comment: string;
@@ -25,10 +25,11 @@ export type Review = {
   createdAt?: string;
 };
 
-// ✅ Uncommented ratings, numOfReviews, and added the reviews array
 export type Product = {
   name: string;
   price: number;
+  salePrice?: number; 
+  discountPercent?: number; 
   stock: number;
   category: string;
   ratings: number;
@@ -37,7 +38,7 @@ export type Product = {
   photo: string;
   reviews: Review[]; 
   _id: string;
-};
+};;
 
 export type ShippingInfo = {
   fullName: string;
