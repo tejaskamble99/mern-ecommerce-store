@@ -28,7 +28,7 @@ export type Review = {
 export type Product = {
   name: string;
   price: number;
-  salePrice?: number; 
+  salePrice: number; 
   discountPercent?: number; 
   stock: number;
   category: string;

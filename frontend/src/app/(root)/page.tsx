@@ -10,6 +10,7 @@ import {
 import { addToCart } from "@/redux/reducer/cartReducer";
 import { AppDispatch, server } from "@/redux/store";
 import { CartItem } from "@/types/types";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
@@ -22,21 +23,11 @@ import "swiper/css/pagination";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 
-// Fallback banners if none in DB
-const FALLBACK_BANNERS = [
-  "/assets/images/cover.jpg",
-  "/assets/images/cover1.jpg",
-  "/assets/images/cover2.jpg",
-  "/assets/images/cover3.jpg",
-];
-
 export default function Home() {
-  // Banner queries
   const { data: heroBannerData } = useGetBannersQuery("hero");
   const { data: promoBannerData } = useGetBannersQuery("promo");
   const { data: bottomBannerData } = useGetBannersQuery("bottom");
 
-  // Product + category queries
   const {
     data: productData,
     isLoading: productLoading,
@@ -62,52 +53,46 @@ export default function Home() {
     toast.success("Added to Cart");
   };
 
-  // Build hero banner URLs — fallback to local images if DB is empty
   const heroUrls =
     heroBannerData?.banners && heroBannerData.banners.length > 0
       ? heroBannerData.banners.map((b) =>
-          b.image.startsWith("http") ? b.image : `${server}/${b.image}`
+          b.image.startsWith("http") ? b.image : `${server}/${b.image}`,
         )
-      : FALLBACK_BANNERS;
+      : [];
 
-  const promoBanner = promoBannerData?.banners[0];
-  const bottomBanner = bottomBannerData?.banners[0];
+  const promoBanner = promoBannerData?.banners?.[0];
+  const bottomBanner = bottomBannerData?.banners?.[0];
 
   const buildImgUrl = (path: string) =>
     path.startsWith("http") ? path : `${server}/${path}`;
 
   return (
     <div className="home">
-
-      {/* ── Hero Banner ── */}
       <section className="hero">
-        <Swiper
-          modules={[Autoplay, Pagination]}
-          spaceBetween={0}
-          slidesPerView={1}
-          loop={heroUrls.length > 1}
-          autoplay={{ delay: 2500, disableOnInteraction: false }}
-          pagination={{ clickable: true }}
-          className="hero-swiper"
-        >
-          {heroUrls.map((src) => (
-            <SwiperSlide key={src}>
-              <img src={src} alt="banner" />
-            </SwiperSlide>
-          ))}
-        </Swiper>
-
-        {/* <div className="hero-content">
-          <h1>Tech that Defines You.</h1>
-          <p>
-            Upgrade your lifestyle with the latest gadgets.
-            <br />
-            Best prices, genuine quality.
-          </p>
-          <Link href="/search" className="hero-btn">
-            Shop Now
-          </Link>
-        </div> */}
+        <div className="hero-banner">
+          <Swiper
+            modules={[Autoplay, Pagination]}
+            spaceBetween={0}
+            slidesPerView={1}
+            loop={heroUrls.length > 1}
+            autoplay={{ delay: 3000, disableOnInteraction: false }}
+            pagination={{ clickable: true }}
+            className="hero-swiper"
+          >
+            {heroUrls.map((src) => (
+              <SwiperSlide key={src}>
+                <Image
+                  src={src}
+                  alt="banner"
+                  fill
+                  priority
+                  sizes="100vw"
+                  style={{ objectFit: "cover" }}
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
       </section>
 
       {/* ── Categories ── */}
@@ -142,14 +127,17 @@ export default function Home() {
         )}
       </section>
 
-      {/* ── Promo Banner ── */}
       {promoBanner && (
         <div className="promo-banner">
-          <img src={buildImgUrl(promoBanner.image)} alt="Promotion" />
+          <Image
+            src={buildImgUrl(promoBanner.image)}
+            alt="Promotion"
+            width={0}
+            height={0}
+          />
         </div>
       )}
 
-      {/* ── Latest Products ── */}
       <h1>
         Latest Products
         <Link href="/search" className="findmore">
@@ -164,7 +152,9 @@ export default function Home() {
       {productLoading ? (
         <Skeleton width="80vw" length={3} />
       ) : productError ? (
-        <p className="empty-state">Something went wrong. Please try again later.</p>
+        <p className="empty-state">
+          Something went wrong. Please try again later.
+        </p>
       ) : !productData?.products.length ? (
         <p className="empty-state">No products available right now.</p>
       ) : (
@@ -175,6 +165,7 @@ export default function Home() {
               productId={i._id}
               name={i.name}
               price={i.price}
+              salePrice={i.salePrice}
               stock={i.stock}
               photo={i.photo}
               handler={addToCartHandler}
@@ -183,14 +174,17 @@ export default function Home() {
         </main>
       )}
 
-      {/* ── Bottom Banner ── */}
       {bottomBanner && (
         <div className="bottom-banner">
-          <img src={buildImgUrl(bottomBanner.image)} alt="Promotion" />
+          <Image
+            src={buildImgUrl(bottomBanner.image)}
+            alt="Promotion"
+            width={0}
+            height={0}
+          />
         </div>
       )}
 
-      {/* ── Features Row ── */}
       <section className="features">
         <div className="feature-item">
           <FaShippingFast />
@@ -214,7 +208,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
     </div>
   );
 }

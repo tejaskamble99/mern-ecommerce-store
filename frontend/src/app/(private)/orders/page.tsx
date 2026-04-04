@@ -85,7 +85,7 @@ const Orders = () => {
   );
 
   return (
-    <div className="container">
+    <div className="order-table">
       <h1>My Orders</h1>
       {isLoading ? <Skeleton width="100%" length={20} /> : <Table />}
     </div>

@@ -10,14 +10,19 @@
   box-sizing: border-box;
 }
 
+
+
 a {
   text-decoration: none;
   color: black;
 }
 
+
+
 $color1: white;
 $color2: rgb(39, 39, 39);
 $color3: rgb(0, 104, 136);
+$color4: rgb(255, 202, 7);
 
 body {
   user-select: none;
@@ -45,6 +50,7 @@ body {
 @import "order";
 @import "shipping";
 @import "login";
+@import "terms";
 @import "admin-styles/dashboard";
 @import "admin-styles/products";
 @import "admin-styles/chart";
@@ -55,12 +61,21 @@ body {
 @import "user-styles/profilesidebar";
 @import "user-styles/orders";
 
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-content {
+  flex: 1;
+}
 
 .container {
-  max-width: 1367px;
+  max-width: 1600px;
   width: 100%;
   margin: auto;
-  overflow: auto;
+  overflow: visible;
 
   >h1 {
     @include heading;
@@ -411,6 +426,9 @@ body {
   background: #272727;
   color: white;
   padding: 3rem 2rem 1rem;
+  bottom: 0;
+  left: 0;
+  width: 100%;
 
   .footer-container {
     display: grid;

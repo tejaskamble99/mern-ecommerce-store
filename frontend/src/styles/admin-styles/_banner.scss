@@ -1,5 +1,6 @@
 .banner-management {
   padding: 1rem;
+  overflow-y: auto;
  
   @media (min-width: 768px) {
     padding: 2rem;
@@ -16,7 +17,7 @@
     }
   }
  
-  // ── Slot Section ──
+  
   .banner-slot-section {
     background: white;
     border-radius: 0.75rem;

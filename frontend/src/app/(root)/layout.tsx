@@ -1,5 +1,5 @@
 // src/app/(root)/layout.tsx
-"use client"; // This is required for Header/Footer interaction
+"use client"; 
 export default function ShopLayout({
   children,
 }: {

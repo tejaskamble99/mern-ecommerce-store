@@ -15,7 +15,7 @@
 
     /* --- 1. HERO SECTION --- */
     .hero {
-        position:relative;
+        position: relative;
         width: 100%;
         height: 100%;
         aspect-ratio: 16/9;
@@ -280,7 +280,7 @@
 
             svg {
                 font-size: 2rem;
-                color: $color3;
+                color: $color4;
                 flex-shrink: 0;
             }
 
@@ -317,6 +317,8 @@
     flex: none;
     margin: 0 auto;
 
+    
+
     @media only screen and (min-width: 640px) {
         width: 19rem;
         margin: 0;
@@ -327,20 +329,21 @@
     }
 
     .card-header {
-        height: 12rem;
-        width: 100%;
+    height: 12rem;
+    width: 100%;
+    position: relative;
 
-        @media only screen and (min-width: 768px) {
-            height: 14rem;
-        }
-
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
+    @media only screen and (min-width: 768px) {
+        height: 14rem;
     }
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+}
 
     &:hover .card-header img {
         transform: scale(1.05);
@@ -408,6 +411,51 @@
             }
         }
     }
+
+.product-discount-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #ef4444;
+  color: white;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  border-radius: 50%;
+
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.product-name {
+  font-size: 1rem;
+  margin-bottom: .4rem;
+}
+
+.price-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sale-price {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.original-price {
+  text-decoration: line-through;
+  color: #999;
+  font-size: .9rem;
+}
 
     .card-footer {
         padding: 0 1rem 1rem 1rem;

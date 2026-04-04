@@ -13,11 +13,11 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { CartItem } from "@/types/types";
 import { addToCart } from "@/redux/reducer/cartReducer";
-import { useSearchParams, useRouter } from "next/navigation"; // ✅ Added useRouter
+import { useSearchParams, useRouter } from "next/navigation"; 
 
 function SearchContent() {
   const searchParams = useSearchParams();
-  const router = useRouter(); // ✅ Initialize Next.js router
+  const router = useRouter(); 
 
   // Category comes directly from URL
   const category = searchParams.get("category") ?? "";
@@ -27,15 +27,15 @@ function SearchContent() {
   const [maxPrice, setMaxPrice] = useState(200000);
   const [page, setPage] = useState(1);
 
-  // ✅ UX Upgrade: Debounced Search State
+  
   const [searchInput, setSearchInput] = useState(searchFromUrl);
   const [debouncedSearch, setDebouncedSearch] = useState(searchFromUrl);
 
-  // ✅ Wait 500ms after the user stops typing before making the API call
+  
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchInput);
-      setPage(1); // Reset to page 1 on new search
+      setPage(1); 
     }, 500);
     return () => clearTimeout(timer);
   }, [searchInput]);
@@ -51,7 +51,7 @@ function SearchContent() {
     isError: productIsError,
     error: productError,
   } = useSearchProductsQuery({
-    search: debouncedSearch, // ✅ Use debounced value here!
+    search: debouncedSearch, 
     sort,
     category,
     page,
@@ -119,7 +119,7 @@ function SearchContent() {
           <select
             value={category}
             onChange={(e) => {
-              // ✅ Smooth client-side transition instead of hard reload!
+              
               router.push(`/search?category=${e.target.value}`);
             }}
           >
@@ -141,7 +141,7 @@ function SearchContent() {
           type="text"
           placeholder="Search by name..."
           value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)} // Just updates local input instantly
+          onChange={(e) => setSearchInput(e.target.value)}
         />
 
         {productLoading ? (

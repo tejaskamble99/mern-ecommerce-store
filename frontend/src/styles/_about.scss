@@ -1,38 +1,103 @@
-.legal-page {
-  background: #f7f8fa;
-  padding: 3rem 1rem;
-}
-
-.legal-container {
-  max-width: 900px;
+.about {
+  padding: 2rem 5%;
+  max-width: 1100px;
   margin: auto;
-  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.about-hero {
+  background: linear-gradient(135deg, #f3f4f6, #ffffff);
+  border-radius: 1rem;
   padding: 3rem;
-  border-radius: 10px;
-  line-height: 1.7;
+  text-align: center;
+
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    max-width: 700px;
+    margin: auto;
+    color: #6b7280;
+  }
 }
 
-.legal-container h1 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
+.about-section {
+  text-align: center;
+
+  h2 {
+    margin-bottom: 1rem;
+  }
+
+  p {
+    max-width: 700px;
+    margin: auto;
+    color: #6b7280;
+  }
 }
 
-.legal-container h2 {
+.about-grid {
   margin-top: 2rem;
-  font-size: 1.3rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
 }
 
-.legal-container h3 {
-  margin-top: 1rem;
-  font-size: 1.05rem;
+.about-card {
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+
+  h3 {
+    margin-bottom: .5rem;
+  }
+
+  p {
+    font-size: .9rem;
+    color: #6b7280;
+  }
 }
 
-.legal-container p {
-  color: #555;
-  margin-top: .5rem;
+.about-features {
+  display: flex;
+  justify-content: space-around;
+  gap: 2rem;
+  padding: 2rem;
+  background: #f9fafb;
+  border-radius: 1rem;
+
+  .feature {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+
+    svg {
+      font-size: 2rem;
+      color: $color3;
+    }
+
+    h4 {
+      margin-bottom: .2rem;
+    }
+
+    p {
+      font-size: .85rem;
+      color: #6b7280;
+    }
+  }
 }
 
-.email {
-  font-weight: bold;
-  color: #006888;
+.about-contact {
+  text-align: center;
+  padding: 2rem;
+  background: #f9fafb;
+  border-radius: 1rem;
+
+  p {
+    margin-top: .5rem;
+  }
 }
