@@ -7,6 +7,10 @@ import { invalidateCache, reduceStock } from "../utils/features.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { nodeCache } from "../server.js";
 import PDFDocument from "pdfkit";
+import { sendEmail } from "../utils/sendEmail.js";
+import { User } from "../models/user.js";
+import { orderEmailTemplate } from "./../templates/orderEmailTemplate.js";
+import { generateInvoiceBuffer } from "../utils/generateInvoiceBuffer.js";
 
 export const myOrders = TryCatch(async (req, res, next) => {
   const user = req.user!._id;
@@ -76,8 +80,9 @@ export const newOrder = TryCatch(
       total,
     } = req.body;
 
-    // User from verified token — not from client
     const user = req.user!._id;
+
+    const userData = await User.findById(user);
 
     if (!shippingInfo || !orderItems || !subtotal || !tax || !total)
       return next(new ErrorHandler("Please enter all fields", 400));
@@ -103,11 +108,50 @@ export const newOrder = TryCatch(
       productId: order.orderItems.map((i) => String(i.productId)),
     });
 
+    try {
+      const invoiceBuffer = await generateInvoiceBuffer(order);
+
+      // Email to customer
+      if (userData?.email) {
+        await sendEmail({
+          to: userData.email,
+          subject: "Order Confirmation - Barwa",
+          html: orderEmailTemplate(order, userData.email),
+          attachments: [
+            {
+              filename: `invoice-${order._id}.pdf`,
+              content: invoiceBuffer,
+            },
+          ],
+        });
+      }
+
+      // Email to admin
+      await sendEmail({
+        to: process.env.ADMIN_EMAIL as string,
+        subject: "New Order Received",
+        html: `
+      <h2>New Order Received</h2>
+      <p>Order ID: ${order._id}</p>
+      <p>Total: ₹${order.total}</p>
+      <p>Customer: ${userData?.email}</p>
+    `,
+        attachments: [
+          {
+            filename: `invoice-${order._id}.pdf`,
+            content: invoiceBuffer,
+          },
+        ],
+      });
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError);
+    }
+
     return res.status(201).json({
       success: true,
       message: "Order placed successfully",
     });
-  }
+  },
 );
 
 // FIX #1: cancelOrder restocks items + invalidates cache
@@ -124,7 +168,7 @@ export const cancelOrder = TryCatch(async (req, res, next) => {
 
   if (order.status !== "Processing") {
     return next(
-      new ErrorHandler("Only Processing orders can be cancelled", 400)
+      new ErrorHandler("Only Processing orders can be cancelled", 400),
     );
   }
 
@@ -160,9 +204,7 @@ export const processOrder = TryCatch(async (req, res, next) => {
   if (!order) return next(new ErrorHandler("Order not found", 404));
 
   if (order.status === "Delivered") {
-    return next(
-      new ErrorHandler("You have already delivered this order", 400)
-    );
+    return next(new ErrorHandler("You have already delivered this order", 400));
   }
 
   switch (order.status) {
@@ -173,9 +215,7 @@ export const processOrder = TryCatch(async (req, res, next) => {
       order.status = "Delivered";
       break;
     default:
-      return next(
-        new ErrorHandler("Cannot process this order status", 400)
-      );
+      return next(new ErrorHandler("Cannot process this order status", 400));
   }
 
   await order.save();
@@ -224,27 +264,24 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
   // Ownership check
   const requestingUser = req.user!;
   if (
-  order.user.toString() !== requestingUser._id.toString() &&
-  requestingUser.role !== "admin"
-) {
-  return next(new ErrorHandler("Unauthorized", 403));
-}
+    order.user.toString() !== requestingUser._id.toString() &&
+    requestingUser.role !== "admin"
+  ) {
+    return next(new ErrorHandler("Unauthorized", 403));
+  }
 
   const doc = new PDFDocument({ margin: 50 });
 
   res.setHeader(
     "Content-Disposition",
-    `attachment; filename=invoice-${order._id}.pdf`
+    `attachment; filename=invoice-${order._id}.pdf`,
   );
   res.setHeader("Content-Type", "application/pdf");
 
   doc.pipe(res);
 
   // ── Header ──
-  doc
-    .fontSize(24)
-    .font("Helvetica-Bold")
-    .text("MyShop", { align: "left" });
+  doc.fontSize(24).font("Helvetica-Bold").text("MyShop", { align: "left" });
 
   doc
     .fontSize(10)
@@ -272,42 +309,30 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
   doc.moveDown();
 
   // ── Divider ──
-  doc
-    .moveTo(50, doc.y)
-    .lineTo(545, doc.y)
-    .strokeColor("#e5e7eb")
-    .stroke();
+  doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor("#e5e7eb").stroke();
 
   doc.moveDown(0.5);
 
   // ── Shipping Info ──
-  doc
-    .fontSize(12)
-    .font("Helvetica-Bold")
-    .fillColor("#111827")
-    .text("Bill To:");
+  doc.fontSize(12).font("Helvetica-Bold").fillColor("#111827").text("Bill To:");
 
   doc
-  .fontSize(14)
-  .text("Shipping Address", { underline: true })
-  .fontSize(12)
-  .text(order.shippingInfo?.address ?? "")
-  .text(
-    `${order.shippingInfo?.city ?? ""}, ${order.shippingInfo?.state ?? ""}`
-  )
-  .text(
-    `${order.shippingInfo?.country ?? ""} — ${order.shippingInfo?.pinCode ?? ""}`
-  )
-  .moveDown();
+    .fontSize(14)
+    .text("Shipping Address", { underline: true })
+    .fontSize(12)
+    .text(order.shippingInfo?.address ?? "")
+    .text(
+      `${order.shippingInfo?.city ?? ""}, ${order.shippingInfo?.state ?? ""}`,
+    )
+    .text(
+      `${order.shippingInfo?.country ?? ""} — ${order.shippingInfo?.pinCode ?? ""}`,
+    )
+    .moveDown();
 
   doc.moveDown();
 
   // ── Items Table Header ──
-  doc
-    .moveTo(50, doc.y)
-    .lineTo(545, doc.y)
-    .strokeColor("#e5e7eb")
-    .stroke();
+  doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor("#e5e7eb").stroke();
 
   doc.moveDown(0.5);
 
@@ -315,14 +340,13 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
   doc.text("ITEM", 50, doc.y, { width: 250 });
   doc.text("QTY", 300, doc.y - doc.currentLineHeight(), { width: 80 });
   doc.text("PRICE", 380, doc.y - doc.currentLineHeight(), { width: 80 });
-  doc.text("TOTAL", 460, doc.y - doc.currentLineHeight(), { width: 80, align: "right" });
+  doc.text("TOTAL", 460, doc.y - doc.currentLineHeight(), {
+    width: 80,
+    align: "right",
+  });
 
   doc.moveDown(0.5);
-  doc
-    .moveTo(50, doc.y)
-    .lineTo(545, doc.y)
-    .strokeColor("#e5e7eb")
-    .stroke();
+  doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor("#e5e7eb").stroke();
   doc.moveDown(0.5);
 
   // ── Items ──
@@ -337,17 +361,13 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
       `Rs.${(item.price * item.quantity).toLocaleString("en-IN")}`,
       460,
       y,
-      { width: 80, align: "right" }
+      { width: 80, align: "right" },
     );
     doc.moveDown();
   }
 
   doc.moveDown(0.5);
-  doc
-    .moveTo(50, doc.y)
-    .lineTo(545, doc.y)
-    .strokeColor("#e5e7eb")
-    .stroke();
+  doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor("#e5e7eb").stroke();
   doc.moveDown(0.5);
 
   // ── Summary ──
@@ -366,33 +386,25 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
   };
 
   summaryRow("Subtotal", `Rs.${order.subtotal.toLocaleString("en-IN")}`);
-  summaryRow("Tax (GST)", `Rs.${Math.round(order.tax).toLocaleString("en-IN")}`);
+  summaryRow(
+    "Tax (GST)",
+    `Rs.${Math.round(order.tax).toLocaleString("en-IN")}`,
+  );
   summaryRow(
     "Shipping",
     order.shippingCharges === 0
       ? "FREE"
-      : `Rs.${order.shippingCharges.toLocaleString("en-IN")}`
+      : `Rs.${order.shippingCharges.toLocaleString("en-IN")}`,
   );
   if (order.discount > 0) {
-    summaryRow(
-      "Discount",
-      `- Rs.${order.discount.toLocaleString("en-IN")}`
-    );
+    summaryRow("Discount", `- Rs.${order.discount.toLocaleString("en-IN")}`);
   }
 
   doc.moveDown(0.5);
-  doc
-    .moveTo(380, doc.y)
-    .lineTo(545, doc.y)
-    .strokeColor("#111827")
-    .stroke();
+  doc.moveTo(380, doc.y).lineTo(545, doc.y).strokeColor("#111827").stroke();
   doc.moveDown(0.5);
 
-  summaryRow(
-    "Total Paid",
-    `Rs.${order.total.toLocaleString("en-IN")}`,
-    true
-  );
+  summaryRow("Total Paid", `Rs.${order.total.toLocaleString("en-IN")}`, true);
 
   // ── Footer ──
   doc.moveDown(2);

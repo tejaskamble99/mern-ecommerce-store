@@ -4,7 +4,6 @@ import dotenv from "dotenv";
 import { InvalidateCacheProps, OrderItemType } from "../types/types.js";
 import { nodeCache } from "../server.js";
 import { Product } from "../models/product.js";
-import { Order } from "../models/order.js";
 
 dotenv.config();
 mongoose.set("strictQuery", true);
