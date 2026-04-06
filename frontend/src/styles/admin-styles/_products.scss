@@ -5,6 +5,7 @@
   padding: 1.5rem;
   background: #f7f8fa;
   align-items: start;
+  overflow: auto;
 
 
   @media (min-width: 768px) {
@@ -350,6 +351,17 @@
   }
 }
 
+.shipping-btn{
+   width: 30rem;
+  height: 2rem;
+  padding: 0.5rem 1rem;
+  background: $color3;
+  color: white;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
 
 .product-delete-btn {
   background: #1f2937;
