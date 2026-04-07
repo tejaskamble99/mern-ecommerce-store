@@ -7,7 +7,7 @@ import {
 import { addToCart } from "@/redux/reducer/cartReducer";
 import { AppDispatch, server } from "@/redux/store";
 import { CartItem } from "@/types/types";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FaMinus, FaPlus, FaShoppingCart, FaTag, FaStar } from "react-icons/fa";
@@ -20,18 +20,17 @@ import ReviewForm from "@/components/layout/product/ReviewForm";
 import ReviewList from "@/components/layout/product/ReviewList";
 import RatingBreakdown from "@/components/layout/product/RatingBreakdown";
 
-export default function ProductPage() {
-  const params = useParams();
+type Props = {
+  slug: string;
+};
+
+export default function ProductPage({ slug }: Props) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
-  const rawId = params.id;
-  const id = Array.isArray(rawId) ? rawId[0] : rawId;
-
-  const { data, isLoading, isError } = useProductDetailsQuery(id ?? "", {
-    skip: !id,
+  const { data, isLoading, isError } = useProductDetailsQuery(slug ?? "", {
+    skip: !slug,
   });
-
   const { data: latestData } = useLatestProductsQuery();
 
   const [quantity, setQuantity] = useState(1);
@@ -67,6 +66,7 @@ export default function ProductPage() {
     dispatch(
       addToCart({
         productId: product._id,
+        slug: product.seo?.slug || "",
         photo: product.photo,
         name: product.name,
         price: product.price,
@@ -101,7 +101,7 @@ export default function ProductPage() {
   const imgUrl = buildImgUrl(product.photo);
 
   return (
-    <div key={id} className="product-page">
+    <div key={slug} className="product-page">
       <nav className="product-breadcrumb">
         <Link href="/">Home</Link>
         <span>/</span>
@@ -113,7 +113,6 @@ export default function ProductPage() {
       </nav>
 
       <section className="product-detail">
-      
         <div className="product-gallery">
           <div className="gallery-main">
             <Image
@@ -155,7 +154,6 @@ export default function ProductPage() {
 
           <h1 className="product-name">{product.name}</h1>
 
-         
           <div className="product-rating">
             {[1, 2, 3, 4, 5].map((s) => {
               const ratingVal = Math.round(product.ratings || 0);
@@ -234,7 +232,6 @@ export default function ProductPage() {
         </div>
       </section>
 
-      
       <div className="product-detail-divider" style={{ marginTop: "40px" }}>
         <h3 style={{ marginBottom: "15px", fontSize: "20px" }}>
           Product Description
@@ -268,9 +265,11 @@ export default function ProductPage() {
             {relatedProducts.slice(0, 4).map((i) => (
               <ProductCard
                 key={i._id}
+                slug={i.seo?.slug || ""}
                 productId={i._id}
                 name={i.name}
                 price={i.price}
+                salePrice={i.salePrice || 0}
                 stock={i.stock}
                 photo={i.photo}
                 handler={addRelatedToCart}
@@ -280,7 +279,6 @@ export default function ProductPage() {
         </section>
       )}
 
-      
       <section
         className="product-reviews-section"
         style={{
@@ -297,7 +295,6 @@ export default function ProductPage() {
           className="reviews-layout"
           style={{ display: "flex", gap: "4rem", flexWrap: "wrap" }}
         >
-         
           <div
             className="reviews-left"
             style={{ flex: "1", minWidth: "300px", maxWidth: "400px" }}
@@ -330,7 +327,6 @@ export default function ProductPage() {
             </div>
           </div>
 
-         
           <div
             className="reviews-right"
             style={{ flex: "2", minWidth: "300px" }}

@@ -69,6 +69,28 @@ const schema = new mongoose.Schema(
       default: 0,
     },
     reviews: [reviewSchema],
+    seo: {
+      metaTitle: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      metaDescription: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      slug: {
+        type: String,
+        trim: true,
+        lowercase: true,
+        sparse: true, // allows multiple null values
+      },
+      keywords: {
+        type: [String],
+        default: [],
+      },
+    },
   },
   {
     timestamps: true,
@@ -103,5 +125,6 @@ schema.index({ price: 1 });
 schema.index({ createdAt: -1 });
 schema.index({ ratings: -1 });
 schema.index({ name: "text" });
+schema.index({ "seo.slug": 1 }, { sparse: true });
 
 export const Product = mongoose.model("Product", schema);

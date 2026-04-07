@@ -5,6 +5,7 @@ import Link from "next/link";
 
 type ProdctsProps = {
   productId: string;
+  slug: string;
   photo: string;
   name: string;
   price: number;
@@ -15,6 +16,7 @@ type ProdctsProps = {
 
 export default function ProductCard({
   productId,
+  slug,
   price,
   salePrice,
   stock,
@@ -32,7 +34,7 @@ export default function ProductCard({
 
   return (
     <div className="productcard">
-      <Link href={`/product/${productId}`}>
+      <Link href={`/product/${slug}`}>
 
         <div className="card-header">
           {discount > 0 && (
@@ -78,6 +80,7 @@ export default function ProductCard({
           onClick={() =>
             handler({
               productId,
+              slug,
               photo,
               name,
               price: salePrice || price,

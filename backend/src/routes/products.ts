@@ -12,7 +12,8 @@ import {
   updateProduct,
   addOrUpdateReview,
   getProductReviews,
-  deleteReview
+  deleteReview,
+  getProductBySlug
 } from "../controllers/product.js";
 
 import { singlUpload, multiUpload } from "../middleware/multer.js";
@@ -25,6 +26,7 @@ app.get("/latest", getlatestProduct);
 app.get("/categories", getAllCategories);
 app.get("/categories-with-image", getCategoriesWithImage);
 app.get("/all", getAllProducts);
+app.get("/slug/:slug", getProductBySlug);
 
 app.get("/admin-products", isAuthenticated, adminOnly, getAdminProduct);
 

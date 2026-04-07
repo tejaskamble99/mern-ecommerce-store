@@ -14,10 +14,12 @@ import { UserReducerInitialState } from "@/types/reducer-types";
 import { Skeleton } from "@/components/admin/Loader";
 import Image from "next/image";
 
+// ✅ 1. Added salePrice to your DataType interface
 interface DataType {
   photo: string;
   name: string;
   price: number;
+  salePrice?: number; 
   stock: number;
   _id: string;
 }
@@ -32,6 +34,7 @@ const columns: ColumnDef<DataType>[] = [
         alt="Product"
         width={50}
         height={50}
+        style={{ borderRadius: "4px", objectFit: "cover" }}
       />
     ),
   },
@@ -39,25 +42,65 @@ const columns: ColumnDef<DataType>[] = [
     header: "Name",
     accessorKey: "name",
   },
+  // ✅ 2. Upgraded Price Column to show Sales!
   {
     header: "Price",
     accessorKey: "price",
-    cell: (info) =>
-      (info.getValue() as number).toLocaleString("en-IN", {
-        style: "currency",
-        currency: "INR",
-        maximumFractionDigits: 0,
-      }),
+    cell: (info) => {
+      const price = info.getValue() as number;
+      const salePrice = info.row.original.salePrice; // Access the full row data
+
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          {salePrice && salePrice < price ? (
+            <>
+              <span style={{ fontWeight: "bold", color: "#111827" }}>
+                {salePrice.toLocaleString("en-IN", {
+                  style: "currency",
+                  currency: "INR",
+                  maximumFractionDigits: 0,
+                })}
+              </span>
+              <span style={{ textDecoration: "line-through", color: "#9ca3af", fontSize: "0.85rem" }}>
+                {price.toLocaleString("en-IN", {
+                  style: "currency",
+                  currency: "INR",
+                  maximumFractionDigits: 0,
+                })}
+              </span>
+            </>
+          ) : (
+            <span style={{ fontWeight: "bold", color: "#111827" }}>
+              {price.toLocaleString("en-IN", {
+                style: "currency",
+                currency: "INR",
+                maximumFractionDigits: 0,
+              })}
+            </span>
+          )}
+        </div>
+      );
+    },
   },
   {
     header: "Stock",
     accessorKey: "stock",
+    cell: (info) => {
+      const stock = info.getValue() as number;
+      return (
+        <span style={{ color: stock < 1 ? "#ef4444" : "inherit", fontWeight: stock < 1 ? "bold" : "normal" }}>
+          {stock < 1 ? "Out of Stock" : stock}
+        </span>
+      );
+    }
   },
   {
     header: "Action",
     accessorKey: "_id",
     cell: (info) => (
-      <Link href={`/admin/product/${info.getValue()}`}>Manage</Link>
+      <Link href={`/admin/product/${info.getValue()}`} style={{ color: "#3b82f6", fontWeight: "600" }}>
+        Manage
+      </Link>
     ),
   },
 ];
@@ -77,6 +120,7 @@ export default function Products() {
         photo: `${server}/${i.photo}`,
         name: i.name,
         price: i.price,
+        salePrice: i.salePrice, // ✅ 3. Extract salePrice from the API response
         stock: i.stock,
         _id: i._id,
       })) ?? [],
@@ -102,7 +146,6 @@ export default function Products() {
     }
   }, [isError, error]);
 
-  // Early returns come AFTER all hooks
   if (isError) return <h1>Something went wrong</h1>;
 
   return (

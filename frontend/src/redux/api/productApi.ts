@@ -57,6 +57,10 @@ export const productApi = createApi({
     }),
 
     productDetails: builder.query<ProductResponse, string>({
+      query: (slug) => `product/slug/${slug}`,
+      providesTags: ["Products"],
+    }),
+    productDetailsById: builder.query<ProductResponse, string>({
       query: (id) => `product/${id}`,
       providesTags: ["Products"],
     }),
@@ -103,7 +107,6 @@ export const productApi = createApi({
       query: (productId) => `product/reviews/${productId}`,
     }),
 
-  
     deleteReview: builder.mutation<
       MessageResponse,
       { productId: string; reviewId: string }
@@ -126,6 +129,7 @@ export const {
   useSearchProductsQuery,
   useNewProductsMutation,
   useProductDetailsQuery,
+  useProductDetailsByIdQuery,
   useUpdateProductMutation,
   useDeleteProductMutation,
   useAddReviewMutation,

@@ -28,17 +28,23 @@ export type Review = {
 export type Product = {
   name: string;
   price: number;
-  salePrice: number; 
-  discountPercent?: number; 
+  salePrice?: number;
+  discountPercent?: number;
   stock: number;
   category: string;
   ratings: number;
   numOfReviews: number;
   description: string;
   photo: string;
-  reviews: Review[]; 
+  reviews: Review[];
   _id: string;
-};;
+  seo?: {
+    metaTitle?: string;
+    metaDescription?: string;
+    slug?: string;
+    keywords?: string[];
+  };
+};
 
 export type ShippingInfo = {
   fullName: string;
@@ -51,6 +57,7 @@ export type ShippingInfo = {
 
 export type CartItem = {
   productId: string;
+  slug?: string;
   photo: string;
   name: string;
   price: number;

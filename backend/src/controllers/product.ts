@@ -10,6 +10,7 @@ import ErrorHandler from "../utils/utility-class.js";
 import { rm } from "fs";
 import { nodeCache } from "../server.js";
 import { invalidateCache } from "../utils/features.js";
+import slugify from "slugify";
 
 export const getlatestProduct = TryCatch(async (req, res, next) => {
   let products = [];
@@ -165,7 +166,7 @@ export const newProduct = TryCatch(
         ((Number(price) - Number(salePrice)) / Number(price)) * 100
       );
     }
-
+const slug = slugify(req.body.name, { lower: true });
     await Product.create({
       name,
       price,
@@ -175,8 +176,8 @@ export const newProduct = TryCatch(
       description,
       category: category.toLowerCase(),
       photo: photo.path,
+      seo: { slug }, 
     });
-
     invalidateCache({ product: true, admin: true });
 
     return res.status(200).json({
@@ -362,5 +363,32 @@ export const deleteReview = TryCatch(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Review deleted successfully",
+  });
+});
+
+
+export const getProductBySlug = TryCatch(async (req, res, next) => {
+  const { slug } = req.params;
+
+  if (!slug || slug === "undefined") {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid slug"
+    });
+  }
+
+  // ✅ FIX: Query the nested path "seo.slug"
+  const product = await Product.findOne({ "seo.slug": slug });
+
+  if (!product) {
+    return res.status(404).json({
+      success: false,
+      message: "Product not found"
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    product
   });
 });

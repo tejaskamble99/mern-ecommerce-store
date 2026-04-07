@@ -13,6 +13,7 @@ import paymentRoute from "./routes/payment.js";
 import productRoute from "./routes/products.js";
 import dashboardRoute from "./routes/stats.js";
 import userRoute from "./routes/user.js";
+import seoRoute from "./routes/seo.js";
 import { connectDB } from "./utils/features.js";
 
 config({
@@ -67,6 +68,7 @@ app.use("/api/v1/order", orderRoute);
 app.use("/api/v1/payment", paymentRoute);
 app.use("/api/v1/dashboard", dashboardRoute);
 app.use("/api/v1/banner", bannerRoute);
+app.use("/api/v1/seo", seoRoute);
 
 /* ---------- STATIC FILES ---------- */
 

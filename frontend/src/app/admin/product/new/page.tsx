@@ -11,7 +11,8 @@ const NewProduct = () => {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState(1000);
-  const [salePrice, setSalePrice] = useState(0);
+  // ✅ FIX: Initialize as empty string so it's purely optional
+  const [salePrice, setSalePrice] = useState<number | "">(""); 
   const [stock, setStock] = useState(1);
   const [description, setDescription] = useState("");
 
@@ -27,7 +28,6 @@ const NewProduct = () => {
     if (!file) return;
 
     const reader = new FileReader();
-
     reader.readAsDataURL(file);
 
     reader.onloadend = () => {
@@ -42,22 +42,27 @@ const NewProduct = () => {
     e.preventDefault();
 
     if (!name || !price || !stock || !category || !description || !photo) {
-      return toast.error("Please fill all fields including photo");
+      return toast.error("Please fill all required fields, including the photo");
     }
 
-    if (salePrice >= price) {
-      return toast.error("Sale price must be less than price");
+    // ✅ FIX: Only check sale price validation if they actually typed one in
+    if (salePrice !== "" && Number(salePrice) >= price) {
+      return toast.error("Sale price must be less than the original price");
     }
 
     const formData = new FormData();
 
     formData.set("name", name);
     formData.set("price", String(price));
-    formData.set("salePrice", String(salePrice));
     formData.set("stock", String(stock));
     formData.set("category", category);
     formData.set("description", description);
     formData.set("photo", photo);
+
+    // ✅ FIX: Only attach salePrice to the request if it exists
+    if (salePrice !== "") {
+      formData.set("salePrice", String(salePrice));
+    }
 
     const res = await newProduct(formData);
 
@@ -92,11 +97,12 @@ const NewProduct = () => {
           </div>
 
           <div>
-            <label>Sale Price</label>
+            <label>Sale Price (Optional)</label>
             <input
               type="number"
+              placeholder="Leave blank for no sale"
               value={salePrice}
-              onChange={(e) => setSalePrice(Number(e.target.value))}
+              onChange={(e) => setSalePrice(e.target.value ? Number(e.target.value) : "")}
             />
           </div>
 
@@ -121,14 +127,15 @@ const NewProduct = () => {
             />
           </div>
 
+          {/* ✅ FIX: Converted to a textarea for multi-line formatting */}
           <div>
             <label>Description</label>
-            <input
-              type="text"
-              placeholder="Description"
+            <textarea
+              placeholder="Write a detailed product description..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
+              style={{ minHeight: "120px", resize: "vertical", width: "100%", padding: "10px" }}
             />
           </div>
 
@@ -138,7 +145,13 @@ const NewProduct = () => {
           </div>
 
           {photoPrev && (
-            <Image src={photoPrev} alt="Preview" width={150} height={150} />
+            <Image 
+              src={photoPrev} 
+              alt="Preview" 
+              width={150} 
+              height={150} 
+              style={{ borderRadius: "8px", objectFit: "cover" }} 
+            />
           )}
 
           <button type="submit">Create Product</button>

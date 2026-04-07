@@ -13,11 +13,11 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { CartItem } from "@/types/types";
 import { addToCart } from "@/redux/reducer/cartReducer";
-import { useSearchParams, useRouter } from "next/navigation"; 
+import { useSearchParams, useRouter } from "next/navigation";
 
 function SearchContent() {
   const searchParams = useSearchParams();
-  const router = useRouter(); 
+  const router = useRouter();
 
   // Category comes directly from URL
   const category = searchParams.get("category") ?? "";
@@ -27,23 +27,19 @@ function SearchContent() {
   const [maxPrice, setMaxPrice] = useState(200000);
   const [page, setPage] = useState(1);
 
-  
   const [searchInput, setSearchInput] = useState(searchFromUrl);
   const [debouncedSearch, setDebouncedSearch] = useState(searchFromUrl);
 
-  
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchInput);
-      setPage(1); 
+      setPage(1);
     }, 500);
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const {
-    data: categoriesResponse,
-    isLoading: loadingCategories,
-  } = useCategoriesQuery();
+  const { data: categoriesResponse, isLoading: loadingCategories } =
+    useCategoriesQuery();
 
   const {
     isLoading: productLoading,
@@ -51,7 +47,7 @@ function SearchContent() {
     isError: productIsError,
     error: productError,
   } = useSearchProductsQuery({
-    search: debouncedSearch, 
+    search: debouncedSearch,
     sort,
     category,
     page,
@@ -71,7 +67,6 @@ function SearchContent() {
   const totalPages = searchData?.totalPage ?? 1;
   const isPrevPage = page > 1;
   const isNextPage = page < totalPages;
-
 
   useEffect(() => {
     if (productIsError) {
@@ -119,7 +114,6 @@ function SearchContent() {
           <select
             value={category}
             onChange={(e) => {
-              
               router.push(`/search?category=${e.target.value}`);
             }}
           >
@@ -151,10 +145,11 @@ function SearchContent() {
             {searchData?.products.map((i) => (
               <ProductCard
                 key={i._id}
+                slug={i.seo?.slug || ""}
                 productId={i._id}
                 name={i.name}
                 price={i.price}
-                salePrice={i.salePrice} 
+                salePrice={i.salePrice || 0}
                 stock={i.stock}
                 photo={i.photo}
                 handler={addToCartHandler}

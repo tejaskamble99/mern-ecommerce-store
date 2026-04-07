@@ -8,9 +8,9 @@ import { useRouter, useParams, notFound } from "next/navigation";
 import { Skeleton } from "@/components/admin/Loader";
 import {
   useDeleteProductMutation,
-  useProductDetailsQuery,
   useUpdateProductMutation,
   useDeleteReviewMutation,
+  useProductDetailsByIdQuery,
 } from "@/redux/api/productApi";
 import { RootState } from "@/redux/store";
 import { responseToast } from "@/utils/features";
@@ -26,7 +26,7 @@ const ProductManagement = () => {
   const router = useRouter();
   const productId = params?.id;
 
-  const { data, isLoading, isError } = useProductDetailsQuery(productId ?? "", {
+  const { data, isLoading, isError } = useProductDetailsByIdQuery(productId ?? "", {
     skip: !productId,
   });
 
