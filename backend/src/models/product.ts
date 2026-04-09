@@ -37,6 +37,11 @@ const schema = new mongoose.Schema(
       type: String,
       required: [true, "Please enter photo"],
     },
+    photos: [
+      {
+        type: String,
+      },
+    ],
     price: {
       type: Number,
       required: [true, "Please enter price"],

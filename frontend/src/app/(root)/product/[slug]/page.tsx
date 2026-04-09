@@ -27,12 +27,30 @@ export async function generateMetadata({ params }: Props) {
     }
 
     return {
-      title: `${product.name} | Buy Online at Best Price`,
-      description: product.description?.slice(0, 160),
+      
+      title: product.seo?.metaTitle 
+        ? `${product.seo.metaTitle} | Barwa`
+        : `${product.name} | Buy Online at Best Price`,
+        
+     
+      description: product.seo?.metaDescription || product.description?.slice(0, 160),
 
+     
+      keywords: product.seo?.keywords || ["ecommerce", "barwa", "shop online"],
+
+    
+      authors: [{ name: "Barwa Store" }],
+      publisher: "Barwa Store",
+      robots: { index: true, follow: true },
+    
+      alternates: {
+        canonical: `http://localhost:3000/product/${slug}`, 
+      },
+
+     
       openGraph: {
-        title: product.name,
-        description: product.description,
+        title: product.seo?.metaTitle || product.name,
+        description: product.seo?.metaDescription || product.description?.slice(0, 160),
         images: [
           {
             url: `${server}/${product.photo}`,

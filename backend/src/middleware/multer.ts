@@ -18,6 +18,6 @@ export const singlUpload = multer({ storage }).single("photo");
 
 export const multiUpload = multer({
   storage,
-  limits: { fileSize: 1024 * 1024 * 2 },
-}).array("images", 5);
+  limits: { fileSize: 1024 * 1024 * 10 },
+}).array("photos", 10);
 

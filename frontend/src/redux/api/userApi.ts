@@ -24,7 +24,6 @@ export const userApi = createApi({
       invalidatesTags: ["users"],
     }),
 
-    // ✅ FIX: Removed adminUserId, added "user/" to URL, and added invalidatesTags
     deleteUser: builder.mutation<MessageResponse, string>({
       query: (userId) => ({
         url: `user/${userId}`,
@@ -40,10 +39,11 @@ export const userApi = createApi({
   }),
 });
 
-export const getUser = async () => {
+export const getUser = async (id: string) => {
   const token = await auth.currentUser?.getIdToken();
 
   const { data }: { data: UserResponse } = await axios.get(
+  
     `${process.env.NEXT_PUBLIC_SERVER_URL}/api/v1/user/me`,
     {
       headers: {

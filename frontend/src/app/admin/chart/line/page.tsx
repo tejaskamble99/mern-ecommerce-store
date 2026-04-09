@@ -18,9 +18,7 @@ const Linecharts = () => {
 
    const userId = user?._id;
 
-const { isLoading, data, error, isError } = useLineQuery(userId ?? "", {
-  skip: !userId,
-});
+const { isLoading, data, error, isError } = useLineQuery();
 
 
 

@@ -36,6 +36,7 @@ export type Product = {
   numOfReviews: number;
   description: string;
   photo: string;
+  photos: string[];
   reviews: Review[];
   _id: string;
   seo?: {

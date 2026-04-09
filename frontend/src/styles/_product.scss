@@ -173,7 +173,7 @@
       }
     }
 
-    // ✅ NEW: Dynamic Pricing Container
+
     .product-price-container {
       display: flex;
       align-items: center;
@@ -241,7 +241,7 @@
       border-bottom: 1px solid #f3f4f6;
     }
 
-    // ── Quantity Row ──
+
     .product-qty-row {
       display: flex;
       align-items: center;
@@ -299,7 +299,7 @@
       gap: 0.75rem;
       width: 100%;
       padding: 1rem 1.5rem;
-      background-color: $color3;
+      background-color: $color2;
       color: white;
       border: none;
       border-radius: 0.75rem;

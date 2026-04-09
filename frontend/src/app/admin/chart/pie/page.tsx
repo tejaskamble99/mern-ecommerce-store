@@ -15,9 +15,7 @@ const PieCharts = () => {
 
   const userId = user?._id;
 
-  const { isLoading, data, error, isError } = usePieQuery(userId ?? "", {
-    skip: !userId,
-  });
+  const { isLoading, data, error, isError } = usePieQuery();
 
   useEffect(() => {
     if (isError) {

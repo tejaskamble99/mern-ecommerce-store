@@ -14,7 +14,7 @@ export default function AuthListener({ children }: { children: React.ReactNode }
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
   if (user) {
     try {
-      const data = await getUser();
+      const data = await getUser(user.uid);
       dispatch(userExist(data.user));
     } catch (error) {
       console.error("Failed to fetch user:", error);

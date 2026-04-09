@@ -16,11 +16,11 @@ import {
   getProductBySlug
 } from "../controllers/product.js";
 
-import { singlUpload, multiUpload } from "../middleware/multer.js";
+import {  multiUpload } from "../middleware/multer.js";
 
 const app = express.Router();
 
-app.post("/new", isAuthenticated, adminOnly, singlUpload, newProduct);
+app.post("/new", isAuthenticated, adminOnly, multiUpload, newProduct);
 
 app.get("/latest", getlatestProduct);
 app.get("/categories", getAllCategories);
@@ -41,7 +41,7 @@ app.get("/reviews/:id", getProductReviews);
 app
   .route("/:id")
   .get(getSingleProduct)
-  .put(isAuthenticated, adminOnly, singlUpload, updateProduct)
+  .put(isAuthenticated, adminOnly, multiUpload, updateProduct)
   .delete(isAuthenticated, adminOnly, deleteProduct);
 
 export default app;

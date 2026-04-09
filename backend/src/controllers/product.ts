@@ -138,35 +138,39 @@ export const  getSingleProduct = TryCatch(async (req, res, next) => {
 });
 
 export const newProduct = TryCatch(
-  async (req: Request<{}, {}, NewProductRequestBody>, res, next) => {
-    const { name, price, salePrice, stock, description, category } = req.body;
-    const photo = req.file;
+  async (req: Request<{}, {}, any>, res, next) => {
+    
+    const { 
+      name, price, salePrice, stock, description, category,
+      metaTitle, metaDescription, slug, keywords 
+    } = req.body;
+    
+    const files = req.files as Express.Multer.File[];
 
-    if (!photo) return next(new ErrorHandler("Please upload photo", 400));
+    if (!files || files.length === 0) 
+      return next(new ErrorHandler("Please upload at least one photo", 400));
 
     if (!name || !price || !stock || !description || !category) {
-      rm(photo.path, () => {
-        console.log("file deleted");
-      });
+      files.forEach((file) => rm(file.path, () => console.log("deleted")));
       return next(new ErrorHandler("Please enter all fields", 400));
     }
 
-    
-    if (salePrice && Number(salePrice) >= Number(price)) {
-      return next(
-        new ErrorHandler("Sale price must be less than original price", 400)
-      );
+    let discountPercent = 0;
+    if (salePrice && Number(salePrice) < Number(price)) {
+      discountPercent = Math.round(((Number(price) - Number(salePrice)) / Number(price)) * 100);
     }
+    
+   
+    const finalSlug = slug ? slugify(slug, { lower: true }) : slugify(name, { lower: true });
+    
+   
+    const formattedKeywords = keywords 
+      ? keywords.split(",").map((k: string) => k.trim()).filter((k: string) => k !== "")
+      : [];
+  
+    const photosPaths = files.map((file) => file.path);
 
    
-    let discountPercent = 0;
-
-    if (salePrice) {
-      discountPercent = Math.round(
-        ((Number(price) - Number(salePrice)) / Number(price)) * 100
-      );
-    }
-const slug = slugify(req.body.name, { lower: true });
     await Product.create({
       name,
       price,
@@ -175,56 +179,91 @@ const slug = slugify(req.body.name, { lower: true });
       stock,
       description,
       category: category.toLowerCase(),
-      photo: photo.path,
-      seo: { slug }, 
+      photo: photosPaths[0], 
+      photos: photosPaths,   
+      seo: { 
+        slug: finalSlug,
+        metaTitle: metaTitle || "",
+        metaDescription: metaDescription || "",
+        keywords: formattedKeywords
+      },
     });
+
     invalidateCache({ product: true, admin: true });
 
-    return res.status(200).json({
-      success: true,
-      message: "Product created successfully",
-    });
+    return res.status(200).json({ success: true, message: "Product created successfully" });
   }
 );
 
 export const updateProduct = TryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const { name, price, salePrice, stock, description, category } = req.body;
-  const photo = req.file;
-
   const product = await Product.findById(id);
-  if (!product) return next(new ErrorHandler("Product not found", 404));
 
-  if (photo) {
-    if (product.photo) {
-      rm(product.photo, (err) => {
-        if (err) console.error("Error deleting old photo:", err);
-      });
+  if (!product)
+    return next(new ErrorHandler("Product not found", 404));
+
+  const { 
+    name, price, salePrice, stock, description, category,
+    metaTitle, metaDescription, slug, keywords 
+  } = req.body;
+
+
+  product.seo = product.seo || { metaTitle: "", metaDescription: "", keywords: [], slug: "" };
+
+  if (name) {
+    product.name = name;
+  
+    if (!product.seo.slug && !slug) {
+      product.seo.slug = slugify(name, { lower: true });
     }
-    product.photo = photo.path;
   }
 
-  if (name) product.name = name;
+
+  if (metaTitle !== undefined) product.seo.metaTitle = metaTitle;
+  if (metaDescription !== undefined) product.seo.metaDescription = metaDescription;
+  
+ 
+  if (slug) {
+    product.seo.slug = slugify(slug, { lower: true });
+  }
+
+  // Convert comma-separated string back to an array for MongoDB
+  if (keywords !== undefined) {
+    product.seo.keywords = keywords.split(",").map((k: string) => k.trim()).filter((k: string) => k !== "");
+  }
+  
   if (price) product.price = Number(price);
-  if (stock) product.stock = Number(stock);
+  if (salePrice !== undefined) {
+    product.salePrice = salePrice === "" || salePrice === "null" ? null as any : Number(salePrice);
+  }
+  
+  if (stock !== undefined) product.stock = Number(stock);
   if (description) product.description = description;
   if (category) product.category = category.toLowerCase();
 
-  /* ---------- SALE PRICE LOGIC ---------- */
+  const files = req.files as Express.Multer.File[];
+  const existingImages = JSON.parse(req.body.existingImages || "[]");
 
-  if (salePrice !== undefined && salePrice !== "") {
-  const sale = Number(salePrice);
-
-  if (sale >= product.price) {
-    return next(
-      new ErrorHandler("Sale price must be less than original price", 400)
-    );
+  if (product.photos && product.photos.length > 0) {
+    product.photos.forEach((img) => {
+      if (!existingImages.includes(img)) {
+        rm(img, () => {});
+      }
+    });
   }
 
-  product.salePrice = sale;
-} else {
-  product.salePrice = null as any;
-}
+  product.photos = existingImages;
+
+  if (files && files.length > 0) {
+    const newImages = files.map((file) => file.path);
+    product.photos.push(...newImages);
+  }
+
+  product.photo = product.photos[0] || "";
+
+  if (!product.photo) {
+    return next(new ErrorHandler("A product must have at least one photo", 400));
+  }
 
   await product.save();
 
@@ -234,9 +273,9 @@ export const updateProduct = TryCatch(async (req, res, next) => {
     admin: true,
   });
 
-  return res.status(200).json({
+  res.status(200).json({
     success: true,
-    message: "Product Updated successfully",
+    message: "Product updated successfully",
   });
 });
 
@@ -244,9 +283,18 @@ export const deleteProduct = TryCatch(async (req, res, next) => {
   const product = await Product.findById(req.params.id);
   if (!product) return next(new ErrorHandler("Product not found", 404));
 
-  rm(product.photo!, () => {});
 
- 
+  if (product.photos && product.photos.length > 0) {
+    product.photos.forEach((photoPath) => {
+      rm(photoPath, () => {
+        console.log("Deleted image:", photoPath);
+      });
+    });
+  } else if (product.photo) {
+    // Fallback for very old products
+    rm(product.photo, () => {});
+  }
+
   await product.deleteOne();
   invalidateCache({ product: true, productId: String(product._id), admin: true });
 
@@ -255,7 +303,6 @@ export const deleteProduct = TryCatch(async (req, res, next) => {
     message: "Product Deleted successfully",
   });
 });
-
 export const addOrUpdateReview = TryCatch(async (req, res, next) => {
   const { rating, comment, productId } = req.body;
   const user = req.user!;

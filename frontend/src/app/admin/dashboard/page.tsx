@@ -22,11 +22,9 @@ const Dashboard = () => {
   const { user } = useSelector((state: RootState) => state.userReducer);
   const [src, setSrc] = useState(user?.photo || fallback);
 
-  const userId = user?._id;
+ 
 
-  const { isLoading, data, error, isError } = useStatsQuery(userId ?? "", {
-    skip: !userId,
-  });
+  const { isLoading, data, error, isError } = useStatsQuery();
 
   useEffect(() => {
     if (isError) {

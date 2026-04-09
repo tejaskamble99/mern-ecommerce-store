@@ -19,6 +19,7 @@ import Image from "next/image";
 import ReviewForm from "@/components/layout/product/ReviewForm";
 import ReviewList from "@/components/layout/product/ReviewList";
 import RatingBreakdown from "@/components/layout/product/RatingBreakdown";
+import DOMPurify from "isomorphic-dompurify";
 
 type Props = {
   slug: string;
@@ -114,9 +115,14 @@ export default function ProductPage({ slug }: Props) {
 
       <section className="product-detail">
         <div className="product-gallery">
+          {/* THE BIG MAIN IMAGE */}
           <div className="gallery-main">
             <Image
-              src={imgUrl}
+              src={
+                product.photos?.length
+                  ? buildImgUrl(product.photos[activeThumb])
+                  : imgUrl
+              }
               alt={product.name}
               width={500}
               height={500}
@@ -126,14 +132,14 @@ export default function ProductPage({ slug }: Props) {
           </div>
 
           <div className="gallery-thumbs">
-            {[imgUrl, imgUrl, imgUrl].map((src, i) => (
+            {product.photos?.map((src, i) => (
               <button
                 key={i}
                 className={`thumb ${activeThumb === i ? "active" : ""}`}
                 onClick={() => setActiveThumb(i)}
               >
                 <Image
-                  src={src}
+                  src={buildImgUrl(src)}
                   alt={`view ${i + 1}`}
                   width={100}
                   height={100}
@@ -236,15 +242,12 @@ export default function ProductPage({ slug }: Props) {
         <h3 style={{ marginBottom: "15px", fontSize: "20px" }}>
           Product Description
         </h3>
-        <p
-          style={{
-            whiteSpace: "pre-wrap",
-            lineHeight: "1.8",
-            color: "#4b5563",
+        <div
+          style={{ lineHeight: "1.8", color: "#4b5563" }}
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(product.description),
           }}
-        >
-          {product.description}
-        </p>
+        />
       </div>
 
       {relatedProducts && relatedProducts.length > 0 && (

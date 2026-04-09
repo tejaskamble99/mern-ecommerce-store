@@ -20,9 +20,7 @@ const Barcharts = () => {
 
 const userId = user?._id;
 
-const { isLoading, data, error, isError } = useBarQuery(userId ?? "", {
-  skip: !userId,
-});
+const { isLoading, data, error, isError } = useBarQuery();
 
   
 

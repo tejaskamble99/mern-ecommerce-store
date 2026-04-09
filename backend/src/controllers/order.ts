@@ -126,7 +126,6 @@ export const newOrder = TryCatch(
         });
       }
 
-      // Email to admin
       await sendEmail({
         to: process.env.ADMIN_EMAIL as string,
         subject: "New Order Received",
@@ -154,15 +153,19 @@ export const newOrder = TryCatch(
   },
 );
 
-// FIX #1: cancelOrder restocks items + invalidates cache
 export const cancelOrder = TryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const order = await Order.findById(id);
+  
+  // We populate the user so we can get their email address for the notification!
+  const order = await Order.findById(id).populate("user", "name email");
 
   if (!order) return next(new ErrorHandler("Order not found", 404));
 
+  // Handle TS typing for populated user field
+  const orderUserId = typeof order.user === "object" ? (order.user as any)._id.toString() : order.user.toString();
+
   // Only the owner can cancel their order
-  if (order.user.toString() !== req.user!._id.toString()) {
+  if (orderUserId !== req.user!._id.toString()) {
     return next(new ErrorHandler("Unauthorized", 403));
   }
 
@@ -188,9 +191,31 @@ export const cancelOrder = TryCatch(async (req, res, next) => {
     product: true,
     order: true,
     admin: true,
-    _id: String(order.user), // ✅ FIX: Cast ObjectId to String
+    _id: String(orderUserId), 
     orderId: String(order._id),
   });
+
+  // ✅ SEND CANCELLATION EMAIL
+  try {
+    const userEmail = (order.user as any).email;
+    const userName = (order.user as any).name;
+
+    if (userEmail) {
+      await sendEmail({
+        to: userEmail,
+        subject: "Order Cancelled - Barwa",
+        html: `
+          <h2>Order Cancelled</h2>
+          <p>Hi ${userName},</p>
+          <p>Your order <strong>#${order._id}</strong> has been successfully cancelled.</p>
+          <p>Any applied charges will be refunded to your original payment method within 3-5 business days.</p>
+          <p>We hope to see you shopping with us again soon!</p>
+        `,
+      });
+    }
+  } catch (error) {
+    console.error("Failed to send cancellation email:", error);
+  }
 
   return res.status(200).json({
     success: true,
@@ -200,7 +225,9 @@ export const cancelOrder = TryCatch(async (req, res, next) => {
 
 export const processOrder = TryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const order = await Order.findById(id);
+
+  // Populate user to grab their email address
+  const order = await Order.findById(id).populate("user", "name email");
   if (!order) return next(new ErrorHandler("Order not found", 404));
 
   if (order.status === "Delivered") {
@@ -220,12 +247,46 @@ export const processOrder = TryCatch(async (req, res, next) => {
 
   await order.save();
 
+  const orderUserId = typeof order.user === "object" ? (order.user as any)._id.toString() : order.user.toString();
+
   invalidateCache({
     order: true,
     admin: true,
-    _id: String(order.user), // ✅ FIX: Cast ObjectId to String
+    _id: String(orderUserId), 
     orderId: String(order._id),
   });
+
+  // ✅ SEND PROCESSING EMAIL (Shipped or Delivered)
+  try {
+    const userEmail = (order.user as any).email;
+    const userName = (order.user as any).name;
+
+    if (userEmail) {
+      let subject = "";
+      let html = "";
+
+      if (order.status === "Shipped") {
+        subject = "Your Barwa Order has been Shipped! 🚚";
+        html = `
+          <h2>Great news, ${userName}!</h2>
+          <p>Your order <strong>#${order._id}</strong> has been packed and handed over to our delivery partners.</p>
+          <p>It is currently on its way to your shipping address.</p>
+        `;
+      } else if (order.status === "Delivered") {
+        subject = "Your Barwa Order has been Delivered! 🎉";
+        html = `
+          <h2>Order Delivered!</h2>
+          <p>Hi ${userName},</p>
+          <p>Your order <strong>#${order._id}</strong> has been marked as delivered.</p>
+          <p>We hope you love your new purchase! If you have any issues, please reply to this email.</p>
+        `;
+      }
+
+      await sendEmail({ to: userEmail, subject, html });
+    }
+  } catch (error) {
+    console.error("Failed to send processing email:", error);
+  }
 
   return res.status(200).json({
     success: true,
@@ -254,7 +315,7 @@ export const deleteOrder = TryCatch(async (req, res, next) => {
   });
 });
 
-// FIX #4: generateInvoice with ownership check
+
 export const generateInvoice = TryCatch(async (req, res, next) => {
   const { id } = req.params;
   const order = await Order.findById(id).populate("user", "name email");
