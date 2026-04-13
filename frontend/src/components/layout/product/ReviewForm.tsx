@@ -19,8 +19,24 @@ export default function ReviewForm({ productId }: Props) {
   const imageHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
-    const files = Array.from(e.target.files);
-    setImages(files);
+    const newFiles = Array.from(e.target.files);
+
+    
+    setImages((prev) => {
+      if (prev.length + newFiles.length > 3) {
+        toast.error("You can only upload up to 3 photos per review");
+        return prev; 
+      }
+      return [...prev, ...newFiles];
+    });
+
+    
+    e.target.value = "";
+  };
+
+  
+  const removeImage = (indexToRemove: number) => {
+    setImages((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
   const submitHandler = async (e: React.FormEvent) => {
@@ -36,8 +52,9 @@ export default function ReviewForm({ productId }: Props) {
       formData.append("comment", comment);
       formData.append("productId", productId);
 
+    
       images.forEach((file) => {
-        formData.append("images", file);
+        formData.append("photos", file);
       });
 
       const res = await addReview(formData).unwrap();
@@ -90,15 +107,36 @@ export default function ReviewForm({ productId }: Props) {
       />
 
       {/* Preview Images */}
-      <div className="review-preview">
+      <div className="review-preview" style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "10px" }}>
         {images.map((img, index) => (
-          <Image
-          key={index}
-            src={URL.createObjectURL(img)}
-            alt="preview"
-            width={80}
-            height={80}
-          />
+          <div key={index} style={{ position: "relative" }}>
+            <Image
+              src={URL.createObjectURL(img)}
+              alt="preview"
+              width={80}
+              height={80}
+              style={{ objectFit: "cover", borderRadius: "8px" }}
+            />
+            <button
+              type="button"
+              onClick={() => removeImage(index)}
+              style={{
+                position: "absolute",
+                top: "-5px",
+                right: "-5px",
+                background: "#ef4444",
+                color: "white",
+                border: "none",
+                borderRadius: "50%",
+                width: "20px",
+                height: "20px",
+                cursor: "pointer",
+                fontSize: "10px",
+              }}
+            >
+              ✕
+            </button>
+          </div>
         ))}
       </div>
 

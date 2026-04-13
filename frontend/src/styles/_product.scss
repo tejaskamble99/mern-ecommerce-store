@@ -389,6 +389,21 @@
     flex-direction: column;
     gap: 12px;
     margin-top: 20px;
+
+    >input{
+      padding: 0.6rem 1.5rem;
+      border-radius: 2rem;
+      border: 1px solid #e5e7eb;
+    }
+    >button{
+      padding: 0.6rem 1.5rem;
+      background: $color2;
+      color: white;
+      border-radius: 2rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: opacity 0.2s ease;
+    }
   }
 
   .rating-stars span {
