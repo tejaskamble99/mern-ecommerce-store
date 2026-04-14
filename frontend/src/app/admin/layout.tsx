@@ -11,10 +11,7 @@ export default function AdminLayout({
   return (
     <ProtectedRoute adminOnly={true}>
       <div className="admin-container">
-        {/* Column 1: Sidebar */}
         <AdminSidebar />
-
-        {/* Column 2: The Page Content (Dashboard, Products, etc.) */}
         {children}
       </div>
     </ProtectedRoute>

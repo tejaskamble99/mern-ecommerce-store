@@ -2,10 +2,9 @@
 import CartItemComponent from "@/components/cart-item";
 import {
   decrementQuantity,
-  discountApplied,
   incrementQuantity,
   removeCartItem,
-  saveCoupon,
+  applyCoupon, 
 } from "@/redux/reducer/cartReducer";
 import { AppDispatch, server } from "@/redux/store";
 import { CartReducerInitialState } from "@/types/reducer-types";
@@ -28,6 +27,17 @@ export default function Cart() {
 
   const dispatch = useDispatch<AppDispatch>();
 
+ 
+  const couponChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.toUpperCase();
+    setCouponCode(val);
+
+    if (val.length < 3) {
+      dispatch(applyCoupon(undefined));
+      setIsValidCouponCode(false);
+    }
+  };
+
   const incrementHandler = (cartItem: CartItem) => {
     dispatch(incrementQuantity(cartItem.productId));
   };
@@ -43,9 +53,7 @@ export default function Cart() {
 
   useEffect(() => {
     if (!couponCode || couponCode.length < 3 || cartItems.length === 0) {
-      dispatch(discountApplied(0));
-      dispatch(saveCoupon(undefined));
-      return;
+      return; // Safe bailout
     }
 
     const { token, cancel } = axios.CancelToken.source();
@@ -57,15 +65,13 @@ export default function Cart() {
         })
         .then((res) => {
           setIsValidCouponCode(true);
-          dispatch(discountApplied(res.data.discount));
-          dispatch(saveCoupon(couponCode));
+          dispatch(applyCoupon(res.data.coupon)); 
         })
         .catch((err) => {
           if (axios.isCancel(err)) return;
 
           setIsValidCouponCode(false);
-          dispatch(discountApplied(0));
-          dispatch(saveCoupon(undefined));
+          dispatch(applyCoupon(undefined));
         });
     }, 800);
 
@@ -73,7 +79,7 @@ export default function Cart() {
       clearTimeout(timeOut);
       cancel();
     };
-  }, [couponCode, cartItems.length, dispatch]);
+  }, [couponCode, cartItems, dispatch]);
 
   return (
     <div className="cart">
@@ -93,41 +99,42 @@ export default function Cart() {
         )}
       </main>
 
-      <aside>
-        <p>Subtotal : ₹{subtotal.toLocaleString("en-IN")}</p>
-        <p>Shipping Charges : ₹{shippingCharges.toLocaleString("en-IN")}</p>
-        {/* FIX #3: Math.round prevents float display e.g. ₹180.000000002 */}
-        <p>Tax : ₹{Math.round(tax).toLocaleString("en-IN")}</p>
-        <p>
-          Discount:{" "}
-          <em className="red"> - ₹{discount.toLocaleString("en-IN")}</em>
-        </p>
-        <p>
-          <b>Total : ₹{total.toLocaleString("en-IN")}</b>
-        </p>
+      {cartItems.length > 0 && (
+        <aside>
+         
+          <p>Subtotal : ₹{(subtotal || 0).toLocaleString("en-IN")}</p>
+          <p>Shipping Charges : ₹{(shippingCharges || 0).toLocaleString("en-IN")}</p>
+          <p>Tax : ₹{Math.round(tax || 0).toLocaleString("en-IN")}</p>
+          <p>
+            Discount: <em className="red"> - ₹{(discount || 0).toLocaleString("en-IN")}</em>
+          </p>
+          <p>
+            <b>Total : ₹{(total || 0).toLocaleString("en-IN")}</b>
+          </p>
 
-        <input
-          id="coupon-code"
-          name="couponCode"
-          type="text"
-          placeholder="Enter Promo Code"
-          value={couponCode}
-          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-        />
+          <input
+            id="coupon-code"
+            name="couponCode"
+            type="text"
+            placeholder="Enter Promo Code"
+            value={couponCode}
+            onChange={couponChangeHandler}
+          />
 
-        {couponCode &&
-          (isValidCouponCode ? (
-            <span className="green">
-              ₹{discount} off using the <code>{couponCode}</code>
-            </span>
-          ) : (
-            <span className="red">
-              Invalid Coupon <VscError />
-            </span>
-          ))}
+          {couponCode &&
+            (isValidCouponCode ? (
+              <span className="green">
+                ₹{discount || 0} off using the <code>{couponCode}</code>
+              </span>
+            ) : (
+              <span className="red">
+                Invalid Coupon <VscError />
+              </span>
+            ))}
 
-        {cartItems.length > 0 && <Link href="/shipping">Checkout</Link>}
-      </aside>
+          <Link href="/shipping">Checkout</Link>
+        </aside>
+      )}
     </div>
   );
 }

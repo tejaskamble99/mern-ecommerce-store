@@ -7,6 +7,7 @@ import {
 
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQueryWithAuth } from "./baseQuery";
+import { auth } from "@/firebase";
 
 export const orderApi = createApi({
   reducerPath: "orderApi",
@@ -14,34 +15,29 @@ export const orderApi = createApi({
   tagTypes: ["orders"],
 
   endpoints: (builder) => ({
-    // Create new order
-    newOrder: builder.mutation<MessageResponse, NewOrderRequest>({
-      query: (order) => ({
-        url: "order/new",
-        method: "POST",
-        body: order,
-      }),
+newOrder: builder.mutation<MessageResponse, NewOrderRequest>({
+  query: (order) => ({
+    url: `order/new`,
+    method: "POST",
+    body: order,
+  }),
       invalidatesTags: ["orders"],
     }),
 
-    // Update order status (admin)
-    // FIX: Removed userId. The backend knows who you are from the token!
     updateOrder: builder.mutation<MessageResponse, string>({
       query: (orderId) => ({
-        url: `order/${orderId}`, // FIX: Added "order/" prefix
+        url: `order/${orderId}`,
         method: "PUT",
       }),
       invalidatesTags: ["orders"],
     }),
 
-    // Delete order (admin)
-    // FIX: Removed userId.
     deleteOrder: builder.mutation<MessageResponse, string>({
       query: (orderId) => ({
-        url: `order/${orderId}`, // FIX: Added "order/" prefix
+        url: `order/${orderId}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["orders"], // FIX: Added invalidation so the UI updates automatically!
+      invalidatesTags: ["orders"],
     }),
 
     // Current user orders

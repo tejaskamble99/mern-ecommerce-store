@@ -5,7 +5,7 @@ import { auth } from "@/firebase";
 export const baseQueryWithAuth = fetchBaseQuery({
   baseUrl: `${process.env.NEXT_PUBLIC_SERVER_URL}/api/v1/`,
   prepareHeaders: async (headers) => {
-    // 1. Get the current user
+    
     const user = auth.currentUser;
 
     if (user) {

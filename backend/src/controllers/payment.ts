@@ -24,36 +24,46 @@ export const createPaymentIntent = TryCatch(async (req, res, next) => {
 });
 
 export const newCoupon = TryCatch(async (req, res, next) => {
-  const { coupon, amount } = req.body || {};
+  
+  const { coupon, amount, type, productId } = req.body || {};
 
-  if (!coupon || !amount)
+  if (!coupon || amount === undefined)
     return next(new ErrorHandler("Please enter Both Amount and Coupon", 400));
 
-  await Coupon.create({ coupon, amount });
+  const upperCaseCoupon = coupon.toUpperCase();
+
+  await Coupon.create({ 
+    coupon: upperCaseCoupon, 
+    amount, 
+    type: type || "flat", 
+    productId: productId || null 
+  });
+
   return res.status(200).json({
     success: true,
-    message: `Coupon ${coupon} Created Successfully`,
+    message: `Coupon ${upperCaseCoupon} Created Successfully`,
   });
 });
 
-export const applyDiscount= TryCatch(async (req, res, next) => {
-  const { coupon} = req.query;
 
-  const discount =  await Coupon.findOne({ coupon });
-  if (!discount)
+export const applyDiscount = TryCatch(async (req, res, next) => {
+  const { coupon } = req.query;
+  const upperCaseCoupon = String(coupon).toUpperCase();
+
+  const discountData = await Coupon.findOne({ coupon: upperCaseCoupon });
+  
+  if (!discountData)
     return next(new ErrorHandler("Invalid Coupon Code", 400));
 
-
+ 
   return res.status(200).json({
     success: true,
-    discount: discount.amount,
+    coupon: discountData, 
   });
 });
 
 export const getAllCoupons = TryCatch(async (req, res, next) => {
-
-  const coupons =  await Coupon.findOne({ });
-
+ const coupons = await Coupon.find({}).sort({ createdAt: -1 });
 
   return res.status(200).json({
     success: true,

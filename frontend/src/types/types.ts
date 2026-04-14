@@ -6,6 +6,7 @@ export type User = {
   role: string;
   dob: string;
   _id: string;
+  accessToken?: string;
 };
 
 
@@ -168,4 +169,6 @@ export type CouponType = {
   code: string;
   amount: number;
   _id: string;
+  type: "flat" | "percent";
+  productId: string | null;
 };

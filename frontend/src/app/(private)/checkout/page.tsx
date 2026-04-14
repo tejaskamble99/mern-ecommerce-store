@@ -20,7 +20,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { auth } from "@/firebase"; // ⭐ IMPORTANT
+import { auth } from "@/firebase"; 
 
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_KEY?.trim() ?? "";
 
@@ -55,6 +55,9 @@ const CheckOutForm = () => {
   const router = useRouter();
   const dispatch = useDispatch();
 
+
+  const { user } = useSelector((state: RootState) => state.userReducer);
+  
   const {
     shippingInfo,
     cartItems,
@@ -67,16 +70,12 @@ const CheckOutForm = () => {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPaymentElementReady, setIsPaymentElementReady] = useState(false);
-  const [paymentElementError, setPaymentElementError] =
-    useState<string | null>(null);
+  const [paymentElementError, setPaymentElementError] = useState<string | null>(null);
 
   const [newOrder] = useNewOrderMutation();
 
   const paymentLoadErrorHandler = ({ error }: PaymentElementLoadErrorEvent) => {
-    const message =
-      error.message ||
-      "Unable to load payment form. Check Stripe keys and try again.";
-
+    const message = error.message || "Unable to load payment form. Check Stripe keys and try again.";
     setIsPaymentElementReady(false);
     setPaymentElementError(message);
     toast.error(message);
@@ -90,35 +89,41 @@ const CheckOutForm = () => {
   const submitHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (paymentElementError) {
-      return toast.error(paymentElementError);
-    }
-
+    if (paymentElementError) return toast.error(paymentElementError);
     if (!stripe || !elements || !isPaymentElementReady) return;
 
     setIsProcessing(true);
 
-    const orderData: NewOrderRequest = {
-      shippingInfo,
-      orderItems: cartItems,
-      subtotal,
-      tax,
-      discount,
-      shippingCharges,
-      total,
-    };
+const orderData: NewOrderRequest = {
+  shippingInfo,
+  orderItems: cartItems,
+  subtotal,
+  tax,
+  discount,
+  shippingCharges,
+  total,
+};
 
     try {
-      const { paymentIntent } = await stripe.confirmPayment({
+    
+      const { paymentIntent, error } = await stripe.confirmPayment({
         elements,
         confirmParams: { return_url: window.location.origin },
         redirect: "if_required",
       });
 
+    
+      if (error) {
+        setIsProcessing(false);
+        return toast.error(error.message || "Something went wrong with the payment.");
+      }
+
       if (paymentIntent?.status !== "succeeded") {
+        setIsProcessing(false);
         return toast.error("Payment failed. Please try again.");
       }
 
+      // If Stripe succeeds, send the full orderData (with the user ID) to MongoDB
       const res = await newOrder(orderData);
 
       if ("data" in res) {

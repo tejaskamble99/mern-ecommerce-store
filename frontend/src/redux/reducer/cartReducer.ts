@@ -1,18 +1,51 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { CartReducerInitialState } from "../../types/reducer-types";
-import { CartItem, ShippingInfo } from "../../types/types";
-
+import { CartItem, ShippingInfo, CouponType } from "../../types/types";
 
 const FREE_SHIPPING_THRESHOLD = 1000;
 const SHIPPING_CHARGE = 200;
-const TAX_RATE = 0.18;
-
+const TAX_RATE = 0;
 
 const recalculate = (state: CartReducerInitialState): void => {
   state.subtotal = state.cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
+
+  if (state.cartItems.length === 0) {
+    state.shippingCharges = 0;
+    state.tax = 0;
+    state.discount = 0;
+    state.total = 0;
+    return;
+  }
+
+
+  let calculatedDiscount = 0;
+
+  if (state.coupon) {
+    const { amount, type, productId } = state.coupon;
+
+    if (productId) {
+      const validItem = state.cartItems.find((i) => i.productId === productId);
+      if (validItem) {
+        if (type === "percent") {
+          calculatedDiscount = (validItem.price * validItem.quantity) * (amount / 100);
+        } else {
+          calculatedDiscount = amount; 
+        }
+      }
+    } else {
+      if (type === "percent") {
+        calculatedDiscount = state.subtotal * (amount / 100);
+      } else {
+        calculatedDiscount = amount; 
+      }
+    }
+  }
+
+  state.discount = Math.min(calculatedDiscount, state.subtotal);
+
   state.shippingCharges =
     state.subtotal > FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
   state.tax = state.subtotal * TAX_RATE;
@@ -23,7 +56,6 @@ const recalculate = (state: CartReducerInitialState): void => {
     )
   );
 };
-
 
 const initialState: CartReducerInitialState = {
   loading: false,
@@ -48,51 +80,32 @@ export const cartReducer = createSlice({
   name: "cartReducer",
   initialState,
   reducers: {
-   
     addToCart: (state, action: PayloadAction<CartItem>) => {
       if (action.payload.quantity <= 0) return;
-
-      const safeQuantity = Math.min(
-        action.payload.quantity,
-        action.payload.stock ?? Infinity
-      );
+      const safeQuantity = Math.min(action.payload.quantity, action.payload.stock ?? Infinity);
       const item: CartItem = { ...action.payload, quantity: safeQuantity };
-
-      const index = state.cartItems.findIndex(
-        (i) => i.productId === item.productId
-      );
+      const index = state.cartItems.findIndex((i) => i.productId === item.productId);
 
       if (index !== -1) state.cartItems[index] = item;
       else state.cartItems.push(item);
-
       recalculate(state);
     },
-
     removeCartItem: (state, action: PayloadAction<string>) => {
-      state.cartItems = state.cartItems.filter(
-        (i) => i.productId !== action.payload
-      );
+      state.cartItems = state.cartItems.filter((i) => i.productId !== action.payload);
       recalculate(state);
     },
-
-   
     incrementQuantity: (state, action: PayloadAction<string>) => {
       const item = state.cartItems.find((i) => i.productId === action.payload);
       if (!item) return;
-
       const maxQty = item.stock ?? Infinity;
       if (item.quantity < maxQty) {
         item.quantity += 1;
         recalculate(state);
       }
     },
-
     decrementQuantity: (state, action: PayloadAction<string>) => {
-      const index = state.cartItems.findIndex(
-        (i) => i.productId === action.payload
-      );
+      const index = state.cartItems.findIndex((i) => i.productId === action.payload);
       if (index === -1) return;
-
       if (state.cartItems[index].quantity > 1) {
         state.cartItems[index].quantity -= 1;
       } else {
@@ -100,33 +113,17 @@ export const cartReducer = createSlice({
       }
       recalculate(state);
     },
-
-
-    discountApplied: (state, action: PayloadAction<number>) => {
-      state.discount = Math.min(
-        Math.max(0, action.payload),
-        state.subtotal
-      );
+   
+    applyCoupon: (state, action: PayloadAction<CouponType | undefined>) => {
+      state.coupon = action.payload;
       recalculate(state);
     },
-
-
-    saveCoupon: (state, action: PayloadAction<string | undefined>) => {
-      state.coupon = action.payload;
-      if (!action.payload) {
-        state.discount = 0;
-        recalculate(state);
-      }
-    },
-
     saveShippingInfo: (state, action: PayloadAction<ShippingInfo>) => {
       state.shippingInfo = action.payload;
     },
-
     setCartLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
-
     resetCart: () => initialState,
   },
 });
@@ -136,9 +133,8 @@ export const {
   removeCartItem,
   incrementQuantity,
   decrementQuantity,
-  discountApplied,
+  applyCoupon, 
   saveShippingInfo,
-  saveCoupon,
   setCartLoading,
   resetCart,
 } = cartReducer.actions;

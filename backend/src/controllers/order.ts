@@ -84,7 +84,7 @@ export const newOrder = TryCatch(
 
     const userData = await User.findById(user);
 
-    if (!shippingInfo || !orderItems || !subtotal || !tax || !total)
+    if (!shippingInfo || !orderItems || !subtotal || tax === undefined || !total)
       return next(new ErrorHandler("Please enter all fields", 400));
 
     const order = await Order.create({

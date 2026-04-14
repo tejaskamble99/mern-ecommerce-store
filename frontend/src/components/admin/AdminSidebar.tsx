@@ -9,9 +9,7 @@ import {
   FaChartBar,
   FaChartLine,
   FaChartPie,
-  FaGamepad,
   FaImage,
-  FaStopwatch,
   FaBars,
   FaTimes,
 } from "react-icons/fa";
@@ -136,18 +134,6 @@ const AdminSidebar = () => {
               url="/admin/app/coupon"
               text="Coupon"
               Icon={RiCoupon3Fill}
-              location={pathname}
-            />
-            <Li
-              url="/admin/app/toss"
-              text="Toss"
-              Icon={FaGamepad}
-              location={pathname}
-            />
-            <Li
-              url="/admin/app/stopwatch"
-              text="Stopwatch"
-              Icon={FaStopwatch}
               location={pathname}
             />
           </ul>
