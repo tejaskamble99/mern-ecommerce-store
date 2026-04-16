@@ -1,12 +1,13 @@
 import { TryCatch } from "../middleware/error.js";
 import { Order } from "../models/order.js";
+import { Product } from "../models/product.js";
+import { User } from "../models/user.js";
 import { stripe } from "../server.js";
 import ErrorHandler from "../utils/utility-class.js";
 import crypto from "crypto";
 import Razorpay from "razorpay";
 import { invalidateCache } from "../utils/features.js";
 import { sendEmail } from "../utils/sendEmail.js";
-import { User } from "../models/user.js";
 import { adminOrderEmailTemplate } from "../templates/orderEmailTemplate.js";
 import { generateInvoiceBuffer } from "../utils/generateInvoiceBuffer.js";
 
@@ -16,12 +17,12 @@ const razorpay = new Razorpay({
 });
 
 
+
+
 export const stripeWebhook = TryCatch(async (req, res, next) => {
   const sig = req.headers["stripe-signature"] as string;
 
-  if (!sig) {
-    return next(new ErrorHandler("No signature found", 400));
-  }
+  if (!sig) return next(new ErrorHandler("No signature found", 400));
 
   let event;
 
@@ -33,37 +34,46 @@ export const stripeWebhook = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler(`Webhook Error: ${err.message}`, 400));
   }
 
-
   switch (event.type) {
-    case "payment_intent.succeeded":
-      const paymentIntent = event.data.object as any;
 
     
-      const order = await Order.findOne({
-        "paymentInfo.paymentId": paymentIntent.id
-      });
+    case "payment_intent.succeeded": {
+      const paymentIntent = event.data.object as any;
 
-      if (order) {
-     
-        order.paymentInfo = order.paymentInfo || {
-          gateway: "Stripe",
-          paymentId: paymentIntent.id,
-          gatewayOrderId: paymentIntent.id,
-        };
-        order.paymentInfo.signature = paymentIntent.latest_charge || "";
-        order.paymentStatus = "paid";
+      const orderId = paymentIntent.metadata?.orderId;
 
-        await order.save();
+      if (!orderId) break;
 
-       
+      const order = await Order.findById(orderId);
+
+      if (!order) break;
+
+      if (order.paymentStatus === "paid") {
+        return res.json({ received: true });
+      }
+
+      order.paymentInfo = {
+        gateway: "Stripe",
+        paymentId: paymentIntent.id,
+        gatewayOrderId: paymentIntent.id,
+        signature: paymentIntent.latest_charge || "",
+      };
+
+      order.paymentStatus = "paid";
+
+      await order.save();
+
+      (async () => {
         try {
           const userData = await User.findById(order.user);
+
           if (userData?.email) {
             const invoiceBuffer = await generateInvoiceBuffer(order);
+
             await sendEmail({
               to: userData.email,
               subject: "Payment Confirmed - Barwa",
-              html: `<h2>Payment Confirmed!</h2><p>Your payment for order #${order._id} has been successfully processed.</p>`,
+              html: `<h2>Payment Confirmed!</h2><p>Your payment for order #${order._id} is successful.</p>`,
               attachments: [
                 {
                   filename: `invoice-${order._id}.pdf`,
@@ -81,55 +91,67 @@ export const stripeWebhook = TryCatch(async (req, res, next) => {
             });
           }
         } catch (err) {
-          console.error("Email failed:", err);
+          console.error("Email error:", err);
         }
+      })();
 
-        invalidateCache({
-          order: true,
-          admin: true,
-          _id: String(order.user),
-          orderId: String(order._id),
-        });
-      }
-      break;
-
-    case "payment_intent.payment_failed":
-      const failedIntent = event.data.object as any;
-      const failedOrder = await Order.findOne({
-        "paymentInfo.paymentId": failedIntent.id
+      invalidateCache({
+        order: true,
+        admin: true,
+        _id: String(order.user),
+        orderId: String(order._id),
       });
 
-      if (failedOrder) {
-        failedOrder.paymentStatus = "failed";
-        failedOrder.status = "Cancelled";
-        await failedOrder.save();
-
-        // Restore stock
-        for (const item of failedOrder.orderItems) {
-          const product = await import("../models/product.js").then(m => m.Product);
-          const prod = await product.findById(item.productId);
-          if (prod) {
-            prod.stock += item.quantity;
-            await prod.save();
-          }
-        }
-
-        invalidateCache({
-          product: true,
-          order: true,
-          admin: true,
-          _id: String(failedOrder.user),
-          productId: failedOrder.orderItems.map((i) => String(i.productId)),
-        });
-      }
       break;
+    }
+
+   
+    case "payment_intent.payment_failed": {
+      const failedIntent = event.data.object as any;
+
+      const orderId = failedIntent.metadata?.orderId;
+
+      if (!orderId) break;
+
+      const order = await Order.findById(orderId);
+
+      if (!order) break;
+
+      if (order.paymentStatus === "failed") {
+        return res.json({ received: true });
+      }
+
+      order.paymentStatus = "failed";
+      order.status = "Cancelled";
+
+      await order.save();
+
+    
+      for (const item of order.orderItems) {
+        await Product.updateOne(
+          { _id: item.productId },
+          { $inc: { stock: item.quantity } }
+        );
+      }
+
+      invalidateCache({
+        product: true,
+        order: true,
+        admin: true,
+        _id: String(order.user),
+        productId: order.orderItems.map((i) => String(i.productId)),
+      });
+
+      break;
+    }
 
     default:
-      console.log(`Unhandled event type: ${event.type}`);
+      console.log("Unhandled Stripe event:", event.type);
   }
 
   res.json({ received: true });
 });
+
 
 
 export const razorpayWebhook = TryCatch(async (req, res, next) => {
@@ -148,38 +170,44 @@ export const razorpayWebhook = TryCatch(async (req, res, next) => {
   const event = req.body;
 
   switch (event.event) {
-    case "payment.captured":
+
+   
+    case "payment.captured": {
       const payment = event.payload.payment.entity;
       const orderId = payment.notes?.orderId;
 
+      if (!orderId) break;
 
-      const order = await Order.findOne({
-        $or: [
-          { "paymentInfo.paymentId": payment.id },
-          { _id: orderId }
-        ]
-      });
+      const order = await Order.findById(orderId);
 
-      if (order) {
-        order.paymentInfo = order.paymentInfo || {
-          gateway: "Razorpay",
-          paymentId: payment.id,
-          gatewayOrderId: payment.order_id,
-        };
-        order.paymentInfo.signature = payment.signature || "";
-        order.paymentStatus = "paid";
+      if (!order) break;
 
-        await order.save();
+      if (order.paymentStatus === "paid") {
+        return res.json({ received: true });
+      }
 
-   
+      order.paymentInfo = {
+        gateway: "Razorpay",
+        paymentId: payment.id,
+        gatewayOrderId: payment.order_id,
+        signature: payment.signature || "",
+      };
+
+      order.paymentStatus = "paid";
+
+      await order.save();
+
+      (async () => {
         try {
           const userData = await User.findById(order.user);
+
           if (userData?.email) {
             const invoiceBuffer = await generateInvoiceBuffer(order);
+
             await sendEmail({
               to: userData.email,
               subject: "Payment Confirmed - Barwa",
-              html: `<h2>Payment Confirmed!</h2><p>Your Razorpay payment for order #${order._id} has been successfully processed.</p>`,
+              html: `<h2>Payment Confirmed!</h2><p>Your Razorpay payment for order #${order._id} is successful.</p>`,
               attachments: [
                 {
                   filename: `invoice-${order._id}.pdf`,
@@ -197,56 +225,60 @@ export const razorpayWebhook = TryCatch(async (req, res, next) => {
             });
           }
         } catch (err) {
-          console.error("Email failed:", err);
+          console.error("Email error:", err);
         }
+      })();
 
-        invalidateCache({
-          order: true,
-          admin: true,
-          _id: String(order.user),
-          orderId: String(order._id),
-        });
-      }
-      break;
-
-    case "payment.failed":
-      const failedPayment = event.payload.payment.entity;
-      const failedOrderId = failedPayment.notes?.orderId;
-
-      const failedOrder = await Order.findOne({
-        $or: [
-          { "paymentInfo.paymentId": failedPayment.id },
-          { _id: failedOrderId }
-        ]
+      invalidateCache({
+        order: true,
+        admin: true,
+        _id: String(order.user),
+        orderId: String(order._id),
       });
 
-      if (failedOrder) {
-        failedOrder.paymentStatus = "failed";
-        failedOrder.status = "Cancelled";
-        await failedOrder.save();
-
-        // Restore stock
-        for (const item of failedOrder.orderItems) {
-          const productModule = await import("../models/product.js");
-          const prod = await productModule.Product.findById(item.productId);
-          if (prod) {
-            prod.stock += item.quantity;
-            await prod.save();
-          }
-        }
-
-        invalidateCache({
-          product: true,
-          order: true,
-          admin: true,
-          _id: String(failedOrder.user),
-          productId: failedOrder.orderItems.map((i) => String(i.productId)),
-        });
-      }
       break;
+    }
+
+   
+    case "payment.failed": {
+      const payment = event.payload.payment.entity;
+      const orderId = payment.notes?.orderId;
+
+      if (!orderId) break;
+
+      const order = await Order.findById(orderId);
+
+      if (!order) break;
+
+      if (order.paymentStatus === "failed") {
+        return res.json({ received: true });
+      }
+
+      order.paymentStatus = "failed";
+      order.status = "Cancelled";
+
+      await order.save();
+
+      for (const item of order.orderItems) {
+        await Product.updateOne(
+          { _id: item.productId },
+          { $inc: { stock: item.quantity } }
+        );
+      }
+
+      invalidateCache({
+        product: true,
+        order: true,
+        admin: true,
+        _id: String(order.user),
+        productId: order.orderItems.map((i) => String(i.productId)),
+      });
+
+      break;
+    }
 
     default:
-      console.log(`Unhandled Razorpay event type: ${event.event}`);
+      console.log("Unhandled Razorpay event:", event.event);
   }
 
   res.json({ received: true });
