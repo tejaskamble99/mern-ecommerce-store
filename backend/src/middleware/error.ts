@@ -7,13 +7,13 @@ export const errorMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-  console.log("🔥 FATAL BACKEND CRASH:", err.message || err);
+  console.error("Backend error:", err.message || err);
   err.message ||= "something went wrong";
   err.statusCode ||= 500;
 
   if(err.name=== "CastError") err.message = `Invalid Id`
   return res.status(err.statusCode).json({
-    success: true,
+    success: false,
     message: err.message,
   });
 };

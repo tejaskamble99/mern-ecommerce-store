@@ -76,13 +76,11 @@ export type ShippingInfoType = {
 
 export interface NewOrderRequestBody {
   shippingInfo: ShippingInfoType;
-  user: string;
-  subtotal: number;
-  tax: number;
-  shippingCharges: number;
-  discount: number;
-  total: number;
   orderItems: OrderItemType[];
-  paymentMethod?: string;
- 
+  paymentMethod?: "Stripe" | "COD" | "Razorpay";
+  couponCode?: string;
+  paymentIntentId?: string;
+  razorpay_order_id?: string;
+  razorpay_payment_id?: string;
+  razorpay_signature?: string;
 }

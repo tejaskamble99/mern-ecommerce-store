@@ -11,6 +11,7 @@ import { sendEmail } from "../utils/sendEmail.js";
 import { User } from "../models/user.js";
 import { adminCancelEmailTemplate, adminOrderEmailTemplate, customerCancelEmailTemplate, orderEmailTemplate } from "./../templates/orderEmailTemplate.js";
 import { generateInvoiceBuffer } from "../utils/generateInvoiceBuffer.js";
+import { delhiveryAPI } from "../utils/delhivery.js";
 
 export const myOrders = TryCatch(async (req, res, next) => {
   const user = req.user!._id;
@@ -70,84 +71,134 @@ export const getSingleOrder = TryCatch(async (req, res, next) => {
 
 export const newOrder = TryCatch(
   async (req: Request<{}, {}, NewOrderRequestBody>, res, next) => {
-    const {
-      shippingInfo,
-      orderItems,
-      subtotal,
-      tax,
-      shippingCharges,
-      discount,
-      total,
-      paymentMethod,
-    } = req.body;
+    const { shippingInfo, orderItems, paymentMethod } = req.body;
 
     const user = req.user!._id;
 
-    const userData = await User.findById(user);
-
-    if (!shippingInfo || !orderItems || !subtotal || tax === undefined || !total)
-      return next(new ErrorHandler("Please enter all fields", 400));
-
-    const order = await Order.create({
-      shippingInfo,
-      orderItems,
-      user,
-      subtotal,
-      tax,
-      shippingCharges,
-      discount,
-      total,
-      paymentMethod: paymentMethod || "COD",
-    });
-
-    await reduceStock(orderItems);
-
-    invalidateCache({
-      product: true,
-      order: true,
-      admin: true,
-      _id: user,
-      productId: order.orderItems.map((i) => String(i.productId)),
-    });
-
-    try {
-      const invoiceBuffer = await generateInvoiceBuffer(order);
-
-      
-      if (userData?.email) {
-        await sendEmail({
-          to: userData.email,
-          subject: "Order Confirmation - Barwa",
-          html: orderEmailTemplate(order, userData.email),
-          attachments: [
-            {
-              filename: `invoice-${order._id}.pdf`,
-              content: invoiceBuffer,
-            },
-          ],
-        });
-      }
-
-await sendEmail({
-        to: process.env.ADMIN_EMAIL as string,
-        subject: `New Order Received - ₹${order.total.toLocaleString("en-IN")}`, 
-        html: adminOrderEmailTemplate(order, userData), 
-        attachments: [
-          {
-            filename: `invoice-${order._id}.pdf`,
-            content: invoiceBuffer,
-          },
-        ],
-      });
-    } catch (emailError) {
-      console.error("Email sending failed:", emailError);
+    if (!shippingInfo || !orderItems || orderItems.length === 0) {
+      return next(new ErrorHandler("Invalid order data", 400));
     }
 
-    return res.status(201).json({
-      success: true,
-      message: "Order placed successfully",
-    });
-  },
+    
+    const session = await Product.startSession();
+    session.startTransaction();
+
+    try {
+     
+      let subtotal = 0;
+
+      for (const item of orderItems) {
+        const product = await Product.findById(item.productId).session(session);
+
+        if (!product) {
+          throw new ErrorHandler("Product not found", 404);
+        }
+
+        const price = product.salePrice || product.price;
+
+        if (product.stock < item.quantity) {
+          throw new ErrorHandler(`${product.name} out of stock`, 400);
+        }
+
+        subtotal += price * item.quantity;
+      }
+
+      const tax = Math.round(subtotal * 0.18);
+      const shippingCharges = subtotal > 1000 ? 0 : 50;
+      const discount = 0; // apply coupon logic later
+      const total = subtotal + tax + shippingCharges - discount;
+
+    
+      const [order] = await Order.create(
+        [
+          {
+            shippingInfo,
+            orderItems,
+            user,
+            subtotal,
+            tax,
+            shippingCharges,
+            discount,
+            total,
+            paymentMethod: paymentMethod || "COD",
+            paymentStatus: "pending", 
+            status: "Processing",
+          },
+        ],
+        { session }
+      );
+
+     
+      for (const item of orderItems) {
+        const updated = await Product.findOneAndUpdate(
+          {
+            _id: item.productId,
+            stock: { $gte: item.quantity },
+          },
+          { $inc: { stock: -item.quantity } },
+          { session }
+        );
+
+        if (!updated) {
+          throw new ErrorHandler("Stock update failed", 400);
+        }
+      }
+
+     
+      await session.commitTransaction();
+      session.endSession();
+
+      
+      invalidateCache({
+        product: true,
+        order: true,
+        admin: true,
+        _id: user,
+        productId: order.orderItems.map((i) => String(i.productId)),
+      });
+
+      
+      try {
+        const userData = await User.findById(user);
+
+        const invoiceBuffer = await generateInvoiceBuffer(order);
+
+        if (userData?.email) {
+          await sendEmail({
+            to: userData.email,
+            subject: "Order Confirmation - Barwa",
+            html: orderEmailTemplate(order, userData.email),
+            attachments: [
+              {
+                filename: `invoice-${order._id}.pdf`,
+                content: invoiceBuffer,
+              },
+            ],
+          });
+        }
+
+        if (process.env.ADMIN_EMAIL) {
+          await sendEmail({
+            to: process.env.ADMIN_EMAIL,
+            subject: `New Order - ₹${order.total}`,
+            html: adminOrderEmailTemplate(order, userData),
+          });
+        }
+      } catch (err) {
+        console.error("Email failed:", err);
+      }
+
+      return res.status(201).json({
+        success: true,
+        message: "Order placed successfully",
+        orderId: order._id,
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      return next(error);
+    }
+  }
 );
 
 export const cancelOrder = TryCatch(async (req, res, next) => {

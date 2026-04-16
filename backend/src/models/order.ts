@@ -48,30 +48,53 @@ const schema = new mongoose.Schema(
       type: Number,
       required: [true, "Please enter tax amount"],
     },
+
     shippingCharges: {
       type: Number,
       required: [true, "Please enter shipping charges"],
       default: 0,
     },
+
     discount: {
       type: Number,
       required: [true, "Please enter discount amount"],
       default: 0,
     },
+
     total: {
       type: Number,
       required: [true, "Please enter total amount"],
     },
+
     paymentMethod: {
       type: String,
-      enum: ["Stripe" , "COD" , "Razorpay"],
+      enum: ["Stripe", "COD", "Razorpay"],
       default: "COD",
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending",
+    },
+    paymentInfo: {
+      gateway: String,
+      paymentId: String,
+      gatewayOrderId: String,
+      signature: String,
+    },
+    couponCode: {
+      type: String,
+      trim: true,
     },
 
     status: {
       type: String,
       enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
       default: "Processing",
+    },
+    
+    trackingId: {
+      type: String,
     },
 
     orderItems: [

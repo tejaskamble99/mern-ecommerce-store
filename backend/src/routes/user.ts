@@ -1,11 +1,11 @@
 import express from "express";
 import { newUser, getAllUsers, getUser, deleteUser } from "../controllers/user.js";
-import { adminOnly, isAuthenticated } from "../middleware/auth.js";
+import { adminOnly, isAuthenticated, verifyFirebaseToken } from "../middleware/auth.js";
 
 const app = express.Router();
 
 
-app.post("/new", newUser);
+app.post("/new", verifyFirebaseToken, newUser);
 
 app.get("/me", isAuthenticated, (req, res) => {
   res.json({

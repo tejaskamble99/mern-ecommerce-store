@@ -11,12 +11,21 @@ export const newUser = TryCatch(
     next: NextFunction
   ) => {
     const { name, email, photo, gender, _id, dob } = req.body;
+    const firebaseUser = req.firebaseUser;
 
-    if (!name || !email || !photo || !gender || !_id|| !dob) {
+    if (!firebaseUser) {
+      return next(new ErrorHandler("Please login first", 401));
+    }
+
+    if (_id && _id !== firebaseUser.uid) {
+      return next(new ErrorHandler("Invalid user identity", 403));
+    }
+
+    if (!name || !email || !photo || !gender || !dob) {
       return next(new ErrorHandler("Please enter all fields", 400));
     }
 
-    let user = await User.findById(_id); // Use findById since _id = userId
+    let user = await User.findById(firebaseUser.uid);
 
     if (user) {
       return res.status(200).json({
@@ -26,9 +35,9 @@ export const newUser = TryCatch(
     }
 
     user = await User.create({
-      _id, // Only set _id, remove duplicate userId field
+      _id: firebaseUser.uid,
       name,
-      email,
+      email: firebaseUser.email || email,
       photo,
       gender,
       dob: new Date(dob),
