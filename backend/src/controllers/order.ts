@@ -71,7 +71,7 @@ export const getSingleOrder = TryCatch(async (req, res, next) => {
 
 export const newOrder = TryCatch(
   async (req: Request<{}, {}, NewOrderRequestBody>, res, next) => {
-    const { shippingInfo, orderItems, paymentMethod } = req.body;
+    const { shippingInfo, orderItems, paymentMethod ,paymentInfo} = req.body;
 
     const user = req.user!._id;
 
@@ -121,7 +121,8 @@ export const newOrder = TryCatch(
             discount,
             total,
             paymentMethod: paymentMethod || "COD",
-            paymentStatus: "pending", 
+        paymentStatus: paymentMethod === "COD" ? "pending" : "paid",
+      paymentInfo: paymentInfo || undefined,
             status: "Processing",
           },
         ],

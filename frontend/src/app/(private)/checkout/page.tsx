@@ -10,6 +10,7 @@ import { NewOrderRequest } from "@/types/api-types";
 import { CartReducerInitialState } from "@/types/reducer-types";
 
 import { responseToast } from "@/utils/features";
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 
 import {
   Elements,
@@ -100,41 +101,32 @@ const CheckOutForm = () => {
     e.preventDefault();
 
     if (paymentElementError) return toast.error(paymentElementError);
-
     if (!stripe || !elements || !isPaymentElementReady) return;
 
     setIsProcessing(true);
 
     const orderData: NewOrderRequest = {
       shippingInfo,
-
       orderItems: cartItems,
-
       subtotal,
-
       tax,
-
       discount,
-
       shippingCharges,
-
       total,
-
-      paymentMethod: "COD",
+      paymentMethod: "Stripe",
     };
 
     try {
       const { paymentIntent, error } = await stripe.confirmPayment({
         elements,
-
-        confirmParams: { return_url: window.location.origin },
-
+        confirmParams: {
+          return_url: window.location.origin,
+        },
         redirect: "if_required",
       });
 
       if (error) {
         setIsProcessing(false);
-
         return toast.error(
           error.message || "Something went wrong with the payment.",
         );
@@ -142,15 +134,33 @@ const CheckOutForm = () => {
 
       if (paymentIntent?.status !== "succeeded") {
         setIsProcessing(false);
-
         return toast.error("Payment failed. Please try again.");
       }
 
+      orderData.paymentInfo = {
+        gateway: "Stripe",
+        paymentId: paymentIntent.id,
+        gatewayOrderId: paymentIntent.id,
+        status: paymentIntent.status,
+      };
+
+      // 5. Create Order in Backend with Payment Info
       const res = await newOrder(orderData);
 
-      if ("data" in res) dispatch(resetCart());
+      if ("data" in res) {
+        dispatch(resetCart());
+        responseToast(res, router, "/dashboard/orders");
+      } else {
+  const err = res.error as FetchBaseQueryError;
 
-      responseToast(res, router, "/dashboard/orders");
+  const message =
+    "data" in err
+      ? (err.data as { message?: string })?.message
+      : "Order failed";
+
+  toast.error(message || "Order failed");
+
+      }
     } catch (error) {
       toast.error(getErrorMessage(error, "Payment failed"));
     } finally {
@@ -236,6 +246,12 @@ const RazorpayForm = () => {
                 shippingCharges,
                 total,
                 paymentMethod: "Razorpay",
+                paymentInfo: {
+                  gateway: "Razorpay",
+                  paymentId: response.razorpay_payment_id,
+                  gatewayOrderId: response.razorpay_order_id,
+                  status: "paid",
+                },
               });
               if ("data" in res) dispatch(resetCart());
               responseToast(res, router, "/dashboard/orders");
@@ -257,18 +273,10 @@ const RazorpayForm = () => {
   };
 
   return (
-    <form
-      onSubmit={razorpayHandler}
-      className="checkout-card">
+    <form onSubmit={razorpayHandler} className="checkout-card">
       <h3>Razorpay Payment</h3>
-      <p>
-        Pay ₹{total.toLocaleString("en-IN")} via UPI, GPay, or Net Banking.
-      </p>
-      <button
-        type="submit"
-        disabled={isProcessing}
-        className="submit-btn"
-      >
+      <p>Pay ₹{total.toLocaleString("en-IN")} via UPI, GPay, or Net Banking.</p>
+      <button type="submit" disabled={isProcessing} className="submit-btn">
         {isProcessing ? "Opening Secure Gateway..." : "Pay with Razorpay"}
       </button>
     </form>
@@ -331,25 +339,15 @@ const CODForm = () => {
   };
 
   return (
-    <form
-      onSubmit={submitHandler}
-      className="checkout-card"
-    >
+    <form onSubmit={submitHandler} className="checkout-card">
       <h3>Cash on Delivery</h3>
 
       <p>
-        Pay{" "}
-        <strong>
-          ₹{total.toLocaleString("en-IN")}
-        </strong>{" "}
-        in cash when your order arrives at your door.
+        Pay <strong>₹{total.toLocaleString("en-IN")}</strong> in cash when your
+        order arrives at your door.
       </p>
 
-      <button
-        type="submit"
-        className="submit-btn"
-        disabled={isProcessing}
-      >
+      <button type="submit" className="submit-btn" disabled={isProcessing}>
         {isProcessing ? "Placing Order..." : "Confirm COD Order"}
       </button>
     </form>
@@ -433,15 +431,15 @@ const Checkout = () => {
     <div className="checkout-container">
       <div className="payment-tabs">
         <button
-        className="tab-btn"
+          className="tab-btn"
           type="button"
           onClick={() => setPaymentMethod("Stripe")}
-          >
+        >
           💳 Pay using Stripe
         </button>
 
         <button
-        className="tab-btn"
+          className="tab-btn"
           type="button"
           onClick={() => setPaymentMethod("Razorpay")}
         >
@@ -449,31 +447,29 @@ const Checkout = () => {
         </button>
 
         <button
-        className="tab-btn"
+          className="tab-btn"
           type="button"
           onClick={() => setPaymentMethod("COD")}
         >
           💵 Cash on Delivery
         </button>
       </div>
-<div className="form-wrapper">
-      {paymentMethod === "COD" && <CODForm />}
-      {paymentMethod === "Razorpay" && <RazorpayForm />}
-      {paymentMethod === "Stripe" &&
-        (clientSecret && stripePromise ? (
-          <Elements
-            key={clientSecret}
-            options={{ clientSecret }}
-            stripe={stripePromise}
-          >
-            <CheckOutForm />
-          </Elements>
-        ) : (
-          <div className="loader-container">
-            Loading Payment...
-          </div>
-        ))}
-        </div>
+      <div className="form-wrapper">
+        {paymentMethod === "COD" && <CODForm />}
+        {paymentMethod === "Razorpay" && <RazorpayForm />}
+        {paymentMethod === "Stripe" &&
+          (clientSecret && stripePromise ? (
+            <Elements
+              key={clientSecret}
+              options={{ clientSecret }}
+              stripe={stripePromise}
+            >
+              <CheckOutForm />
+            </Elements>
+          ) : (
+            <div className="loader-container">Loading Payment...</div>
+          ))}
+      </div>
     </div>
   );
 };

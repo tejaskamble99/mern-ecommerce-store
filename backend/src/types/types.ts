@@ -83,4 +83,11 @@ export interface NewOrderRequestBody {
   razorpay_order_id?: string;
   razorpay_payment_id?: string;
   razorpay_signature?: string;
+   paymentInfo?: {
+    gateway: string;
+    paymentId: string;
+    gatewayOrderId?: string;
+    signature?: string;
+    status?: string;
+  };
 }

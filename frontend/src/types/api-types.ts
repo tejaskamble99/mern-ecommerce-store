@@ -136,7 +136,12 @@ export type NewOrderRequest = {
   discount: number;
   total: number;
   paymentMethod?: "Stripe" | "COD" | "Razorpay";
-  
+  paymentInfo?: {
+    gateway: string;
+    paymentId: string;
+    gatewayOrderId?: string;
+    status?: string;
+  };
 };
 
 export type UpdateOrderRequest = {
