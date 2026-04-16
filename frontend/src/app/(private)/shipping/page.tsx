@@ -6,6 +6,7 @@ import { BiArrowBack } from "react-icons/bi";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { saveShippingInfo } from "@/redux/reducer/cartReducer";
+import { Country } from 'country-state-city';
 
 const Shipping = () => {
   const { cartItems } = useSelector(
@@ -83,17 +84,21 @@ const Shipping = () => {
           value={shippingInfo.state}
           onChange={changeHandler}
         />
-        <select
-          name="country"
-          required
-          value={shippingInfo.country}
-          onChange={changeHandler}
-        >
-          <option value="">Country</option>
-          <option value="India">India</option>
-          <option value="USA">USA</option>
-          <option value="UAE">UAE</option>
-        </select>
+<select
+  name="country"
+  required
+  value={shippingInfo.country}
+  onChange={changeHandler}
+>
+  <option value="" disabled>Select Country</option>
+  
+  {/* This automatically generates all 195+ countries perfectly formatted */}
+  {Country.getAllCountries().map((country) => (
+    <option key={country.isoCode} value={country.isoCode}>
+      {country.name}
+    </option>
+  ))}
+</select>
 
         <input
           required

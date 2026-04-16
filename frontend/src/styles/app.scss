@@ -50,11 +50,13 @@ body {
 @import "search";
 @import "order";
 @import "shipping";
+@import "checkout";
 @import "login";
 @import "terms";
 @import "footer";
 @import "admin-styles/dashboard";
 @import "admin-styles/products";
+@import "admin-styles/transaction";
 @import "admin-styles/chart";
 @import "admin-styles/dashboardapp";
 @import "admin-styles/mediaquery";
@@ -113,81 +115,21 @@ body {
   }
 }
 
-.checkout-container {
-  max-width: 420px;
-  width: 100%;
-  margin: 4rem auto;
-  padding: 2.5rem;
-  background: #fff;
-  border-radius: 1rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-
-  >form {
-    @include flex(column, flex-start, stretch, 1.5rem);
 
 
-    .payment-element-wrapper {
-      padding: 1rem;
-      border: 1px solid #e0e0e0;
-      border-radius: 0.5rem;
-      transition: border-color 0.2s ease;
 
-      &:focus-within {
-        border-color: $color3;
-      }
-    }
-
-
-    p[role="alert"] {
-      font-size: 0.875rem;
-      color: #e53e3e;
-      background: #fff5f5;
-      border: 1px solid #feb2b2;
-      border-radius: 0.5rem;
-      padding: 0.75rem 1rem;
-      margin: 0;
-    }
-
-    >button {
-      @include btn(1rem, $color2, $color1);
-      width: 100%;
-      font-size: 1.1rem;
-      border-radius: 0.5rem;
-      transition: opacity 0.2s ease, transform 0.1s ease;
-
-      &:hover:not(:disabled) {
-        opacity: 0.92;
-        transform: translateY(-1px);
-      }
-
-      &:active:not(:disabled) {
-        transform: translateY(0);
-      }
-
-
-      &:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-        transform: none;
-      }
-    }
-  }
-}
-
-// Replace your existing .admin-container styles with this
 
 .admin-container {
   display: grid;
   grid-template-columns: 1fr 4fr;
   gap: 2rem;
-  height: 100vh;
   background-color: rgb(247, 247, 247);
   position: relative;
 
-  // Mobile: single column, sidebar hidden
+  
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    padding-top: 3.5rem; // space for hamburger button
+    padding-top: 3.5rem; 
   }
 
   >aside {
@@ -228,7 +170,7 @@ body {
   }
 }
 
-// ── Sidebar (aside) responsive ──
+
 .admin-sidebar {
   width: 100%;
   background-color: white;
@@ -295,7 +237,7 @@ body {
   }
 }
 
-// ── Overlay (mobile only) ──
+
 .admin-sidebar-overlay {
   display: none;
 
@@ -308,7 +250,7 @@ body {
   }
 }
 
-// ── Hamburger button (mobile only) ──
+
 .admin-hamburger {
   display: none;
 
@@ -337,7 +279,7 @@ body {
   }
 }
 
-// ── Dashboard responsive fixes ──
+
 .dashboard {
   overflow-y: auto;
   overflow-x: hidden;

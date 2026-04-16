@@ -1,0 +1,8 @@
+export const COD_RULES = {
+  MAX_ORDER_VALUE: 5000,
+  COD_CHARGE_THRESHOLD: 1000,
+  COD_CHARGE: 50,
+
+  BLOCKED_PINCODES: ["400001", "400002"], // test
+};
+

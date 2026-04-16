@@ -28,6 +28,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
+    "src/types/declarations.d.ts",
     "**/*.mts"
 , "src/app/(private)/checkout", "../backend/src/utils/sendEmail.ts"  ],
   "exclude": ["node_modules"]

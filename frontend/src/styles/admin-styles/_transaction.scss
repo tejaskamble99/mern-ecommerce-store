@@ -1,0 +1,196 @@
+$bg-light: #f9fafb;
+$card-bg: #ffffff;
+$text-main: #111827;
+$text-muted: #6b7280;
+$border-color: #e5e7eb;
+$primary-black: #111111;
+$danger-red: #ef4444;
+$danger-bg: #fee2e2;
+
+.transaction {
+  display: flex;
+  gap: 2rem;
+  padding: 2rem;
+  padding-bottom: 6rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+  height: auto;
+  align-items: flex-start;
+  background-color: $bg-light;
+  min-height: calc(100vh - 80px);
+  font-family: inherit;
+
+ 
+  @media (max-width: 860px) {
+    flex-direction: column;
+  }
+
+
+  section {
+    flex: 2;
+    background: $card-bg;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid $border-color;
+    
+    h2 {
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      color: $text-main;
+      font-weight: 700;
+    }
+
+    .transaction-product-card {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1rem;
+      border: 1px solid $border-color;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      transition: box-shadow 0.2s;
+
+      &:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      }
+
+      img {
+        border-radius: 6px;
+        object-fit: cover;
+        background: $bg-light;
+      }
+
+      a {
+        flex: 1;
+        color: $text-main;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.05rem;
+
+        &:hover {
+          color: #000;
+          text-decoration: underline;
+        }
+      }
+
+      span {
+        font-weight: 600;
+        color: $text-muted;
+        font-size: 0.95rem;
+      }
+    }
+  }
+
+
+  .shipping-info-card {
+    flex: 1;
+    background: $card-bg;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid $border-color;
+    position: relative; 
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+
+    .product-delete-btn {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: $danger-bg;
+      color: $danger-red;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: $danger-red;
+        color: white;
+        transform: scale(1.05);
+      }
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: $text-main;
+      margin-bottom: 0.5rem;
+    }
+
+    h5 {
+      font-size: 1.1rem;
+      color: $text-main;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid $bg-light;
+      padding-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0.3rem 0;
+      color: $text-muted;
+      font-size: 0.95rem;
+      line-height: 1.5;
+
+      b {
+        color: $text-main;
+        font-size: 1.1rem;
+      }
+    }
+
+
+    .purple { 
+      color: #8b5cf6; 
+      background: #ede9fe;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .green { 
+      color: #10b981; 
+      background: #d1fae5;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .red { 
+      color: #ef4444; 
+      background: #fee2e2;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+   
+    .shipping-btn {
+      margin-top: 2rem;
+      background: $primary-black;
+      color: white;
+      border: none;
+      padding: 1rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%; 
+
+      &:hover {
+        background: #333333;
+      }
+    }
+  }
+}

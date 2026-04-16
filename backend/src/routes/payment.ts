@@ -9,12 +9,16 @@ import {
   updateCoupon,
   getCoupon,
   createPaymentIntent,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
 } from "../controllers/payment.js";
 
 const app = express.Router();
 
 // Payment
 app.post("/create", isAuthenticated, createPaymentIntent);
+app.post("/razorpay/order", isAuthenticated, createRazorpayOrder);
+app.post("/razorpay/verify", isAuthenticated, verifyRazorpayPayment);
 
 // Coupon routes
 app.post("/coupon/new", isAuthenticated, adminOnly, newCoupon);

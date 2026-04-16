@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const schema = new mongoose.Schema(
   {
     shippingInfo: {
-      fullName:{
+      fullName: {
         type: String,
         required: [true, "Please enter address"],
         trim: true,
@@ -62,6 +62,11 @@ const schema = new mongoose.Schema(
       type: Number,
       required: [true, "Please enter total amount"],
     },
+    paymentMethod: {
+      type: String,
+      enum: ["Stripe" , "COD" , "Razorpay"],
+      default: "COD",
+    },
 
     status: {
       type: String,
@@ -98,7 +103,7 @@ const schema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export const Order = mongoose.model("Order", schema);

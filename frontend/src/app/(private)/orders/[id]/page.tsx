@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  useDeleteOrderMutation,
+  useCancelOrderMutation,
   useOrderDetailsQuery,
 } from "@/redux/api/orderApi";
 import { server } from "@/redux/store";
@@ -21,18 +21,19 @@ const OrderDetails = () => {
     skip: !id,
   });
 
-  const [deleteOrder] = useDeleteOrderMutation();
+  const [cancelOrder] = useCancelOrderMutation();
 
   if (isLoading) return <Skeleton width="100%" length={20} />;
 
   const order = data?.order;
   if (!order) return <p>Order not found</p>;
 
-  const cancelHandler = async () => {
+const cancelHandler = async () => {
     if (!confirm("Are you sure you want to cancel this order?")) return;
 
     try {
-      const res = await deleteOrder(id).unwrap();
+    
+      const res = await cancelOrder(id).unwrap(); 
       toast.success(res.message);
       router.push("/orders");
     } catch {
@@ -44,14 +45,11 @@ const OrderDetails = () => {
     try {
       const token = await auth.currentUser?.getIdToken();
 
-      const res = await fetch(
-        `${server}/api/v1/order/invoice/${order._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(`${server}/api/v1/order/invoice/${order._id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!res.ok) throw new Error("Failed to download invoice");
 
@@ -81,6 +79,12 @@ const OrderDetails = () => {
         Status{" "}
         <span className={`status status-${order.status.toLowerCase()}`}>
           {order.status}
+        </span>
+      </div>
+      <div className="order-payment">
+        Payment Method :-{" "}
+        <span>
+          {order.paymentMethod === "COD" ? "Cash on Delivery" : "Paid Online"}
         </span>
       </div>
 

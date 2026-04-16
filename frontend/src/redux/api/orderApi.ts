@@ -7,7 +7,6 @@ import {
 
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQueryWithAuth } from "./baseQuery";
-import { auth } from "@/firebase";
 
 export const orderApi = createApi({
   reducerPath: "orderApi",
@@ -15,12 +14,12 @@ export const orderApi = createApi({
   tagTypes: ["orders"],
 
   endpoints: (builder) => ({
-newOrder: builder.mutation<MessageResponse, NewOrderRequest>({
-  query: (order) => ({
-    url: `order/new`,
-    method: "POST",
-    body: order,
-  }),
+    newOrder: builder.mutation<MessageResponse, NewOrderRequest>({
+      query: (order) => ({
+        url: `order/new`,
+        method: "POST",
+        body: order,
+      }),
       invalidatesTags: ["orders"],
     }),
 
@@ -40,19 +39,24 @@ newOrder: builder.mutation<MessageResponse, NewOrderRequest>({
       invalidatesTags: ["orders"],
     }),
 
-    // Current user orders
+    cancelOrder: builder.mutation<MessageResponse, string>({
+      query: (orderId) => ({
+        url: `order/cancel/${orderId}`,
+
+        method: "PATCH",
+      }),
+      invalidatesTags: ["orders"],
+    }),
     myOrders: builder.query<AllOrdersResponse, void>({
       query: () => "order/my",
       providesTags: ["orders"],
     }),
 
-    // Admin orders list
     allOrders: builder.query<AllOrdersResponse, void>({
       query: () => "order/all",
       providesTags: ["orders"],
     }),
 
-    // Single order details
     orderDetails: builder.query<OrderDetailsResponse, string>({
       query: (id) => `order/${id}`,
       providesTags: ["orders"],
@@ -67,4 +71,5 @@ export const {
   useMyOrdersQuery,
   useAllOrdersQuery,
   useOrderDetailsQuery,
+  useCancelOrderMutation,
 } = orderApi;

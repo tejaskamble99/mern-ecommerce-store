@@ -83,4 +83,6 @@ export interface NewOrderRequestBody {
   discount: number;
   total: number;
   orderItems: OrderItemType[];
+  paymentMethod?: string;
+ 
 }

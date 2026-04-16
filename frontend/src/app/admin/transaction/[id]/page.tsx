@@ -36,6 +36,7 @@ const defaultData: Order = {
   orderItems: [],
   user: { name: "", _id: "" },
   _id: "",
+  paymentMethod: "",
 };
 
 const ProductCard = ({ name, photo, price, quantity, _id }: OrderItem) => {
@@ -87,6 +88,7 @@ const TransactionManagement = () => {
     discount,
     shippingCharges,
     _id: orderId,
+    paymentMethod,
   } = data?.order || defaultData;
 
   const [updateOrder] = useUpdateOrderMutation();
@@ -137,7 +139,7 @@ const TransactionManagement = () => {
   if (isLoading) return <Skeleton width="100%" length={20} />;
 
   return (
-    <main className="product-management">
+    <main className="transaction">
       <section style={{ padding: "2rem" }}>
         <h2>Order Items</h2>
         {orderItems.map((i) => (
@@ -165,7 +167,13 @@ const TransactionManagement = () => {
         <p>
           <b>Total: ₹{total.toLocaleString("en-IN")}</b>
         </p>
-
+        <h5>Payment Info</h5>
+        <p>
+          Method:{" "}
+          <span>
+            {paymentMethod === "COD" ? "Cash on Delivery" : "Paid Online"}
+          </span>
+        </p>
         <h5>Status Info</h5>
         <p>
           Status:{" "}
