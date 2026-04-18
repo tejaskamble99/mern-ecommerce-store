@@ -18,73 +18,72 @@ import { connectDB } from "./utils/features.js";
 import webhookRoute from "./routes/webhook.js";
 import shippingRoute from "./routes/shipping.js";
 
-
-
-config({
-  path: "./.env",
-});
+config({ path: "./.env" });
 
 const stripeKey = process.env.STRIPE_KEY || "";
 connectDB();
 
 export const stripe = new Stripe(stripeKey);
-export const nodeCache = new NodeCache();
+
+
+export const nodeCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
 const port = process.env.PORT || 4000;
 const app = express();
 
-/* ---------- GLOBAL MIDDLEWARE ---------- */
+
 
 app.use(express.json({ limit: "10mb" }));
 app.set("trust proxy", 1);
-
 app.use(morgan("dev"));
+app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 
 
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true,
-  })
-);
 
-const limiter = rateLimit({
+const sensitiveLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many requests, please try again later." },
 });
 
-app.use(limiter);
+app.use(generalLimiter);
 
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "OK" });
-});
+app.get("/health", (req, res) => res.status(200).json({ status: "OK" }));
+app.get("/", (req, res) => res.send("API is running 🚀"));
 
-/* ---------- ROUTES ---------- */
 
-app.get("/", (req, res) => {
-  res.send("API is running 🚀");
-});
 
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/product", productRoute);
 app.use("/api/v1/order", orderRoute);
 app.use("/api/v1/shipping", shippingRoute);
-app.use("/api/v1/payment", paymentRoute);
+
+
+app.use("/api/v1/payment", sensitiveLimiter, paymentRoute);
 app.use("/api/v1/webhook", webhookRoute);
+
 app.use("/api/v1/dashboard", dashboardRoute);
 app.use("/api/v1/banner", bannerRoute);
 app.use("/api/v1/seo", seoRoute);
 
-/* ---------- STATIC FILES ---------- */
+
 
 app.use("/uploads", express.static("uploads"));
 
-/* ---------- ERROR HANDLER ---------- */
+
 
 app.use(errorMiddleware);
 
-/* ---------- SERVER ---------- */
+
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

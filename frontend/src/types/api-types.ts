@@ -135,6 +135,7 @@ export type NewOrderRequest = {
   shippingCharges: number;
   discount: number;
   total: number;
+  couponCode?: string;
   paymentMethod?: "Stripe" | "COD" | "Razorpay";
   paymentInfo?: {
     gateway: string;

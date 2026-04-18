@@ -3,7 +3,7 @@ import { TryCatch } from "../middleware/error.js";
 import { NewOrderRequestBody } from "../types/types.js";
 import { Order } from "../models/order.js";
 import { Product } from "../models/product.js";
-import { invalidateCache, reduceStock } from "../utils/features.js";
+import { invalidateCache } from "../utils/features.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { nodeCache } from "../server.js";
 import PDFDocument from "pdfkit";
@@ -16,7 +16,8 @@ import {
   orderEmailTemplate,
 } from "./../templates/orderEmailTemplate.js";
 import { generateInvoiceBuffer } from "../utils/generateInvoiceBuffer.js";
-import { createShipment , cancelShipment } from "../utils/delhivery/delhiveryService.js";
+import { createShipment, cancelShipment } from "../utils/delhivery/delhiveryService.js";
+import { calculateOrderPricing } from "../utils/pricing.js";
 
 export const myOrders = TryCatch(async (req, res, next) => {
   const user = req.user!._id;
@@ -57,7 +58,6 @@ export const getSingleOrder = TryCatch(async (req, res, next) => {
     nodeCache.set(key, JSON.stringify(order));
   }
 
-  // FIX #2: ownership check — user can only see their own orders
   const requestingUser = req.user!;
   const orderUserId =
     typeof order.user === "object"
@@ -76,52 +76,46 @@ export const getSingleOrder = TryCatch(async (req, res, next) => {
 
 export const newOrder = TryCatch(
   async (req: Request<{}, {}, NewOrderRequestBody>, res, next) => {
-    const { shippingInfo, orderItems, paymentMethod, paymentInfo } = req.body;
-
+    const { shippingInfo, orderItems, paymentMethod, paymentInfo, couponCode } = req.body;
     const user = req.user!._id;
 
     if (!shippingInfo || !orderItems || orderItems.length === 0) {
       return next(new ErrorHandler("Invalid order data", 400));
     }
 
+   
+    const pricing = await calculateOrderPricing(orderItems, couponCode);
+
     const session = await Product.startSession();
     session.startTransaction();
 
     try {
-      let subtotal = 0;
+      
+      for (const item of pricing.orderItems) {
+        const updated = await Product.findOneAndUpdate(
+          { _id: item.productId, stock: { $gte: item.quantity } },
+          { $inc: { stock: -item.quantity } },
+          { session }
+        );
 
-      for (const item of orderItems) {
-        const product = await Product.findById(item.productId).session(session);
-
-        if (!product) {
-          throw new ErrorHandler("Product not found", 404);
+        if (!updated) {
+          throw new ErrorHandler(`${item.name} went out of stock`, 400);
         }
-
-        const price = product.salePrice || product.price;
-
-        if (product.stock < item.quantity) {
-          throw new ErrorHandler(`${product.name} out of stock`, 400);
-        }
-
-        subtotal += price * item.quantity;
       }
-
-      const tax = Math.round(subtotal * 0.18);
-      const shippingCharges = subtotal > 1000 ? 0 : 50;
-      const discount = 0;
-      const total = subtotal + tax + shippingCharges - discount;
 
       const [order] = await Order.create(
         [
           {
             shippingInfo,
-            orderItems,
+        
+            orderItems: pricing.orderItems,
             user,
-            subtotal,
-            tax,
-            shippingCharges,
-            discount,
-            total,
+            subtotal: pricing.subtotal,
+            tax: pricing.tax,               
+            shippingCharges: pricing.shippingCharges,
+            discount: pricing.discount,     
+            total: pricing.total,
+            couponCode: pricing.couponCode,
             paymentMethod: paymentMethod || "COD",
             paymentStatus: paymentMethod === "COD" ? "pending" : "paid",
             paymentInfo: paymentInfo || undefined,
@@ -129,62 +123,45 @@ export const newOrder = TryCatch(
             timeline: [{ status: "Processing", timestamp: new Date() }],
           },
         ],
-        { session },
+        { session }
       );
-
-      const waybill = await createShipment(order);
-
-      if (waybill) {
-        order.trackingId = waybill;
-
-        order.timeline.push({
-          status: "Shipment Created",
-          timestamp: new Date(),
-        });
-
-        await order.save();
-      }
-      for (const item of orderItems) {
-        const updated = await Product.findOneAndUpdate(
-          {
-            _id: item.productId,
-            stock: { $gte: item.quantity },
-          },
-          { $inc: { stock: -item.quantity } },
-          { session },
-        );
-
-        if (!updated) {
-          throw new ErrorHandler("Stock update failed", 400);
-        }
-      }
 
       await session.commitTransaction();
       session.endSession();
+
+     
+      try {
+        const waybill = await createShipment(order);
+        if (waybill) {
+          order.trackingId = waybill;
+          order.timeline.push({ status: "Shipment Created", timestamp: new Date() });
+          await order.save();
+        }
+      } catch (shipErr) {
+        console.error("Shipment creation failed (non-critical):", shipErr);
+      }
 
       invalidateCache({
         product: true,
         order: true,
         admin: true,
         _id: user,
-        productId: order.orderItems.map((i) => String(i.productId)),
+        productId: pricing.orderItems.map((i) => String(i.productId)),
       });
 
+    
       try {
         const userData = await User.findById(user);
-
         const invoiceBuffer = await generateInvoiceBuffer(order);
 
         if (userData?.email) {
           await sendEmail({
             to: userData.email,
             subject: "Order Confirmation - Barwa",
-            html: orderEmailTemplate(order, userData.email),
+            
+            html: orderEmailTemplate(order, userData.name),
             attachments: [
-              {
-                filename: `invoice-${order._id}.pdf`,
-                content: invoiceBuffer,
-              },
+              { filename: `invoice-${order._id}.pdf`, content: invoiceBuffer },
             ],
           });
         }
@@ -210,7 +187,7 @@ export const newOrder = TryCatch(
       session.endSession();
       return next(error);
     }
-  },
+  }
 );
 
 export const cancelOrder = TryCatch(async (req, res, next) => {
@@ -244,23 +221,18 @@ export const cancelOrder = TryCatch(async (req, res, next) => {
     if (order.status !== "Processing") {
       await session.abortTransaction();
       session.endSession();
-      return next(
-        new ErrorHandler("Only Processing orders can be cancelled", 400),
-      );
+      return next(new ErrorHandler("Only Processing orders can be cancelled", 400));
     }
 
     for (const item of order.orderItems) {
       const updated = await Product.findOneAndUpdate(
         { _id: item.productId },
         { $inc: { stock: item.quantity } },
-        { session, new: true },
+        { session, new: true }
       );
 
       if (!updated) {
-        throw new ErrorHandler(
-          `Product ${item.name} not found for stock restoration`,
-          404,
-        );
+        throw new ErrorHandler(`Product ${item.name} not found for stock restoration`, 404);
       }
     }
 
@@ -268,8 +240,8 @@ export const cancelOrder = TryCatch(async (req, res, next) => {
     await order.save({ session });
 
     if (order.trackingId) {
-  await cancelShipment(order.trackingId);
-}
+      await cancelShipment(order.trackingId);
+    }
 
     await session.commitTransaction();
     session.endSession();
@@ -336,10 +308,8 @@ export const processOrder = TryCatch(async (req, res, next) => {
     default:
       return next(new ErrorHandler("Cannot process this order status", 400));
   }
-  order.timeline.push({
-    status: order.status,
-    timestamp: new Date(),
-  });
+
+  order.timeline.push({ status: order.status, timestamp: new Date() });
   await order.save();
 
   const orderUserId =
@@ -364,19 +334,10 @@ export const processOrder = TryCatch(async (req, res, next) => {
 
       if (order.status === "Shipped") {
         subject = "Your Barwa Order has been Shipped! 🚚";
-        html = `
-          <h2>Great news, ${userName}!</h2>
-          <p>Your order <strong>#${order._id}</strong> has been packed and handed over to our delivery partners.</p>
-          <p>It is currently on its way to your shipping address.</p>
-        `;
+        html = `<h2>Great news, ${userName}!</h2><p>Your order <strong>#${order._id}</strong> is on its way.</p>`;
       } else if (order.status === "Delivered") {
         subject = "Your Barwa Order has been Delivered! 🎉";
-        html = `
-          <h2>Order Delivered!</h2>
-          <p>Hi ${userName},</p>
-          <p>Your order <strong>#${order._id}</strong> has been marked as delivered.</p>
-          <p>We hope you love your new purchase! If you have any issues, please reply to this email.</p>
-        `;
+        html = `<h2>Order Delivered!</h2><p>Hi ${userName}, your order <strong>#${order._id}</strong> has been delivered.</p>`;
       }
 
       await sendEmail({ to: userEmail, subject, html });
@@ -402,14 +363,11 @@ export const deleteOrder = TryCatch(async (req, res, next) => {
   invalidateCache({
     order: true,
     admin: true,
-    _id: String(order.user), // ✅ FIX: Cast ObjectId to String
+    _id: String(order.user),
     orderId: String(order._id),
   });
 
-  return res.status(200).json({
-    success: true,
-    message: "Order deleted successfully",
-  });
+  return res.status(200).json({ success: true, message: "Order deleted successfully" });
 });
 
 export const generateInvoice = TryCatch(async (req, res, next) => {
@@ -432,98 +390,47 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
   }
 
   const doc = new PDFDocument({ size: "A4", margin: 50 });
-
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename=invoice-${order._id}.pdf`,
-  );
+  res.setHeader("Content-Disposition", `attachment; filename=invoice-${order._id}.pdf`);
   res.setHeader("Content-Type", "application/pdf");
-
   doc.pipe(res);
 
-  doc
-    .fontSize(28)
-    .font("Helvetica-Bold")
-    .fillColor("#111111")
-    .text("BARWA", 50, 50);
-
-  doc
-    .fontSize(10)
-    .font("Helvetica")
-    .fillColor("#6b7280")
-    .text("Next-Gen Electronics", 50, 82);
-
-  doc
-    .fontSize(24)
-    .font("Helvetica-Bold")
-    .fillColor("#111827")
-    .text("INVOICE", 400, 50, { align: "right" });
-
-  doc
-    .fontSize(10)
-    .font("Helvetica")
-    .fillColor("#4b5563")
-    .text(`Invoice #: ${String(order._id).slice(-8).toUpperCase()}`, 400, 80, {
-      align: "right",
-    })
-    .text(`Date: ${new Date().toLocaleDateString("en-IN")}`, 400, 95, {
-      align: "right",
-    })
+  doc.fontSize(28).font("Helvetica-Bold").fillColor("#111111").text("BARWA", 50, 50);
+  doc.fontSize(10).font("Helvetica").fillColor("#6b7280").text("Next-Gen Electronics", 50, 82);
+  doc.fontSize(24).font("Helvetica-Bold").fillColor("#111827").text("INVOICE", 400, 50, { align: "right" });
+  doc.fontSize(10).font("Helvetica").fillColor("#4b5563")
+    .text(`Invoice #: ${String(order._id).slice(-8).toUpperCase()}`, 400, 80, { align: "right" })
+    .text(`Date: ${new Date().toLocaleDateString("en-IN")}`, 400, 95, { align: "right" })
     .text(`Status: ${order.status}`, 400, 110, { align: "right" });
 
   doc.moveDown(3);
-
   doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor("#e5e7eb").stroke();
   doc.moveDown(1);
 
   const customerName =
     typeof order.user === "object" ? (order.user as any).name : "Customer";
 
-  doc
-    .fontSize(12)
-    .font("Helvetica-Bold")
-    .fillColor("#111827")
-    .text("Billed & Shipped To:", 50, doc.y);
+  doc.fontSize(12).font("Helvetica-Bold").fillColor("#111827").text("Billed & Shipped To:", 50, doc.y);
   doc.moveDown(0.5);
-
-  doc
-    .fontSize(10)
-    .font("Helvetica")
-    .fillColor("#4b5563")
+  doc.fontSize(10).font("Helvetica").fillColor("#4b5563")
     .text(order.shippingInfo?.fullName || customerName)
     .text(order.shippingInfo?.address ?? "")
-    .text(
-      `${order.shippingInfo?.city ?? ""}, ${order.shippingInfo?.state ?? ""}`,
-    )
-    .text(
-      `${order.shippingInfo?.country ?? ""} — ${order.shippingInfo?.pinCode ?? ""}`,
-    );
+    .text(`${order.shippingInfo?.city ?? ""}, ${order.shippingInfo?.state ?? ""}`)
+    .text(`${order.shippingInfo?.country ?? ""} — ${order.shippingInfo?.pinCode ?? ""}`);
 
-  doc
-    .fontSize(10)
-    .font("Helvetica-Bold")
-    .fillColor("#111827")
+  doc.fontSize(10).font("Helvetica-Bold").fillColor("#111827")
     .text("Payment Method: ", 400, doc.y - 45)
-    .font("Helvetica")
-    .fillColor("#4b5563")
-    .text(
-      order.paymentMethod === "COD" ? "Cash on Delivery" : "Paid Online",
-      400,
-      doc.y + 2,
-    );
+    .font("Helvetica").fillColor("#4b5563")
+    .text(order.paymentMethod === "COD" ? "Cash on Delivery" : "Paid Online", 400, doc.y + 2);
 
   doc.moveDown(3);
 
   const tableTop = doc.y;
-
   doc.rect(50, tableTop, 495, 25).fill("#f3f4f6");
   doc.fillColor("#111827").font("Helvetica-Bold").fontSize(10);
-
   doc.text("ITEM", 60, tableTop + 8, { width: 230 });
   doc.text("QTY", 300, tableTop + 8, { width: 50, align: "center" });
   doc.text("PRICE", 370, tableTop + 8, { width: 70, align: "right" });
   doc.text("TOTAL", 460, tableTop + 8, { width: 75, align: "right" });
-
   doc.moveDown(1.5);
 
   let yPosition = doc.y;
@@ -531,60 +438,29 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
 
   for (const item of order.orderItems) {
     doc.text(item.name, 60, yPosition, { width: 230 });
-    doc.text(String(item.quantity), 300, yPosition, {
-      width: 50,
-      align: "center",
-    });
-    doc.text(`Rs. ${item.price.toLocaleString("en-IN")}`, 370, yPosition, {
-      width: 70,
-      align: "right",
-    });
-    doc.text(
-      `Rs. ${(item.price * item.quantity).toLocaleString("en-IN")}`,
-      460,
-      yPosition,
-      { width: 75, align: "right" },
-    );
-
+    doc.text(String(item.quantity), 300, yPosition, { width: 50, align: "center" });
+    doc.text(`Rs. ${item.price.toLocaleString("en-IN")}`, 370, yPosition, { width: 70, align: "right" });
+    doc.text(`Rs. ${(item.price * item.quantity).toLocaleString("en-IN")}`, 460, yPosition, { width: 75, align: "right" });
     yPosition += 25;
-    doc
-      .moveTo(50, yPosition - 10)
-      .lineTo(545, yPosition - 10)
-      .strokeColor("#f3f4f6")
-      .stroke();
+    doc.moveTo(50, yPosition - 10).lineTo(545, yPosition - 10).strokeColor("#f3f4f6").stroke();
   }
 
   doc.y = yPosition + 10;
 
   const summaryLeft = 360;
-  const summaryRight = 545;
-
   const summaryRow = (label: string, value: string, isBold = false) => {
     const y = doc.y;
-    doc
-      .font(isBold ? "Helvetica-Bold" : "Helvetica")
-      .fontSize(10)
+    doc.font(isBold ? "Helvetica-Bold" : "Helvetica").fontSize(10)
       .fillColor(isBold ? "#111827" : "#4b5563")
       .text(label, summaryLeft, y, { width: 100 })
-      .text(value, 460, y, { width: summaryRight - 460, align: "right" });
+      .text(value, 460, y, { width: 85, align: "right" });
     doc.moveDown(0.6);
   };
 
   summaryRow("Subtotal:", `Rs. ${order.subtotal.toLocaleString("en-IN")}`);
-  summaryRow(
-    "Tax (GST):",
-    `Rs. ${Math.round(order.tax).toLocaleString("en-IN")}`,
-  );
-  summaryRow(
-    "Shipping:",
-    order.shippingCharges === 0
-      ? "FREE"
-      : `Rs. ${order.shippingCharges.toLocaleString("en-IN")}`,
-  );
-
-  if (order.discount > 0) {
-    summaryRow("Discount:", `- Rs. ${order.discount.toLocaleString("en-IN")}`);
-  }
+  summaryRow("Tax (GST):", `Rs. ${Math.round(order.tax).toLocaleString("en-IN")}`);
+  summaryRow("Shipping:", order.shippingCharges === 0 ? "FREE" : `Rs. ${order.shippingCharges.toLocaleString("en-IN")}`);
+  if (order.discount > 0) summaryRow("Discount:", `- Rs. ${order.discount.toLocaleString("en-IN")}`);
 
   doc.moveDown(0.5);
   doc.moveTo(360, doc.y).lineTo(545, doc.y).strokeColor("#111827").stroke();
@@ -594,10 +470,7 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
   summaryRow("Total:", `Rs. ${order.total.toLocaleString("en-IN")}`, true);
 
   doc.moveDown(4);
-  doc
-    .fontSize(10)
-    .font("Helvetica")
-    .fillColor("#9ca3af")
+  doc.fontSize(10).font("Helvetica").fillColor("#9ca3af")
     .text("Thank you for shopping with Barwa!", { align: "center" })
     .text("For support, email us at: support@barwa.com", { align: "center" });
 

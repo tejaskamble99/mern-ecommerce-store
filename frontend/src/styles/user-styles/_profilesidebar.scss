@@ -2,7 +2,6 @@
     display: grid;
   grid-template-columns: 250px 1fr;
   gap: 2rem;
-  height: 100vh;
   background-color: rgb(247, 247, 247);
 
   @media (max-width: 768px) {

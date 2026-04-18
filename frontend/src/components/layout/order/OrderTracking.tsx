@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { server } from "@/redux/store";
+import { auth } from "@/firebase";
 
 type TimelineItem = {
   status: string;
@@ -13,27 +15,41 @@ type Order = {
   timeline: TimelineItem[];
 };
 
-const steps = [
-  "Processing",
-  "Shipped",
-  "Out for Delivery",
-  "Delivered",
-];
+const steps = ["Processing", "Shipped", "Out for Delivery", "Delivered"];
 
 export default function OrderTracking({ orderId }: { orderId: string }) {
   const [order, setOrder] = useState<Order | null>(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
-      const res = await fetch(`/api/v1/order/${orderId}`);
-      const data = await res.json();
-      setOrder(data.order);
+      try {
+
+        const token = await auth.currentUser?.getIdToken();
+
+        const res = await fetch(`${server}/api/v1/order/${orderId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          setError(true);
+          return;
+        }
+
+        const data = await res.json();
+        setOrder(data.order);
+      } catch {
+        setError(true);
+      }
     };
 
-    fetchOrder();
+    if (orderId) fetchOrder();
   }, [orderId]);
 
-  if (!order) return <p>Loading...</p>;
+  if (error) return null; // fail silently — tracking is non-critical
+  if (!order) return <p>Loading tracking...</p>;
 
   const currentIndex = steps.indexOf(order.status);
 
@@ -44,10 +60,7 @@ export default function OrderTracking({ orderId }: { orderId: string }) {
       {/* Progress Bar */}
       <div className="progress-bar">
         {steps.map((step, index) => (
-          <div
-            key={step}
-            className={`step ${index <= currentIndex ? "active" : ""}`}
-          >
+          <div key={step} className={`step ${index <= currentIndex ? "active" : ""}`}>
             <div className="circle">{index + 1}</div>
             <p>{step}</p>
           </div>
@@ -66,7 +79,6 @@ export default function OrderTracking({ orderId }: { orderId: string }) {
           </div>
         ))}
       </div>
-
     </div>
   );
 }

@@ -9,16 +9,14 @@ export type User = {
   accessToken?: string;
 };
 
-
 export type ReviewImage = {
   url: string;
   _id?: string;
 };
 
-
 export type Review = {
   _id: string;
-  user: string; 
+  user: string;
   name: string;
   rating: number;
   comment: string;
@@ -79,7 +77,7 @@ export type Order = {
   discount: number;
   total: number;
   status: string;
-  createdAt?: string;  
+  createdAt?: string;
   user: {
     name: string;
     _id: string;
@@ -167,7 +165,9 @@ export type Line = {
 };
 
 export type CouponType = {
-  code: string;
+  // ✅ FIX: Renamed from `code` to `coupon` to match the Mongoose model field name.
+  //    Previously `c.code` was always undefined in the admin coupon list.
+  coupon: string;
   amount: number;
   _id: string;
   type: "flat" | "percent";
@@ -200,7 +200,6 @@ export interface RazorpayOptions {
     ondismiss?: () => void;
   };
 }
-
 
 declare global {
   interface Window {

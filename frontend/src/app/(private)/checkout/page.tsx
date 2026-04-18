@@ -2,45 +2,33 @@
 
 import { useNewOrderMutation } from "@/redux/api/orderApi";
 import { resetCart } from "@/redux/reducer/cartReducer";
-
 import { RootState, server } from "@/redux/store";
-
 import { NewOrderRequest } from "@/types/api-types";
-
+// Note: make sure NewOrderRequest in api-types.ts includes: couponCode?: string
 import { CartReducerInitialState } from "@/types/reducer-types";
-
 import { responseToast } from "@/utils/features";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
-
 import {
   Elements,
   PaymentElement,
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
-
 import { loadStripe, type StripeError } from "@stripe/stripe-js";
-
 import axios from "axios";
-
 import { FormEvent, useEffect, useState } from "react";
-
 import { useDispatch, useSelector } from "react-redux";
-
 import toast from "react-hot-toast";
-
 import { useRouter } from "next/navigation";
-
 import { auth } from "@/firebase";
 import { RazorpayOptions, RazorpayResponse } from "@/types/types";
 
+
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_KEY?.trim() ?? "";
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
-const stripePromise = stripePublishableKey
-  ? loadStripe(stripePublishableKey)
-  : null;
 
-type PaymentIntentResponse = { clientSecret?: string };
+type PaymentIntentResponse = { clientSecret?: string; total?: number };
 
 type PaymentElementLoadErrorEvent = {
   elementType: "payment";
@@ -50,50 +38,29 @@ type PaymentElementLoadErrorEvent = {
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (axios.isAxiosError(error))
     return error.response?.data?.message || error.message || fallback;
-
   if (error instanceof Error && error.message) return error.message;
-
   return fallback;
 };
 
-const CheckOutForm = () => {
+const CheckOutForm = ({ serverTotal }: { serverTotal: number }) => {
   const stripe = useStripe();
-
   const elements = useElements();
-
   const router = useRouter();
-
   const dispatch = useDispatch();
 
-  const {
-    shippingInfo,
-    cartItems,
-    subtotal,
-    tax,
-    discount,
-    shippingCharges,
-    total,
-  } = useSelector((state: RootState) => state.cartReducer);
+  const { shippingInfo, cartItems, subtotal, tax, discount, shippingCharges, coupon } =
+    useSelector((state: RootState) => state.cartReducer);
 
   const [isProcessing, setIsProcessing] = useState(false);
-
   const [isPaymentElementReady, setIsPaymentElementReady] = useState(false);
-
-  const [paymentElementError, setPaymentElementError] = useState<string | null>(
-    null,
-  );
+  const [paymentElementError, setPaymentElementError] = useState<string | null>(null);
 
   const [newOrder] = useNewOrderMutation();
 
   const paymentLoadErrorHandler = ({ error }: PaymentElementLoadErrorEvent) => {
-    const message =
-      error.message ||
-      "Unable to load payment form. Check Stripe keys and try again.";
-
+    const message = error.message || "Unable to load payment form.";
     setIsPaymentElementReady(false);
-
     setPaymentElementError(message);
-
     toast.error(message);
   };
 
@@ -112,24 +79,21 @@ const CheckOutForm = () => {
       tax,
       discount,
       shippingCharges,
-      total,
+      total: serverTotal,
       paymentMethod: "Stripe",
+      couponCode: coupon?.coupon ?? undefined,
     };
 
     try {
       const { paymentIntent, error } = await stripe.confirmPayment({
         elements,
-        confirmParams: {
-          return_url: window.location.origin,
-        },
+        confirmParams: { return_url: window.location.origin },
         redirect: "if_required",
       });
 
       if (error) {
         setIsProcessing(false);
-        return toast.error(
-          error.message || "Something went wrong with the payment.",
-        );
+        return toast.error(error.message || "Something went wrong with the payment.");
       }
 
       if (paymentIntent?.status !== "succeeded") {
@@ -144,22 +108,16 @@ const CheckOutForm = () => {
         status: paymentIntent.status,
       };
 
-      // 5. Create Order in Backend with Payment Info
       const res = await newOrder(orderData);
 
       if ("data" in res) {
         dispatch(resetCart());
         responseToast(res, router, "/dashboard/orders");
       } else {
-  const err = res.error as FetchBaseQueryError;
-
-  const message =
-    "data" in err
-      ? (err.data as { message?: string })?.message
-      : "Order failed";
-
-  toast.error(message || "Order failed");
-
+        const err = res.error as FetchBaseQueryError;
+        const message =
+          "data" in err ? (err.data as { message?: string })?.message : "Order failed";
+        toast.error(message || "Order failed");
       }
     } catch (error) {
       toast.error(getErrorMessage(error, "Payment failed"));
@@ -174,23 +132,17 @@ const CheckOutForm = () => {
         onLoadError={paymentLoadErrorHandler}
         onReady={() => setIsPaymentElementReady(true)}
       />
-
       {paymentElementError && <p>{paymentElementError}</p>}
-
       <button
         type="submit"
         disabled={
-          isProcessing ||
-          !stripe ||
-          !elements ||
-          !isPaymentElementReady ||
-          !!paymentElementError
+          isProcessing || !stripe || !elements || !isPaymentElementReady || !!paymentElementError
         }
         className="submit-btn"
       >
         {isProcessing
           ? "Processing..."
-          : `Pay ₹${total.toLocaleString("en-IN")}`}
+          : `Pay ₹${serverTotal.toLocaleString("en-IN")}`}
       </button>
     </form>
   );
@@ -201,25 +153,24 @@ const RazorpayForm = () => {
   const dispatch = useDispatch();
   const [newOrder] = useNewOrderMutation();
   const [isProcessing, setIsProcessing] = useState(false);
-  const {
-    shippingInfo,
-    cartItems,
-    subtotal,
-    tax,
-    discount,
-    shippingCharges,
-    total,
-  } = useSelector((state: RootState) => state.cartReducer);
+
+  const { shippingInfo, cartItems, subtotal, tax, discount, shippingCharges, total, coupon } =
+    useSelector((state: RootState) => state.cartReducer);
 
   const razorpayHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsProcessing(true);
+
     try {
       const token = await auth.currentUser?.getIdToken();
+
       const { data } = await axios.post(
         `${server}/api/v1/payment/razorpay/order`,
-        { amount: total },
-        { headers: { Authorization: `Bearer ${token}` } },
+        {
+          orderItems: cartItems,
+          couponCode: coupon?.coupon ?? null,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       const options: RazorpayOptions = {
@@ -234,8 +185,9 @@ const RazorpayForm = () => {
             const verifyRes = await axios.post(
               `${server}/api/v1/payment/razorpay/verify`,
               response,
-              { headers: { Authorization: `Bearer ${token}` } },
+              { headers: { Authorization: `Bearer ${token}` } }
             );
+
             if (verifyRes.data.success) {
               const res = await newOrder({
                 shippingInfo,
@@ -244,8 +196,9 @@ const RazorpayForm = () => {
                 tax,
                 discount,
                 shippingCharges,
-                total,
+                total: data.total,
                 paymentMethod: "Razorpay",
+                couponCode: coupon?.coupon ?? undefined,
                 paymentInfo: {
                   gateway: "Razorpay",
                   paymentId: response.razorpay_payment_id,
@@ -253,10 +206,11 @@ const RazorpayForm = () => {
                   status: "paid",
                 },
               });
+
               if ("data" in res) dispatch(resetCart());
               responseToast(res, router, "/dashboard/orders");
             }
-          } catch (err) {
+          } catch {
             toast.error("Payment verification failed");
           }
         },
@@ -285,53 +239,34 @@ const RazorpayForm = () => {
 
 const CODForm = () => {
   const router = useRouter();
-
   const dispatch = useDispatch();
-
   const [newOrder] = useNewOrderMutation();
-
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const {
-    shippingInfo,
-    cartItems,
-    subtotal,
-    tax,
-    discount,
-    shippingCharges,
-    total,
-  } = useSelector((state: RootState) => state.cartReducer);
+  const { shippingInfo, cartItems, subtotal, tax, discount, shippingCharges, total, coupon } =
+    useSelector((state: RootState) => state.cartReducer);
 
   const submitHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     setIsProcessing(true);
 
     const orderData: NewOrderRequest = {
       shippingInfo,
-
       orderItems: cartItems,
-
       subtotal,
-
       tax,
-
       discount,
-
       shippingCharges,
-
       total,
-
       paymentMethod: "COD",
+      couponCode: coupon?.coupon ?? undefined,
     };
 
     try {
       const res = await newOrder(orderData);
-
       if ("data" in res) dispatch(resetCart());
-
       responseToast(res, router, "/dashboard/orders");
-    } catch (error) {
+    } catch {
       toast.error("Failed to place COD order");
     } finally {
       setIsProcessing(false);
@@ -341,12 +276,9 @@ const CODForm = () => {
   return (
     <form onSubmit={submitHandler} className="checkout-card">
       <h3>Cash on Delivery</h3>
-
       <p>
-        Pay <strong>₹{total.toLocaleString("en-IN")}</strong> in cash when your
-        order arrives at your door.
+        Pay <strong>₹{total.toLocaleString("en-IN")}</strong> in cash when your order arrives.
       </p>
-
       <button type="submit" className="submit-btn" disabled={isProcessing}>
         {isProcessing ? "Placing Order..." : "Confirm COD Order"}
       </button>
@@ -356,26 +288,20 @@ const CODForm = () => {
 
 const Checkout = () => {
   const [clientSecret, setClientSecret] = useState("");
+  const [serverTotal, setServerTotal] = useState(0);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"Stripe" | "COD" | "Razorpay">("COD");
 
-  const [initializationError, setInitializationError] = useState<string | null>(
-    null,
-  );
-
-  const [paymentMethod, setPaymentMethod] = useState<
-    "Stripe" | "COD" | "Razorpay"
-  >("COD");
-
-  const { total } = useSelector(
-    (state: { cartReducer: CartReducerInitialState }) => state.cartReducer,
+  const { total, cartItems, coupon } = useSelector(
+    (state: { cartReducer: CartReducerInitialState }) => state.cartReducer
   );
 
   useEffect(() => {
     if (!stripePromise) return setInitializationError("Stripe key missing.");
-
     if (!server) return setInitializationError("Server URL missing.");
-
-    if (total <= 0)
-      return setInitializationError("Cart total must be greater than 0.");
+    if (total <= 0) return setInitializationError("Cart total must be greater than 0.");
+    if (paymentMethod !== "Stripe") return;
+    if (clientSecret) return; // already fetched
 
     let isActive = true;
 
@@ -385,40 +311,40 @@ const Checkout = () => {
 
         const { data } = await axios.post<PaymentIntentResponse>(
           `${server}/api/v1/payment/create`,
-
-          { amount: total },
-
+          {
+            orderItems: cartItems,
+            couponCode: coupon?.coupon ?? null,
+          },
           {
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-          },
+          }
         );
 
-        if (!data.clientSecret)
-          throw new Error("Stripe did not return client secret.");
+        if (!data.clientSecret) throw new Error("Stripe did not return client secret.");
 
-        if (isActive) setClientSecret(data.clientSecret);
+        if (isActive) {
+          setClientSecret(data.clientSecret);
+
+          setServerTotal(data.total ?? total);
+        }
       } catch (error) {
         if (isActive) {
           const msg = getErrorMessage(error, "Failed to initialize payment.");
-
           setInitializationError(msg);
-
           toast.error(msg);
         }
       }
     };
 
-    if (paymentMethod === "Stripe" && !clientSecret) {
-      createPaymentIntent();
-    }
+    createPaymentIntent();
 
     return () => {
       isActive = false;
     };
-  }, [total, paymentMethod, clientSecret]);
+  }, [total, paymentMethod, clientSecret, cartItems, coupon]);
 
   if (initializationError)
     return (
@@ -430,41 +356,24 @@ const Checkout = () => {
   return (
     <div className="checkout-container">
       <div className="payment-tabs">
-        <button
-          className="tab-btn"
-          type="button"
-          onClick={() => setPaymentMethod("Stripe")}
-        >
+        <button className="tab-btn" type="button" onClick={() => setPaymentMethod("Stripe")}>
           💳 Pay using Stripe
         </button>
-
-        <button
-          className="tab-btn"
-          type="button"
-          onClick={() => setPaymentMethod("Razorpay")}
-        >
+        <button className="tab-btn" type="button" onClick={() => setPaymentMethod("Razorpay")}>
           💳 Pay using Razorpay
         </button>
-
-        <button
-          className="tab-btn"
-          type="button"
-          onClick={() => setPaymentMethod("COD")}
-        >
+        <button className="tab-btn" type="button" onClick={() => setPaymentMethod("COD")}>
           💵 Cash on Delivery
         </button>
       </div>
+
       <div className="form-wrapper">
         {paymentMethod === "COD" && <CODForm />}
         {paymentMethod === "Razorpay" && <RazorpayForm />}
         {paymentMethod === "Stripe" &&
           (clientSecret && stripePromise ? (
-            <Elements
-              key={clientSecret}
-              options={{ clientSecret }}
-              stripe={stripePromise}
-            >
-              <CheckOutForm />
+            <Elements key={clientSecret} options={{ clientSecret }} stripe={stripePromise}>
+              <CheckOutForm serverTotal={serverTotal} />
             </Elements>
           ) : (
             <div className="loader-container">Loading Payment...</div>
