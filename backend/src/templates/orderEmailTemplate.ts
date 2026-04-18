@@ -130,7 +130,7 @@ export const adminOrderEmailTemplate = (order: any, userData: any) => {
         <div style="background-color: ${order.paymentMethod === 'COD' ? '#fef3c7' : '#d1fae5'}; border-left: 4px solid ${order.paymentMethod === 'COD' ? '#f59e0b' : '#10b981'}; padding: 12px; margin-bottom: 20px; border-radius: 4px;">
           <strong style="color: ${order.paymentMethod === 'COD' ? '#92400e' : '#065f46'};">Payment Method:</strong> 
           <span style="color: ${order.paymentMethod === 'COD' ? '#b45309' : '#047857'};">
-            ${order.paymentMethod === 'COD' ? 'Cash on Delivery (Collect Cash)' : 'Paid Online (Stripe)'}
+            ${order.paymentMethod === 'COD' ? 'Cash on Delivery (Collect Cash)' : 'Paid Online'}
           </span>
         </div>
 

@@ -16,6 +16,9 @@ import userRoute from "./routes/user.js";
 import seoRoute from "./routes/seo.js";
 import { connectDB } from "./utils/features.js";
 import webhookRoute from "./routes/webhook.js";
+import shippingRoute from "./routes/shipping.js";
+
+
 
 config({
   path: "./.env",
@@ -66,6 +69,7 @@ app.get("/", (req, res) => {
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/product", productRoute);
 app.use("/api/v1/order", orderRoute);
+app.use("/api/v1/shipping", shippingRoute);
 app.use("/api/v1/payment", paymentRoute);
 app.use("/api/v1/webhook", webhookRoute);
 app.use("/api/v1/dashboard", dashboardRoute);

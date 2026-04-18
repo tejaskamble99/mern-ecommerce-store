@@ -91,3 +91,10 @@ export interface NewOrderRequestBody {
     status?: string;
   };
 }
+
+export type OrderStatus =
+  | "Processing"
+  | "Shipped"
+  | "Out for Delivery"
+  | "Delivered"
+  | "Cancelled";

@@ -10,6 +10,7 @@ import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/admin/Loader";
 import { auth } from "@/firebase";
+import OrderTracking from "@/components/layout/order/OrderTracking"; 
 
 const OrderDetails = () => {
   const params = useParams();
@@ -163,7 +164,9 @@ const cancelHandler = async () => {
           <span>₹{order.total.toLocaleString("en-IN")}</span>
         </div>
       </div>
-
+      <div>
+      <OrderTracking orderId={order._id} />
+        </div>
       <button onClick={downloadInvoice} className="invoice-btn">
         Download Invoice
       </button>

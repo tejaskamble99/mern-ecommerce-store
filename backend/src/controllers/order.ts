@@ -9,9 +9,14 @@ import { nodeCache } from "../server.js";
 import PDFDocument from "pdfkit";
 import { sendEmail } from "../utils/sendEmail.js";
 import { User } from "../models/user.js";
-import { adminCancelEmailTemplate, adminOrderEmailTemplate, customerCancelEmailTemplate, orderEmailTemplate } from "./../templates/orderEmailTemplate.js";
+import {
+  adminCancelEmailTemplate,
+  adminOrderEmailTemplate,
+  customerCancelEmailTemplate,
+  orderEmailTemplate,
+} from "./../templates/orderEmailTemplate.js";
 import { generateInvoiceBuffer } from "../utils/generateInvoiceBuffer.js";
-import { delhiveryAPI } from "../utils/delhivery.js";
+import { createShipment , cancelShipment } from "../utils/delhivery/delhiveryService.js";
 
 export const myOrders = TryCatch(async (req, res, next) => {
   const user = req.user!._id;
@@ -71,7 +76,7 @@ export const getSingleOrder = TryCatch(async (req, res, next) => {
 
 export const newOrder = TryCatch(
   async (req: Request<{}, {}, NewOrderRequestBody>, res, next) => {
-    const { shippingInfo, orderItems, paymentMethod ,paymentInfo} = req.body;
+    const { shippingInfo, orderItems, paymentMethod, paymentInfo } = req.body;
 
     const user = req.user!._id;
 
@@ -79,12 +84,10 @@ export const newOrder = TryCatch(
       return next(new ErrorHandler("Invalid order data", 400));
     }
 
-    
     const session = await Product.startSession();
     session.startTransaction();
 
     try {
-     
       let subtotal = 0;
 
       for (const item of orderItems) {
@@ -105,10 +108,9 @@ export const newOrder = TryCatch(
 
       const tax = Math.round(subtotal * 0.18);
       const shippingCharges = subtotal > 1000 ? 0 : 50;
-      const discount = 0; // apply coupon logic later
+      const discount = 0;
       const total = subtotal + tax + shippingCharges - discount;
 
-    
       const [order] = await Order.create(
         [
           {
@@ -121,15 +123,27 @@ export const newOrder = TryCatch(
             discount,
             total,
             paymentMethod: paymentMethod || "COD",
-        paymentStatus: paymentMethod === "COD" ? "pending" : "paid",
-      paymentInfo: paymentInfo || undefined,
+            paymentStatus: paymentMethod === "COD" ? "pending" : "paid",
+            paymentInfo: paymentInfo || undefined,
             status: "Processing",
+            timeline: [{ status: "Processing", timestamp: new Date() }],
           },
         ],
-        { session }
+        { session },
       );
 
-     
+      const waybill = await createShipment(order);
+
+      if (waybill) {
+        order.trackingId = waybill;
+
+        order.timeline.push({
+          status: "Shipment Created",
+          timestamp: new Date(),
+        });
+
+        await order.save();
+      }
       for (const item of orderItems) {
         const updated = await Product.findOneAndUpdate(
           {
@@ -137,7 +151,7 @@ export const newOrder = TryCatch(
             stock: { $gte: item.quantity },
           },
           { $inc: { stock: -item.quantity } },
-          { session }
+          { session },
         );
 
         if (!updated) {
@@ -145,11 +159,9 @@ export const newOrder = TryCatch(
         }
       }
 
-     
       await session.commitTransaction();
       session.endSession();
 
-      
       invalidateCache({
         product: true,
         order: true,
@@ -158,7 +170,6 @@ export const newOrder = TryCatch(
         productId: order.orderItems.map((i) => String(i.productId)),
       });
 
-      
       try {
         const userData = await User.findById(user);
 
@@ -199,83 +210,115 @@ export const newOrder = TryCatch(
       session.endSession();
       return next(error);
     }
-  }
+  },
 );
 
 export const cancelOrder = TryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const order = await Order.findById(id).populate("user", "name email");
 
-  if (!order) return next(new ErrorHandler("Order not found", 404));
- 
-  const orderUserId = typeof order.user === "object" ? (order.user as any)._id.toString() : order.user.toString();
+  const session = await Order.startSession();
+  session.startTransaction();
 
-  if (orderUserId !== req.user!._id.toString()) {
-    return next(new ErrorHandler("Unauthorized", 403));
-  }
+  try {
+    const order = await Order.findById(id)
+      .populate("user", "name email")
+      .session(session);
 
-  if (order.status !== "Processing") {
-    return next(
-      new ErrorHandler("Only Processing orders can be cancelled", 400),
-    );
-  }
-
-
-  for (const item of order.orderItems) {
-    const product = await Product.findById(item.productId);
-    if (product) {
-      product.stock += item.quantity;
-      await product.save();
+    if (!order) {
+      await session.abortTransaction();
+      session.endSession();
+      return next(new ErrorHandler("Order not found", 404));
     }
-  }
 
-  order.status = "Cancelled";
-  await order.save();
+    const orderUserId =
+      typeof order.user === "object"
+        ? (order.user as any)._id.toString()
+        : order.user.toString();
 
-  invalidateCache({
-    product: true,
-    order: true,
-    admin: true,
-    _id: String(orderUserId), 
-    orderId: String(order._id),
-  });
+    if (orderUserId !== req.user!._id.toString()) {
+      await session.abortTransaction();
+      session.endSession();
+      return next(new ErrorHandler("Unauthorized", 403));
+    }
 
- 
-try {
-    const userEmail = (order.user as any).email;
-    const userName = (order.user as any).name;
+    if (order.status !== "Processing") {
+      await session.abortTransaction();
+      session.endSession();
+      return next(
+        new ErrorHandler("Only Processing orders can be cancelled", 400),
+      );
+    }
 
-    if (userEmail) {
-    
-      await sendEmail({
-        to: userEmail,
-        subject: "Order Cancelled - Barwa",
-        html: customerCancelEmailTemplate(order, userName),
-      });
+    for (const item of order.orderItems) {
+      const updated = await Product.findOneAndUpdate(
+        { _id: item.productId },
+        { $inc: { stock: item.quantity } },
+        { session, new: true },
+      );
 
-  
-      if (process.env.ADMIN_EMAIL) {
-        await sendEmail({
-          to: process.env.ADMIN_EMAIL as string,
-          subject: `Cancelled ⚠️ Order #${String(order._id).slice(-8).toUpperCase()}`,
-          html: adminCancelEmailTemplate(order, userName, userEmail),
-        });
+      if (!updated) {
+        throw new ErrorHandler(
+          `Product ${item.name} not found for stock restoration`,
+          404,
+        );
       }
     }
-  } catch (error) {
-    console.error("Failed to send cancellation emails:", error);
-  }
 
-  return res.status(200).json({
-    success: true,
-    message: "Order cancelled and stock restored",
-  });
+    order.status = "Cancelled";
+    await order.save({ session });
+
+    if (order.trackingId) {
+  await cancelShipment(order.trackingId);
+}
+
+    await session.commitTransaction();
+    session.endSession();
+
+    invalidateCache({
+      product: true,
+      order: true,
+      admin: true,
+      _id: String(orderUserId),
+      orderId: String(order._id),
+    });
+
+    try {
+      const userEmail = (order.user as any).email;
+      const userName = (order.user as any).name;
+
+      if (userEmail) {
+        await sendEmail({
+          to: userEmail,
+          subject: "Order Cancelled - Barwa",
+          html: customerCancelEmailTemplate(order, userName),
+        });
+
+        if (process.env.ADMIN_EMAIL) {
+          await sendEmail({
+            to: process.env.ADMIN_EMAIL as string,
+            subject: `Cancelled ⚠️ Order #${String(order._id).slice(-8).toUpperCase()}`,
+            html: adminCancelEmailTemplate(order, userName, userEmail),
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to send cancellation emails:", error);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Order cancelled and stock restored",
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    return next(error);
+  }
 });
 
 export const processOrder = TryCatch(async (req, res, next) => {
   const { id } = req.params;
 
-  // Populate user to grab their email address
   const order = await Order.findById(id).populate("user", "name email");
   if (!order) return next(new ErrorHandler("Order not found", 404));
 
@@ -293,19 +336,24 @@ export const processOrder = TryCatch(async (req, res, next) => {
     default:
       return next(new ErrorHandler("Cannot process this order status", 400));
   }
-
+  order.timeline.push({
+    status: order.status,
+    timestamp: new Date(),
+  });
   await order.save();
 
-  const orderUserId = typeof order.user === "object" ? (order.user as any)._id.toString() : order.user.toString();
+  const orderUserId =
+    typeof order.user === "object"
+      ? (order.user as any)._id.toString()
+      : order.user.toString();
 
   invalidateCache({
     order: true,
     admin: true,
-    _id: String(orderUserId), 
+    _id: String(orderUserId),
     orderId: String(order._id),
   });
 
-  // ✅ SEND PROCESSING EMAIL (Shipped or Delivered)
   try {
     const userEmail = (order.user as any).email;
     const userName = (order.user as any).name;
@@ -364,17 +412,18 @@ export const deleteOrder = TryCatch(async (req, res, next) => {
   });
 });
 
-
 export const generateInvoice = TryCatch(async (req, res, next) => {
   const { id } = req.params;
   const order = await Order.findById(id).populate("user", "name email");
 
   if (!order) return next(new ErrorHandler("Order not found", 404));
 
-  
   const requestingUser = req.user!;
-  const orderUserId = typeof order.user === "object" ? (order.user as any)._id.toString() : order.user.toString();
-  
+  const orderUserId =
+    typeof order.user === "object"
+      ? (order.user as any)._id.toString()
+      : order.user.toString();
+
   if (
     orderUserId !== requestingUser._id.toString() &&
     requestingUser.role !== "admin"
@@ -392,8 +441,11 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
 
   doc.pipe(res);
 
-  
-  doc.fontSize(28).font("Helvetica-Bold").fillColor("#111111").text("BARWA", 50, 50);
+  doc
+    .fontSize(28)
+    .font("Helvetica-Bold")
+    .fillColor("#111111")
+    .text("BARWA", 50, 50);
 
   doc
     .fontSize(10)
@@ -411,20 +463,27 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
     .fontSize(10)
     .font("Helvetica")
     .fillColor("#4b5563")
-    .text(`Invoice #: ${String(order._id).slice(-8).toUpperCase()}`, 400, 80, { align: "right" })
-    .text(`Date: ${new Date().toLocaleDateString("en-IN")}`, 400, 95, { align: "right" })
+    .text(`Invoice #: ${String(order._id).slice(-8).toUpperCase()}`, 400, 80, {
+      align: "right",
+    })
+    .text(`Date: ${new Date().toLocaleDateString("en-IN")}`, 400, 95, {
+      align: "right",
+    })
     .text(`Status: ${order.status}`, 400, 110, { align: "right" });
 
   doc.moveDown(3);
 
- 
   doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor("#e5e7eb").stroke();
   doc.moveDown(1);
 
- 
-  const customerName = typeof order.user === "object" ? (order.user as any).name : "Customer";
-  
-  doc.fontSize(12).font("Helvetica-Bold").fillColor("#111827").text("Billed & Shipped To:", 50, doc.y);
+  const customerName =
+    typeof order.user === "object" ? (order.user as any).name : "Customer";
+
+  doc
+    .fontSize(12)
+    .font("Helvetica-Bold")
+    .fillColor("#111827")
+    .text("Billed & Shipped To:", 50, doc.y);
   doc.moveDown(0.5);
 
   doc
@@ -433,27 +492,33 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
     .fillColor("#4b5563")
     .text(order.shippingInfo?.fullName || customerName)
     .text(order.shippingInfo?.address ?? "")
-    .text(`${order.shippingInfo?.city ?? ""}, ${order.shippingInfo?.state ?? ""}`)
-    .text(`${order.shippingInfo?.country ?? ""} — ${order.shippingInfo?.pinCode ?? ""}`);
-
+    .text(
+      `${order.shippingInfo?.city ?? ""}, ${order.shippingInfo?.state ?? ""}`,
+    )
+    .text(
+      `${order.shippingInfo?.country ?? ""} — ${order.shippingInfo?.pinCode ?? ""}`,
+    );
 
   doc
     .fontSize(10)
     .font("Helvetica-Bold")
     .fillColor("#111827")
-    .text("Payment Method: ", 400, doc.y - 45) 
+    .text("Payment Method: ", 400, doc.y - 45)
     .font("Helvetica")
     .fillColor("#4b5563")
-    .text(order.paymentMethod === "COD" ? "Cash on Delivery" : "Paid Online", 400, doc.y + 2);
+    .text(
+      order.paymentMethod === "COD" ? "Cash on Delivery" : "Paid Online",
+      400,
+      doc.y + 2,
+    );
 
   doc.moveDown(3);
 
-  
   const tableTop = doc.y;
-  
+
   doc.rect(50, tableTop, 495, 25).fill("#f3f4f6");
   doc.fillColor("#111827").font("Helvetica-Bold").fontSize(10);
-  
+
   doc.text("ITEM", 60, tableTop + 8, { width: 230 });
   doc.text("QTY", 300, tableTop + 8, { width: 50, align: "center" });
   doc.text("PRICE", 370, tableTop + 8, { width: 70, align: "right" });
@@ -461,22 +526,35 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
 
   doc.moveDown(1.5);
 
- 
   let yPosition = doc.y;
   doc.font("Helvetica").fontSize(10).fillColor("#4b5563");
 
   for (const item of order.orderItems) {
     doc.text(item.name, 60, yPosition, { width: 230 });
-    doc.text(String(item.quantity), 300, yPosition, { width: 50, align: "center" });
-    doc.text(`Rs. ${item.price.toLocaleString("en-IN")}`, 370, yPosition, { width: 70, align: "right" });
-    doc.text(`Rs. ${(item.price * item.quantity).toLocaleString("en-IN")}`, 460, yPosition, { width: 75, align: "right" });
-    
-    yPosition += 25; 
-    doc.moveTo(50, yPosition - 10).lineTo(545, yPosition - 10).strokeColor("#f3f4f6").stroke();
+    doc.text(String(item.quantity), 300, yPosition, {
+      width: 50,
+      align: "center",
+    });
+    doc.text(`Rs. ${item.price.toLocaleString("en-IN")}`, 370, yPosition, {
+      width: 70,
+      align: "right",
+    });
+    doc.text(
+      `Rs. ${(item.price * item.quantity).toLocaleString("en-IN")}`,
+      460,
+      yPosition,
+      { width: 75, align: "right" },
+    );
+
+    yPosition += 25;
+    doc
+      .moveTo(50, yPosition - 10)
+      .lineTo(545, yPosition - 10)
+      .strokeColor("#f3f4f6")
+      .stroke();
   }
 
   doc.y = yPosition + 10;
-
 
   const summaryLeft = 360;
   const summaryRight = 545;
@@ -493,9 +571,17 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
   };
 
   summaryRow("Subtotal:", `Rs. ${order.subtotal.toLocaleString("en-IN")}`);
-  summaryRow("Tax (GST):", `Rs. ${Math.round(order.tax).toLocaleString("en-IN")}`);
-  summaryRow("Shipping:", order.shippingCharges === 0 ? "FREE" : `Rs. ${order.shippingCharges.toLocaleString("en-IN")}`);
-  
+  summaryRow(
+    "Tax (GST):",
+    `Rs. ${Math.round(order.tax).toLocaleString("en-IN")}`,
+  );
+  summaryRow(
+    "Shipping:",
+    order.shippingCharges === 0
+      ? "FREE"
+      : `Rs. ${order.shippingCharges.toLocaleString("en-IN")}`,
+  );
+
   if (order.discount > 0) {
     summaryRow("Discount:", `- Rs. ${order.discount.toLocaleString("en-IN")}`);
   }
@@ -504,11 +590,9 @@ export const generateInvoice = TryCatch(async (req, res, next) => {
   doc.moveTo(360, doc.y).lineTo(545, doc.y).strokeColor("#111827").stroke();
   doc.moveDown(0.5);
 
- 
   doc.fontSize(14);
   summaryRow("Total:", `Rs. ${order.total.toLocaleString("en-IN")}`, true);
 
-  
   doc.moveDown(4);
   doc
     .fontSize(10)

@@ -89,10 +89,10 @@ const schema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
+      enum: ["Processing", "Shipped", "Out for Delivery", "Delivered", "Cancelled"],
       default: "Processing",
     },
-    
+
     trackingId: {
       type: String,
     },
@@ -123,7 +123,20 @@ const schema = new mongoose.Schema(
         },
       },
     ],
+    timeline: [
+      {
+        status: {
+          type: String,
+          required: true,
+        },
+        timestamp: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
+
   {
     timestamps: true,
   },
