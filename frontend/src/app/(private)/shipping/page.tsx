@@ -19,6 +19,7 @@ const Shipping = () => {
   const [shippingInfo, setshippingInfo] = useState({
     address: "",
     fullName: "",
+     phone:"",
     city: "",
     state: "",
     country: "",
@@ -60,12 +61,23 @@ const Shipping = () => {
           value={shippingInfo.address}
           onChange={changeHandler}
         />
+        
         <input
           required
           type="text"
           placeholder="Enter FullName"
           name="fullName"
           value={shippingInfo.fullName}
+          onChange={changeHandler}
+        />
+          <input
+          required
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          placeholder="Enter Phone Number"
+          name="phone"
+          value={shippingInfo.phone}
           onChange={changeHandler}
         />
         <input

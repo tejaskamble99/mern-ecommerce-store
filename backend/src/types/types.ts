@@ -68,6 +68,7 @@ export type OrderItemType = {
 export type ShippingInfoType = {
   fullName?: string;
   address: string;
+  phone:number;
   city: string;
   state: string;
   country: string;

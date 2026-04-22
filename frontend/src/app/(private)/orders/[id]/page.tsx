@@ -93,12 +93,14 @@ const cancelHandler = async () => {
         <h3>Delivery Address</h3>
         <p className="shipping-name">{order.shippingInfo.fullName}</p>
         <p>{order.shippingInfo.address}</p>
+        
         <p>
           {order.shippingInfo.city}, {order.shippingInfo.state}
         </p>
         <p>
           {order.shippingInfo.country} — {order.shippingInfo.pinCode}
         </p>
+        <p> Phone Number :- {order.shippingInfo.phone}</p>
       </div>
 
       <div className="order-items">

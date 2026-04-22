@@ -8,6 +8,10 @@ const schema = new mongoose.Schema(
         required: [true, "Please enter address"],
         trim: true,
       },
+        phone: {
+        type: Number,
+        required: [true, "Please enter phone number"],
+      },
       address: {
         type: String,
         required: [true, "Please enter address"],

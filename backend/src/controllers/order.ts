@@ -107,7 +107,6 @@ export const newOrder = TryCatch(
         [
           {
             shippingInfo,
-        
             orderItems: pricing.orderItems,
             user,
             subtotal: pricing.subtotal,
@@ -237,7 +236,7 @@ export const cancelOrder = TryCatch(async (req, res, next) => {
     }
 
     order.status = "Cancelled";
-    await order.save({ session });
+   await order.save({ validateModifiedOnly: true, session });
 
     if (order.trackingId) {
       await cancelShipment(order.trackingId);
@@ -310,7 +309,7 @@ export const processOrder = TryCatch(async (req, res, next) => {
   }
 
   order.timeline.push({ status: order.status, timestamp: new Date() });
-  await order.save();
+  await order.save({ validateModifiedOnly: true });
 
   const orderUserId =
     typeof order.user === "object"
