@@ -4,6 +4,7 @@ import { ToasterProvider } from "@/components/ToasterProvider";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Script from "next/script";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 
 export const metadata = {
@@ -28,6 +29,7 @@ export default function RootLayout({
           </main>
 
           <Footer/>
+          <WhatsAppButton />
         </Providers>
 
         <ToasterProvider />
