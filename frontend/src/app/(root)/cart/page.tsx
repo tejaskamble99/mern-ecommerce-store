@@ -82,59 +82,63 @@ export default function Cart() {
   }, [couponCode, cartItems, dispatch]);
 
   return (
-    <div className="cart">
-      <main>
-        {cartItems.length > 0 ? (
-          cartItems.map((i) => (
-            <CartItemComponent
-              key={i.productId}
-              cartItem={i}
-              incrementHandler={incrementHandler}
-              decrementHandler={decrementHandler}
-              removeHandler={removeHandler}
-            />
-          ))
+<div className="cart">
+  <main>
+    {cartItems.length > 0 ? (
+      cartItems.map((i) => (
+        <CartItemComponent
+          key={i.productId}
+          cartItem={i}
+          incrementHandler={incrementHandler}
+          decrementHandler={decrementHandler}
+          removeHandler={removeHandler}
+        />
+      ))
+    ) : (
+      <div className="empty-cart">
+        <h1> Your cart is empty</h1>
+        <Link href="/">Start Shopping</Link>
+      </div>
+    )}
+  </main>
+
+  {cartItems.length > 0 && (
+    <aside>
+      <h3>Price Details</h3>
+
+      <p><span>Subtotal</span><span>₹{subtotal}</span></p>
+      <p><span>Shipping</span><span>₹{shippingCharges}</span></p>
+      <p><span>Tax</span><span>₹{Math.round(tax)}</span></p>
+      <p><span>Discount</span><span>-₹{discount}</span></p>
+
+      <hr />
+
+      <p className="total">
+        <strong>Total</strong>
+        <strong>₹{total}</strong>
+      </p>
+
+      <input
+        type="text"
+        placeholder="Apply Coupon"
+        value={couponCode}
+        onChange={couponChangeHandler}
+      />
+
+      {couponCode &&
+        (isValidCouponCode ? (
+          <span className="green">
+            ₹{discount} off using <code>{couponCode}</code>
+          </span>
         ) : (
-          <h1>Cart is empty</h1>
-        )}
-      </main>
+          <span className="red">
+            Invalid Coupon <VscError />
+          </span>
+        ))}
 
-      {cartItems.length > 0 && (
-        <aside>
-         
-          <p>Subtotal : ₹{(subtotal || 0).toLocaleString("en-IN")}</p>
-          <p>Shipping Charges : ₹{(shippingCharges || 0).toLocaleString("en-IN")}</p>
-          <p>Tax : ₹{Math.round(tax || 0).toLocaleString("en-IN")}</p>
-          <p>
-            Discount: <em className="red"> - ₹{(discount || 0).toLocaleString("en-IN")}</em>
-          </p>
-          <p>
-            <b>Total : ₹{(total || 0).toLocaleString("en-IN")}</b>
-          </p>
-
-          <input
-            id="coupon-code"
-            name="couponCode"
-            type="text"
-            placeholder="Enter Promo Code"
-            value={couponCode}
-            onChange={couponChangeHandler}
-          />
-
-          {couponCode &&
-            (isValidCouponCode ? (
-              <span className="green">
-                ₹{discount || 0} off using the <code>{couponCode}</code>
-              </span>
-            ) : (
-              <span className="red">
-                Invalid Coupon <VscError />
-              </span>
-            ))}
-
-          <Link href="/shipping">Checkout</Link>
-        </aside>
-      )}
-    </div>
+      <Link href="/shipping">Proceed to Checkout</Link>
+    </aside>
+  )}
+</div>
   );
 }

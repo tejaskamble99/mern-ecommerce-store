@@ -10,6 +10,9 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 export const metadata = {
   title: 'Barwa | Next-Gen Electronics',
   description: 'Premium electronics and accessories store.',
+    icons: {
+    icon: "/assets/logo/sitelogo.png",   
+  },
 };
 
 export default function RootLayout({
