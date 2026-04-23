@@ -5,6 +5,9 @@ import morgan from "morgan";
 import NodeCache from "node-cache";
 import Stripe from "stripe";
 import rateLimit from "express-rate-limit";
+import helmet from "helmet";
+import mongoSanitize from "express-mongo-sanitize";
+import compression from "compression";
 
 import { errorMiddleware } from "./middleware/error.js";
 import bannerRoute from "./routes/banner.js";
@@ -34,6 +37,22 @@ const app = express();
 
 
 app.use(express.json({ limit: "10mb" }));
+app.use(compression());
+
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
+
+app.use((req, res, next) => {
+  Object.defineProperty(req, "query", {
+    value: { ...req.query },
+    writable: true,
+    configurable: true,
+    enumerable: true,
+  });
+  next();
+});
+app.use(mongoSanitize());
 app.set("trust proxy", 1);
 app.use(morgan("dev"));
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));

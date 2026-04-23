@@ -64,6 +64,7 @@ const schema = new mongoose.Schema(
       required: [true, "Please enter category"],
       trim: true,
       lowercase: true,
+      
     },
     ratings: {
       type: Number,
@@ -89,7 +90,7 @@ const schema = new mongoose.Schema(
         type: String,
         trim: true,
         lowercase: true,
-        sparse: true, // allows multiple null values
+        sparse: true, 
       },
       keywords: {
         type: [String],
