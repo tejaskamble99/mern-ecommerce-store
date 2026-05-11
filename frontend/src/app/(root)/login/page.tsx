@@ -38,7 +38,7 @@ export default function LogInPage() {
 
       try {
         
-        const userData = await getUser(firebaseUser.uid);
+        const userData = await getUser();
 
        
         dispatch(userExist(userData.user));

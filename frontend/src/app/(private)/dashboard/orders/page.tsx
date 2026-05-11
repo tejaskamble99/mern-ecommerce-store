@@ -3,7 +3,7 @@
 import { Skeleton } from "@/components/admin/Loader";
 import { useMyOrdersQuery } from "@/redux/api/orderApi";
 import { RootState, server } from "@/redux/store";
-import Image from "next/image"; // FIX #2: import added
+import Image from "next/image"; 
 import Link from "next/link";
 import { useSelector } from "react-redux";
 

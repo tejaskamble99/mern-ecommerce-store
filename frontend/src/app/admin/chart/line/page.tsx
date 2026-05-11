@@ -3,20 +3,14 @@
 import { LineChart } from "@/components/admin/Charts"; // Corrected import path
 import { Skeleton } from "@/components/admin/Loader";
 import { useLineQuery } from "@/redux/api/dashboardApi";
-import { RootState } from "@/redux/store";
 import { CustomError } from "@/types/api-types";
 import { getLastMonths } from "@/utils/features";
 import { useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
-import { useSelector } from "react-redux";
 
 
 const Linecharts = () => {
-  const { user } = useSelector((state: RootState) => state.userReducer);
-
   const { last12Months } = useMemo(() => getLastMonths(), []);
-
-   const userId = user?._id;
 
 const { isLoading, data, error, isError } = useLineQuery();
 

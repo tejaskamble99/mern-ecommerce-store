@@ -41,7 +41,7 @@ export default function Customers() {
   }, [isError, error]);
 
   const deleteHandler = async (targetUserId: string) => {
-    if (!userId) return;
+    if (!user) return;
 
     if (targetUserId === userId) {
       toast.error("You cannot delete your own account");

@@ -4,8 +4,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import TableHOC from "@/components/admin/TableHOC";
-import { useSelector } from "react-redux";
-import { UserReducerInitialState } from "@/types/reducer-types";
 import { useAllOrdersQuery } from "@/redux/api/orderApi";
 import { CustomError } from "@/types/api-types";
 import toast from "react-hot-toast";
@@ -62,10 +60,6 @@ const columns: ColumnDef<DataType>[] = [
 
 
 export default function Transaction() {
-  const { user } = useSelector(
-      (state: { userReducer: UserReducerInitialState }) => state.userReducer
-    );
-
      const { data, isLoading, isError, error } = useAllOrdersQuery();
 
   useEffect(() => {

@@ -63,7 +63,7 @@ const cancelHandler = async () => {
       document.body.appendChild(a);
       a.click();
       a.remove();
-    } catch (error) {
+    } catch {
       toast.error("Unable to download invoice");
     }
   };
@@ -100,7 +100,7 @@ const cancelHandler = async () => {
         <p>
           {order.shippingInfo.country} — {order.shippingInfo.pinCode}
         </p>
-        <p> Phone Number :- {order.shippingInfo.phone}</p>
+        <p> Phone Number :- {order.shippingInfo.phone ?? "N/A"}</p>
       </div>
 
       <div className="order-items">

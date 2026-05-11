@@ -9,8 +9,6 @@ import { useAllAdminProductsQuery } from "@/redux/api/productApi";
 import { server } from "@/redux/store";
 import { CustomError } from "@/types/api-types";
 import toast from "react-hot-toast";
-import { useSelector } from "react-redux";
-import { UserReducerInitialState } from "@/types/reducer-types";
 import { Skeleton } from "@/components/admin/Loader";
 import Image from "next/image";
 
@@ -34,6 +32,7 @@ const columns: ColumnDef<DataType>[] = [
         alt="Product"
         width={50}
         height={50}
+        sizes="50px"
         style={{ borderRadius: "4px", objectFit: "cover" }}
       />
     ),
@@ -106,12 +105,6 @@ const columns: ColumnDef<DataType>[] = [
 ];
 
 export default function Products() {
-  const { user } = useSelector(
-    (state: { userReducer: UserReducerInitialState }) => state.userReducer,
-  );
-
-  const userId = user?._id;
-
   const { data, isLoading, isError, error } = useAllAdminProductsQuery();
 
   const rows = useMemo<DataType[]>(

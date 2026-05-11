@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/admin/Loader";
 const defaultData: Order = {
   shippingInfo: {
     fullName: "",
+    phone: "",
     address: "",
     city: "",
     state: "",
@@ -47,12 +48,12 @@ const ProductCard = ({ name, photo, price, quantity, _id }: OrderItem) => {
   return (
     <div className="transaction-product-card">
       <Image
-  src={photoUrl}
-  alt={name}
-  width={100}
-  height={100}
-  unoptimized={photoUrl.includes("localhost")}
-/>
+        src={photoUrl}
+        alt={name}
+        width={100}
+        height={100}
+        sizes="100px"
+      />
       <Link href={`/product/${_id}`}>{name}</Link>
       <span>
         ₹{price.toLocaleString("en-IN")} X {quantity} = ₹

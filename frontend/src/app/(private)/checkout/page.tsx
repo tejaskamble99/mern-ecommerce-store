@@ -220,7 +220,7 @@ const RazorpayForm = () => {
 
       const rzp = new window.Razorpay(options);
       rzp.open();
-    } catch (error) {
+    } catch {
       toast.error("Failed to initialize Razorpay");
       setIsProcessing(false);
     }

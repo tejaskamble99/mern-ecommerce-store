@@ -39,7 +39,7 @@ export const userApi = createApi({
   }),
 });
 
-export const getUser = async (id: string) => {
+export const getUser = async () => {
   const token = await auth.currentUser?.getIdToken();
 
   const { data }: { data: UserResponse } = await axios.get(

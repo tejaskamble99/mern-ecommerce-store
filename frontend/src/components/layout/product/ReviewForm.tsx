@@ -65,7 +65,9 @@ export default function ReviewForm({ productId }: Props) {
       setComment("");
       setImages([]);
     } catch (error) {
-      toast.error("Failed to submit review");
+      const message =
+        error instanceof Error ? error.message : "Failed to submit review";
+      toast.error(message);
     }
   };
 

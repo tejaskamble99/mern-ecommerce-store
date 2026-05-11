@@ -2,7 +2,6 @@
 
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { FaTrash } from "react-icons/fa";
-import { useSelector } from "react-redux";
 import { useRouter, useParams, notFound } from "next/navigation";
 import { Skeleton } from "@/components/admin/Loader";
 import {
@@ -11,7 +10,6 @@ import {
   useDeleteReviewMutation,
   useProductDetailsByIdQuery,
 } from "@/redux/api/productApi";
-import { RootState } from "@/redux/store";
 import { responseToast } from "@/utils/features";
 import { server } from "@/redux/store";
 import Image from "next/image";
@@ -20,8 +18,6 @@ import { Review } from "@/types/types";
 import RichTextEditor from "@/components/layout/RichTextEditor";
 
 const ProductManagement = () => {
-  const { user } = useSelector((state: RootState) => state.userReducer);
-
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const productId = params?.id;
@@ -36,7 +32,6 @@ const ProductManagement = () => {
   const {
     price,
     salePrice,
-    photo,
     name,
     stock,
     category,

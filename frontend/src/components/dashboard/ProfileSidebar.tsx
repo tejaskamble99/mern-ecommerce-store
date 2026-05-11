@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { IconType } from "react-icons";
 import { AiFillFileText } from "react-icons/ai";
 import { BiSolidDashboard } from "react-icons/bi";
-import { FaAddressCard, FaBars, FaTimes } from "react-icons/fa";
+import { FaBars, FaTimes } from "react-icons/fa";
 
 const ProfileSidebar = () => {
   const pathname = usePathname();

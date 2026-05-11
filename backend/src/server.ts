@@ -55,7 +55,23 @@ app.use((req, res, next) => {
 app.use(mongoSanitize());
 app.set("trust proxy", 1);
 app.use(morgan("dev"));
-app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
+
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:3000"]),
+]
+  .filter((origin): origin is string => Boolean(origin));
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+}));
 
 
 const generalLimiter = rateLimit({

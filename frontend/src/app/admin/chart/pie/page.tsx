@@ -3,18 +3,12 @@
 import { DoughnutChart, PieChart } from "@/components/admin/Charts";
 import { Skeleton } from "@/components/admin/Loader";
 import { usePieQuery } from "@/redux/api/dashboardApi";
-import { RootState } from "@/redux/store";
 import { CustomError } from "@/types/api-types";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
-import { useSelector } from "react-redux";
 import { categories } from "@/data/data.json";
 
 const PieCharts = () => {
-  const { user } = useSelector((state: RootState) => state.userReducer);
-
-  const userId = user?._id;
-
   const { isLoading, data, error, isError } = usePieQuery();
 
   useEffect(() => {

@@ -6,7 +6,7 @@ export async function generateMetadata() {
     const res = await fetch(
       `${server}/api/v1/seo/home`,
       {
-        cache: "no-store",
+        next: { revalidate: 3600 },
       }
     );
 

@@ -7,7 +7,7 @@ type Props = {
 
 async function getProduct(slug: string) {
   const res = await fetch(`${server}/api/v1/product/slug/${slug}`, {
-    cache: "no-store",
+    next: { revalidate: 3600 },
   });
 
   return res.json();
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: Props) {
       robots: { index: true, follow: true },
     
       alternates: {
-        canonical: `http://localhost:3000/product/${slug}`, 
+        canonical: `https://barwa.in/product/${slug}`, 
       },
 
      
