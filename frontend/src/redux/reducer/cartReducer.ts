@@ -69,6 +69,7 @@ const initialState: CartReducerInitialState = {
   shippingInfo: {
     fullName: "",
     address: "",
+    phone: "",
     city: "",
     state: "",
     country: "",
