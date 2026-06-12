@@ -57,10 +57,9 @@ app.set("trust proxy", 1);
 app.use(morgan("dev"));
 
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL?.replace(/\/$/, ""),  // strip trailing slash
   ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:3000"]),
-]
-  .filter((origin): origin is string => Boolean(origin));
+].filter((origin): origin is string => Boolean(origin));
 
 app.use(cors({
   origin: (origin, callback) => {
