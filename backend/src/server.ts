@@ -58,7 +58,7 @@ app.use(morgan("dev"));
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  ...(process.env.NODE_ENV === "production" ? ["https://mern-ecommerce-store-cpymvv1yt-tejas-kambles-projects.vercel.app"] : ["http://localhost:3000"]),
+  ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:3000"]),
 ]
   .filter((origin): origin is string => Boolean(origin));
 
