@@ -20,7 +20,6 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "mern-ecommerce-store-6u04.onrender.com",
-        pathname: "/uploads/**",
       },
     ],
   },
