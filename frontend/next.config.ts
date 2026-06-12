@@ -5,7 +5,6 @@ const nextConfig: NextConfig = {
     silenceDeprecations: ["legacy-js-api", "import"],
   },
   images: {
-    
     unoptimized: process.env.NODE_ENV === "development",
     remotePatterns: [
       { protocol: "https", hostname: "encrypted-tbn0.gstatic.com" },
@@ -17,6 +16,11 @@ const nextConfig: NextConfig = {
         hostname: "localhost",
         port: "4000",
         pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "mern-ecommerce-store-6u04.onrender.com",
+        pathname: "/uploads/**",
       },
     ],
   },
